@@ -20,7 +20,8 @@
 
     "dependencies" : {
         "redis"   :  "*",
-        "async": "*"
+        "async": "*",
+        "connect": "*"
     },
     "license": "AGPL",
     "engine": {
