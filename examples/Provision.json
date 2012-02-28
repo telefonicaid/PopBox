@@ -1,0 +1,9 @@
+{
+    "payload" : "MESSAGE",
+    "priority" : "H",
+    "devices" : [
+        {"id" : "1234JX"},
+        {"id" : "4QT9JX"}
+    ],
+    "expirationDate" : "12/12/2012"
+}
