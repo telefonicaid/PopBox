@@ -1,0 +1,29 @@
+{
+    "name": "PopBox",
+    "version": "0.0.1",
+    "author": "Transversal Development",
+    "description": "a simple queue notification-box",
+    "contributors": [
+        {
+            "name": "Carlos Romero Brox",
+            "email": "brox@tid.es"
+        },
+        {
+            "name": "Marcos Reyes",
+            "email": "mru@tid.es"
+        }
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:mrutid/PopBox.git"
+    },
+
+    "dependencies" : {
+        "redis"   :  "*",
+        "async": "*"
+    },
+    "license": "AGPL",
+    "engine": {
+        "node": "0.6.11"
+    }
+}
