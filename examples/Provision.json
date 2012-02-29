@@ -1,9 +1,10 @@
 {
-    "payload" : "MESSAGE",
-    "priority" : "H",
-    "devices" : [
-        {"id" : "1234JX"},
-        {"id" : "4QT9JX"}
-    ],
-    "expirationDate" : "12/12/2012"
+"payload" : "MESSAGE",
+"priority" : "H",
+"callback" :"http://foo.bar",
+"qeue" : [
+{"id" : "1234JX"},
+{"id" : "4QT9JX"}
+],
+"expirationDate" : "SECONDS"
 }
