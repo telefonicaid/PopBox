@@ -12,6 +12,6 @@ var provision = {
 };
 
 dataSrv.push_transaction(provision, function(err, transaction_id){
-    console.dir("ERR:"+err);
-    console.dir("TID"+transaction_id);
+    console.dir("ERR: "+err);
+    console.dir("TID: "+transaction_id);
 });
