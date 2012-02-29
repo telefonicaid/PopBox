@@ -15,7 +15,7 @@ var provision = {
     "expirationDelay": 260
 };
 
-dataSrv.push_transaction(provision, function (err, transaction_id) {
+/*dataSrv.push_transaction(provision, function (err, transaction_id) {
     'use strict';
     console.dir("ERR: " + err);
     console.dir("TID: " + transaction_id);
@@ -27,4 +27,11 @@ dataSrv.push_transaction(provision, function (err, transaction_id) {
     }
     //check REDIS
 
+});*/
+
+
+dataSrv.pop_notification({'id':'1234JX'},2,function (err, transaction_id) {
+    'use strict';
+    console.dir("ERR: " + err);
+    console.dir("CLEAN: " + transaction_id);
 });
