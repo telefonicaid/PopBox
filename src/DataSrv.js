@@ -1,6 +1,7 @@
 //Encapsulate DB/queue accesses
 //Deals with data clustering and scalability
 //SmartStub approach
+
 //Require Area
 var config = require('./config.js');
 var db_cluster = require('./DBCluster.js');
@@ -8,20 +9,21 @@ var uuid = require('node-uuid');
 var async = require('async');
 
 
-//Private methods
+//Private methods Area
 
-//uses provision-json
+//uses provision (Provision.json)
 //callback returns transaction_id
 var push_transaction = function (provision, callback) {
     'use strict';
-    //handles a new transaction  (N id's involved)
+    //handles a new transaction  (N ids involved)
 
     var priority = provision.priority + ':'; //contains "H" || "L"
-    var qeues = provision.qeue; //[{},{}]
+    var qeues = provision.qeue; //[{},{}]   //list of ids
     var transaction_id = uuid.v1();
 
-    //setting up the bach proceses.
-    var process_batch=[]; //feeding the process batch
+    //setting up the bach proceses for async module.
+    var process_batch=[];
+    //feeding the process batch
     process_batch[0]=hset_meta_hash_parallel(transaction_id, ':meta', provision);
     for (var i = 0; i < qeues.length; i++) {
         //get the db from cluster
@@ -121,8 +123,8 @@ var push_transaction = function (provision, callback) {
     }
     function set_expiration_date(key, callback) {
 
-
-            db.expire(key, provision.expirationDate, function (err) {
+            if (provision.expirationDate){
+            db.expireat(key, provision.expirationDate, function (err) {
                 if (err) {
                     //error setting expiration date
                     console.dir(err);
@@ -130,6 +132,19 @@ var push_transaction = function (provision, callback) {
                 callback && callback(err);
 
             });
+            }
+        else{
+                var expirationDelay = provision.expirationDelay || 3600 //1 hour default
+
+                db.expire(key, expirationDelay, function (err) {
+                    if (err) {
+                        //error setting expiration date
+                        console.dir(err);
+                    }
+                    callback && callback(err);
+
+                });
+            }
         }
 
 };

@@ -6,5 +6,6 @@
 {"id" : "1234JX"},
 {"id" : "4QT9JX"}
 ],
-"expirationDate" : "SECONDS"
+"expirationDate" : "UNIXTIMESTAMP",    //if both present expirationDate will be used
+"expirationDelay" : "Seconds"
 }
