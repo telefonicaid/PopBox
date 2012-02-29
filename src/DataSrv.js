@@ -1,5 +1,6 @@
-//encapsulate DB/queue acceses
+//encapsulate DB/queue accesses
 //deals with data clustering and scalability
+//SmartStub approach
 //Require Area
 var config = require ('./config.js');
 var redis_module = require('redis');
@@ -19,10 +20,10 @@ var pop_notification = function(imei, callback) {};
 //return err, popped data
 var block_pop_notification = function(imei) {};
 
-//uses summary flag
+//uses summary flag OPT
 //uses state emum ('pending', 'closed', 'error')
 //callback return transaction info
-var get_transaction = function(summary, state, callback) {};
+var get_transaction = function(state, summary) {};
 
 
 //Public Interface Area
@@ -32,9 +33,4 @@ exports.pop_notification = pop_notification;
 
 exports.block_pop_notification = block_pop_notification;
 
-exports.get_transaction_status = get_transaction(false, 'all');
-exports.get_transaction_status_summary = get_transaction(true, 'all');
-exports.get_transaction_status_pending = get_transaction(false, 'pending');
-exports.get_transaction_status_pending = get_transaction(false, 'closed');
-exports.get_transaction_status_pending = get_transaction(false, 'error');
-
+exports.get_transaction = get_transaction;
