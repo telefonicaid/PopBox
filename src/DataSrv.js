@@ -82,6 +82,7 @@ var pop_notification = function (qeue, max_elems, callback) {
     'use strict';
     //client asks for queu box
     var db = db_cluster.get_db(qeue.id); //get the db from cluster
+
     //pop the queu  (LRANGE)
     //hight priority first
     var full_qeue_idH = config.db_key_prefix + 'H:' + qeue.id;
@@ -111,9 +112,20 @@ var pop_notification = function (qeue, max_elems, callback) {
                 //purge GHOST from the list //REPLICATED REFACTOR
                 ghost_buster(db, dataH, function(err, here_are_the_nulls){
                     if(!err){
-                        //SET NEW STATE
+                        //Handle post-pop behaviour (callback)
                         var clean_data = clean_null_from_array(here_are_the_nulls, dataH);
-                        if (callback) {callback(err, clean_data);}
+                        //SET NEW STATE for Every popped transaction
+                        var new_state_batch = [];
+                        for (var i=0;i<clean_data.length; i++){
+                            var transaction_id = clean_data[i];
+                            var dbTr = db_cluster.get_transaction_db(transaction_id);
+                            var f = hset_hash_parallel(dbTr, qeue, transaction_id, ':state', 'Delivered');
+                            new_state_batch.push(f);
+                        }
+                        async.parallel(new_state_batch, function(err){
+                            if (callback) {callback(err, clean_data);}
+                        });
+
                     }
                     else{
                         if (callback) {callback(err, null);}
@@ -126,9 +138,20 @@ var pop_notification = function (qeue, max_elems, callback) {
             //just one qeue used   //REPLICATED REFACTOR
             ghost_buster(db, dataH, function(err, here_are_the_nulls){
                 if(!err){
-                    //SET NEW STATE
+                    //Handle post-pop behaviour (callback)
                     var clean_data = clean_null_from_array(here_are_the_nulls, dataH);
-                    if (callback) {callback(err, clean_data);}
+                    //SET NEW STATE for Every popped transaction
+                    var new_state_batch = [];
+                    for (var i=0;i<clean_data.length; i++){
+                        var transaction_id = clean_data[i];
+                        var dbTr = db_cluster.get_transaction_db(transaction_id);
+                        var f = hset_hash_parallel(dbTr, qeue, transaction_id, ':state', 'Delivered');
+                        new_state_batch.push(f);
+                    }
+                    async.parallel(new_state_batch, function(err){
+                        if (callback) {callback(err, clean_data);}
+                    });
+
                 }
                 else{
                     if (callback) {callback(err, null);}
