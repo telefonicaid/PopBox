@@ -24,12 +24,13 @@ var push_transaction = function (provision, callback) {
     //setting up the bach proceses for async module.
     var process_batch = [];
     //feeding the process batch
-    process_batch[0] = hset_meta_hash_parallel(transaction_id, ':meta', provision);
+    var dbTr = db_cluster.get_transaction_db(transaction_id);
+    process_batch[0] = hset_meta_hash_parallel(dbTr, transaction_id, ':meta', provision);
     for (var i = 0; i < qeues.length; i++) {
         var qeue = qeues[i];
         var db = db_cluster.get_db(qeue.id); //different DB for different Ids
         //launch push/sets/expire in parallel for one ID
-        process_batch[i + 1] = process_one_id(transaction_id, qeue, db, priority);
+        process_batch[i + 1] = process_one_id(db, dbTr, transaction_id, qeue, priority);
     }
 
     async.series(process_batch, function (err) {   //parallel execution may apply also
@@ -46,13 +47,13 @@ var push_transaction = function (provision, callback) {
         }
     });
 
-    function process_one_id(transaction_id, qeue, db, priority) {
+    function process_one_id(db, dbTr, transaction_id, qeue, priority) {
 
         return function (callback) {
             async.parallel(
                 [
-                    push_parallel(qeue, priority, transaction_id, db),
-                    hset_hash_parallel(qeue, transaction_id, db, ':state', 'Pending')
+                    push_parallel(db, qeue, priority, transaction_id),
+                    hset_hash_parallel(dbTr, qeue, transaction_id, ':state', 'Pending')
                 ], function (err) {
                     if (err) {
                         //something goes wrong
@@ -62,7 +63,7 @@ var push_transaction = function (provision, callback) {
                     }
                     else {
                         //set expiration time for state collections (not the qeue)
-                        set_expiration_date(transaction_id + ':state', function (err) {
+                        set_expiration_date(dbTr, transaction_id + ':state', provision, function (err) {
                                 //Everything kept or error
                                 if (callback) {
                                     callback(err);
@@ -73,97 +74,6 @@ var push_transaction = function (provision, callback) {
                 });
         };
     }
-
-    //aux functions
-    function push_parallel(qeue, priority, transaction_id, db) {
-        return function (callback) {
-            var full_qeue_id = config.db_key_prefix + priority + qeue.id;
-            db.lpush(full_qeue_id, transaction_id, function (err) {
-                if (err) {
-                    //error pushing
-                    console.dir(err);
-                }
-
-                if (callback) {
-                    callback(err);
-                }
-            });
-        };
-    }
-
-    function hset_hash_parallel(qeue, transaction_id, db, sufix, datastr) {
-
-        return function (callback) {
-
-            db.hmset(transaction_id + sufix, qeue.id, datastr, function (err) {
-                if (err) {
-                    //error pushing
-                    console.dir(err);
-                }
-
-                if (callback) {
-                    callback(err);
-                }
-            });
-        };
-    }
-
-    function hset_meta_hash_parallel(transaction_id, sufix, provision) {
-        return function (callback) {
-            var meta = {
-                'payload':provision.payload,
-                'priority':provision.priority,
-                'callback':provision.callback,
-                'expirationDate':provision.expirationDate
-            };
-            db.hmset(transaction_id + sufix, meta, function (err) {
-                if (err) {
-                    //error pushing
-                    console.dir(err);
-                }
-                else {
-                    //pushing ok
-                    set_expiration_date(transaction_id + sufix, function (err) {
-                        if (callback) {
-                            callback(err);
-                        }
-                    });
-
-                }
-            });
-        };
-    }
-
-    function set_expiration_date(key, callback) {
-
-        if (provision.expirationDate) {
-            db.expireat(key, provision.expirationDate, function (err) {
-                if (err) {
-                    //error setting expiration date
-                    console.dir(err);
-                }
-                if (callback) {
-                    callback(err);
-                }
-
-            });
-        }
-        else {
-            var expirationDelay = provision.expirationDelay || 3600; //1 hour default
-
-            db.expire(key, expirationDelay, function (err) {
-                if (err) {
-                    //error setting expiration date
-                    console.dir(err);
-                }
-                if (callback) {
-                    callback(err);
-                }
-
-            });
-        }
-    }
-
 };
 
 //uses DEVICE - IMEI
@@ -199,8 +109,9 @@ var pop_notification = function (qeue, max_elems, callback) {
                     dataH.concat(dataL);
                 }
                 //purge GHOST from the list //REPLICATED REFACTOR
-                ghost_buster(dataH, db, function(err, here_are_the_nulls){
+                ghost_buster(db, dataH, function(err, here_are_the_nulls){
                     if(!err){
+                        //SET NEW STATE
                         var clean_data = clean_null_from_array(here_are_the_nulls, dataH);
                         if (callback) {callback(err, clean_data);}
                     }
@@ -213,8 +124,9 @@ var pop_notification = function (qeue, max_elems, callback) {
         }
         else{
             //just one qeue used   //REPLICATED REFACTOR
-            ghost_buster(dataH, db, function(err, here_are_the_nulls){
+            ghost_buster(db, dataH, function(err, here_are_the_nulls){
                 if(!err){
+                    //SET NEW STATE
                     var clean_data = clean_null_from_array(here_are_the_nulls, dataH);
                     if (callback) {callback(err, clean_data);}
                 }
@@ -232,7 +144,7 @@ var pop_notification = function (qeue, max_elems, callback) {
 
     });
 
-    function ghost_buster(dataH, db, callback) {
+    function ghost_buster(db, dataH, callback) {
         var ghost_buster_batch = [];
         for (var i = 0; i < dataH.length; i++) {
             ghost_buster_batch[i] = check_exist(i, dataH[i], db);
@@ -268,7 +180,7 @@ var pop_notification = function (qeue, max_elems, callback) {
     }
 
     function clean_null_from_array(result, dataH) {
-        var clean_data;
+        var clean_data=[];
         //add nulls
         for (var i = 0; i < result.length; i++) {
             dataH[result[i]] = null;
@@ -304,3 +216,95 @@ exports.pop_notification = pop_notification;
 exports.block_pop_notification = block_pop_notification;
 
 exports.get_transaction = get_transaction;
+
+//aux functions
+function push_parallel(db, qeue, priority, transaction_id) {
+    'use strict';
+    return function (callback) {
+        var full_qeue_id = config.db_key_prefix + priority + qeue.id;
+        db.lpush(full_qeue_id, transaction_id, function (err) {
+            if (err) {
+                //error pushing
+                console.dir(err);
+            }
+
+            if (callback) {
+                callback(err);
+            }
+        });
+    };
+}
+
+function hset_hash_parallel(db, qeue, transaction_id, sufix, datastr) {
+    'use strict';
+    return function (callback) {
+
+        db.hmset(transaction_id + sufix, qeue.id, datastr, function (err) {
+            if (err) {
+                //error pushing
+                console.dir(err);
+            }
+
+            if (callback) {
+                callback(err);
+            }
+        });
+    };
+}
+
+function hset_meta_hash_parallel(dbTr, transaction_id, sufix, provision) {
+    'use strict';
+    return function (callback) {
+        var meta = {
+            'payload':provision.payload,
+            'priority':provision.priority,
+            'callback':provision.callback,
+            'expirationDate':provision.expirationDate
+        };
+        dbTr.hmset(transaction_id + sufix, meta, function (err) {
+            if (err) {
+                //error pushing
+                console.dir(err);
+            }
+            else {
+                //pushing ok
+                set_expiration_date(dbTr, transaction_id + sufix, provision, function (err) {
+                    if (callback) {
+                        callback(err);
+                    }
+                });
+
+            }
+        });
+    };
+}
+
+function set_expiration_date(dbTr, key, provision, callback) {
+    'use strict';
+    if (provision.expirationDate) {
+        dbTr.expireat(key, provision.expirationDate, function (err) {
+            if (err) {
+                //error setting expiration date
+                console.dir(err);
+            }
+            if (callback) {
+                callback(err);
+            }
+
+        });
+    }
+    else {
+        var expirationDelay = provision.expirationDelay || 3600; //1 hour default
+
+        dbTr.expire(key, expirationDelay, function (err) {
+            if (err) {
+                //error setting expiration date
+                console.dir(err);
+            }
+            if (callback) {
+                callback(err);
+            }
+
+        });
+    }
+}

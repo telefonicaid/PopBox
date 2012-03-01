@@ -14,8 +14,8 @@ var provision = {
     "expirationDate": Math.round((new Date()).getTime() / 1000)+10000,
     "expirationDelay": 260
 };
-
-/*dataSrv.push_transaction(provision, function (err, transaction_id) {
+/*
+dataSrv.push_transaction(provision, function (err, transaction_id) {
     'use strict';
     console.dir("ERR: " + err);
     console.dir("TID: " + transaction_id);
