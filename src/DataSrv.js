@@ -170,6 +170,7 @@ var push_transaction = function (provision, callback) {
 //callback return err, popped data
 
 var pop_notification = function (qeue, max_elems, callback) {
+    'use strict';
     //client asks for queu box
     var db = db_cluster.get_db(qeue.id); //get the db from cluster
     //pop the queu  (LRANGE)
@@ -179,7 +180,7 @@ var pop_notification = function (qeue, max_elems, callback) {
 
     db.lrange(full_qeue_idH, 0, max_elems-1, function (errH, dataH) {
         if(!errH){
-        db.ltrim(full_qeue_idH, 0, max_elems-1, function(err){
+        db.ltrim(full_qeue_idH, max_elems, -1, function(err){
             console.log('ERROR AT TRIM H:' + err);
         });
         if (dataH.length < max_elems) {
@@ -192,7 +193,7 @@ var pop_notification = function (qeue, max_elems, callback) {
                 }
             }
             else{
-                db.ltrim(full_qeue_idL, 0, rest_elems-1, function(err){
+                db.ltrim(full_qeue_idL, rest_elems, -1, function(err){
                     console.log('ERROR AT TRIM L:' + err);
                 });
                 if (dataL) {
