@@ -11,4 +11,12 @@ var config = require('./config.js');
         return rc;
     };
 
+    var get_transaction_db = function(transaction_id){
+        'use strict';
+        //return a client for transactions
+        return rc;
+
+    };
+
 exports.get_db = get_db;
+exports.get_transaction_db = get_transaction_db;
