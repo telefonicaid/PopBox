@@ -168,7 +168,6 @@ var push_transaction = function (provision, callback) {
 
 //uses DEVICE - IMEI
 //callback return err, popped data
-
 var pop_notification = function (qeue, max_elems, callback) {
     'use strict';
     //client asks for queu box
@@ -200,19 +199,9 @@ var pop_notification = function (qeue, max_elems, callback) {
                     dataH.concat(dataL);
                 }
                 //purge GHOST from the list //REPLICATED REFACTOR
-                ghost_buster(dataH, db, function(err, result){
+                ghost_buster(dataH, db, function(err, here_are_the_nulls){
                     if(!err){
-                        var clean_data;
-                        //add nulls
-                        for (var i= 0;i<result.length;i++){
-                           dataH[result[i]]=null;
-                        }
-                        //remove nulls
-                        for (var j=0;j<dataH.length;j++){
-                            if(dataH[j]){
-                                clean_data.push(dataH[j]);
-                            }
-                        }
+                        var clean_data = clean_null_from_array(here_are_the_nulls, dataH);
                         if (callback) {callback(err, clean_data);}
                     }
                     else{
@@ -224,19 +213,9 @@ var pop_notification = function (qeue, max_elems, callback) {
         }
         else{
             //just one qeue used   //REPLICATED REFACTOR
-            ghost_buster(dataH, db, function(err, result){
+            ghost_buster(dataH, db, function(err, here_are_the_nulls){
                 if(!err){
-                    var clean_data=[];
-                    //add nulls
-                    for (var i= 0;i<result.length;i++){
-                        dataH[result[i]]=null;
-                    }
-                    //remove nulls
-                    for (var j=0;j<dataH.length;j++){
-                        if(dataH[j]){
-                            clean_data.push(dataH[j]);
-                        }
-                    }
+                    var clean_data = clean_null_from_array(here_are_the_nulls, dataH);
                     if (callback) {callback(err, clean_data);}
                 }
                 else{
@@ -286,6 +265,21 @@ var pop_notification = function (qeue, max_elems, callback) {
                 }
             });
         };
+    }
+
+    function clean_null_from_array(result, dataH) {
+        var clean_data;
+        //add nulls
+        for (var i = 0; i < result.length; i++) {
+            dataH[result[i]] = null;
+        }
+        //remove nulls
+        for (var j = 0; j < dataH.length; j++) {
+            if (dataH[j]) {
+                clean_data.push(dataH[j]);
+            }
+        }
+        return clean_data;
     }
 };
 
