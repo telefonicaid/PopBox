@@ -19,12 +19,13 @@ var push_transaction = function (provision, callback) {
 
     var priority = provision.priority + ':'; //contains "H" || "L"
     var qeues = provision.qeue; //[{},{}]   //list of ids
-    var transaction_id = config.db_key_prefix+uuid.v1();
+    var ext_trans_id = uuid.v1();
+    var transaction_id = config.db_key_prefix + ext_trans_id;
 
     //setting up the bach proceses for async module.
     var process_batch = [];
     //feeding the process batch
-    var dbTr = db_cluster.get_transaction_db(transaction_id);
+    var dbTr = db_cluster.get_transaction_db(transaction_id); // external??
     process_batch[0] = hset_meta_hash_parallel(dbTr, transaction_id, ':meta', provision);
     for (var i = 0; i < qeues.length; i++) {
         var qeue = qeues[i];
@@ -42,7 +43,7 @@ var push_transaction = function (provision, callback) {
         }
         else {
             if (callback) {
-                callback(null, transaction_id);
+                callback(null, ext_trans_id);
             }
         }
     });
