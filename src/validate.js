@@ -1,17 +1,29 @@
 function errors_trans(trans) {
-    var error = [];
+    var errors = [];
 
     if(!trans.priority) {
-        error.push("undefined priority");
-    }
-    if(!trans.qeue) {
-        error.push("undefined queue");
-    }
-    if(!trans.payload) {
-        error.push("undefined payload");
+        errors.push("undefined priority");
     }
 
-    return error;
+    if(!trans.qeue) {
+        errors.push("undefined queue");
+    }
+    else if(trans.qeue.constructor != Array) {
+        errors.push("invalid queue (should be an Array)");
+    }
+    else {
+        trans.qeue.forEach(function( value, index){
+            if(!value || !value.id) {
+                errors.push("invalid queue element " + index);
+            }
+        });
+    }
+
+    if(!trans.payload) {
+        errors.push("undefined payload");
+    }
+
+    return errors;
 
 }
 
