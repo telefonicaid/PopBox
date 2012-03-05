@@ -13,7 +13,7 @@ app.use('/', function (req, res) {
         var queue_id = path.pathname.slice(1);
         console.log(queue_id);
 
-        dataSrv.pop_notification(queue_id, 1000, function (err, notif_list) {
+        dataSrv.pop_notification({id: queue_id}, 1000, function (err, notif_list) {
             if (err) {
                 res.writeHead(500, {'content-type':'text/plain'});
                 res.write(String(err));
