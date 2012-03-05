@@ -103,7 +103,7 @@ var pop_notification = function (qeue, max_elems, callback) {
                 }
             }
             else{
-                db.ltrim(full_qeue_idL, dataL.length, -1, function(err){
+                db.ltrim(full_qeue_idL, -dataL.length, -1, function(err){
                     console.log('ERROR AT TRIM L:' + err);
                 });
                 if (dataL) {
