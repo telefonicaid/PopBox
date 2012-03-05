@@ -109,11 +109,11 @@ var pop_notification = function (qeue, max_elems, callback) {
                 if (dataL) {
                     dataH.concat(dataL);
                 }
-                //purge GHOST from the list //REPLICATED REFACTOR
-                ghost_buster(db, dataH, function(err, here_are_the_nulls){
+                //purge GHOST from the queue //REPLICATED REFACTOR
+                retrieve_data(dataH, function(err, payload_with_nulls){
                     if(!err){
                         //Handle post-pop behaviour (callback)
-                        var clean_data = clean_null_from_array(here_are_the_nulls, dataH);
+                        var clean_data = clean_null_from_array(payload_with_nulls);
                         //SET NEW STATE for Every popped transaction
                         var new_state_batch = [];
                         for (var i=0;i<clean_data.length; i++){
@@ -123,7 +123,9 @@ var pop_notification = function (qeue, max_elems, callback) {
                             new_state_batch.push(f);
                         }
                         async.parallel(new_state_batch, function(err){
-                            if (callback) {callback(err, clean_data);}
+
+                                if (callback) {callback(err, clean_data);}
+
                         });
 
                     }
@@ -136,10 +138,10 @@ var pop_notification = function (qeue, max_elems, callback) {
         }
         else{
             //just one qeue used   //REPLICATED REFACTOR
-            ghost_buster(db, dataH, function(err, here_are_the_nulls){
+            retrieve_data(dataH, function(err, payload_with_nulls){
                 if(!err){
                     //Handle post-pop behaviour (callback)
-                    var clean_data = clean_null_from_array(here_are_the_nulls, dataH);
+                    var clean_data = clean_null_from_array(payload_with_nulls);
                     //SET NEW STATE for Every popped transaction
                     var new_state_batch = [];
                     for (var i=0;i<clean_data.length; i++){
@@ -149,7 +151,9 @@ var pop_notification = function (qeue, max_elems, callback) {
                         new_state_batch.push(f);
                     }
                     async.parallel(new_state_batch, function(err){
-                        if (callback) {callback(err, clean_data);}
+                        get_notifications(dbTr, clean_data, function(err, clean_messages){
+                            if (callback) {callback(err, clean_messages);}
+                        });
                     });
 
                 }
@@ -167,51 +171,41 @@ var pop_notification = function (qeue, max_elems, callback) {
 
     });
 
-    function ghost_buster(db, dataH, callback) {
+    function retrieve_data(transactionQ, callback) {
         var ghost_buster_batch = [];
-        for (var i = 0; i < dataH.length; i++) {
-            ghost_buster_batch[i] = check_exist(i, dataH[i], db);
+        for (var i = 0; i < transactionQ.length; i++) {
+            var dbTr = db_cluster.get_transaction_db(transactionQ[i]);
+            ghost_buster_batch[i] = check_data(dbTr, transactionQ[i]);
         }
 
-        async.parallel(ghost_buster_batch, function (err, result) {
-            console.dir(result);
+        async.parallel(ghost_buster_batch, function (err, found_metadata) {
+            console.dir(found_metadata);  //and nulls
             if (callback) {
-                callback(err, result);
+                callback(err, found_metadata);
             }
         });
     }
 
-    function check_exist(index, transaction_id, db) {
+    function check_data(dbTr, transaction_id) {
         return function (callback) {
-            db.exists(transaction_id + ':state', function (err, alive) {
+            dbTr.hgetall(transaction_id + ':meta',function (err, data) {
                 if (err) {
                     callback(err);
                 }
-                else if (!alive) {
-                    //it is a ghost
-                    if (callback) {
-                        callback(null, index);
-                    }
-                }
                 else {
-                    if (callback) {
-                        callback(null, null);
+                        callback(null, data);
                     }
-                }
+
             });
         };
     }
 
-    function clean_null_from_array(result, dataH) {
+    function clean_null_from_array(array_with_nulls) {
         var clean_data=[];
-        //add nulls
-        for (var i = 0; i < result.length; i++) {
-            dataH[result[i]] = null;
-        }
-        //remove nulls
-        for (var j = 0; j < dataH.length; j++) {
-            if (dataH[j]) {
-                clean_data.push(dataH[j]);
+
+        for (var j = 0; j < array_with_nulls.length; j++) {
+            if (array_with_nulls[j]) {
+                clean_data.push(array_with_nulls[j]);
             }
         }
         return clean_data;
@@ -300,6 +294,10 @@ function hset_meta_hash_parallel(dbTr, transaction_id, sufix, provision) {
             }
         });
     };
+}
+function get_notifications(dbTr, clean_data, callback){
+   //look for messages
+
 }
 
 function set_expiration_date(dbTr, key, provision, callback) {
