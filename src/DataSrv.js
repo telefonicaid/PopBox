@@ -90,7 +90,7 @@ var pop_notification = function (qeue, max_elems, callback) {
 
     db.lrange(full_qeue_idH, -max_elems, -1, function (errH, dataH) {
         if(!errH){   //buggy
-        db.ltrim(full_qeue_idH, -dataH.length, -1, function(err){
+        db.ltrim(full_qeue_idH, 0, -dataH.length-1, function(err){
             console.log('ERROR AT TRIM H:' + err);
         });
         if (dataH.length < max_elems) {
@@ -103,7 +103,7 @@ var pop_notification = function (qeue, max_elems, callback) {
                 }
             }
             else{
-                db.ltrim(full_qeue_idL, -dataL.length, -1, function(err){
+                db.ltrim(full_qeue_idL, 0, -dataL.length-1, function(err){
                     console.log('ERROR AT TRIM L:' + err);
                 });
                 if (dataL) {
