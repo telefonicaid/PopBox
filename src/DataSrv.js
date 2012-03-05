@@ -88,22 +88,22 @@ var pop_notification = function (qeue, max_elems, callback) {
     var full_qeue_idH = config.db_key_queue_prefix + 'H:' + qeue.id;
     var full_qeue_idL = config.db_key_queue_prefix + 'L:' + qeue.id;
 
-    db.lrange(full_qeue_idH, 0, max_elems-1, function (errH, dataH) {
-        if(!errH){
-        db.ltrim(full_qeue_idH, max_elems, -1, function(err){
+    db.lrange(full_qeue_idH, -max_elems, -1, function (errH, dataH) {
+        if(!errH){   //buggy
+        db.ltrim(full_qeue_idH, -dataH.length, -1, function(err){
             console.log('ERROR AT TRIM H:' + err);
         });
         if (dataH.length < max_elems) {
             var rest_elems = max_elems - dataH.length;
             //Extract from both qeues
-            db.lrange(full_qeue_idL, 0, rest_elems-1, function (errL, dataL) {
+            db.lrange(full_qeue_idL, -rest_elems, -1, function (errL, dataL) {
             if(errL){
                 if (callback) {
                     callback(errL, null);
                 }
             }
             else{
-                db.ltrim(full_qeue_idL, rest_elems, -1, function(err){
+                db.ltrim(full_qeue_idL, dataL.length, -1, function(err){
                     console.log('ERROR AT TRIM L:' + err);
                 });
                 if (dataL) {
