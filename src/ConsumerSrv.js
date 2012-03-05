@@ -20,8 +20,10 @@ app.use('/', function (req, res) {
                 res.end();
             }
             else {
+                message_list = notif_list.map(function(notif){return notif.payload;});
+                message_list.reverse();
                 res.writeHead(200, {'content-type':'application/json'});
-                res.write(JSON.stringify(notif_list));
+                res.write(JSON.stringify(message_list));
                 res.end();
             }
         });
