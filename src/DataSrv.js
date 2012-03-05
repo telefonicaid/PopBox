@@ -117,7 +117,7 @@ var pop_notification = function (qeue, max_elems, callback) {
                         //SET NEW STATE for Every popped transaction
                         var new_state_batch = [];
                         for (var i=0;i<clean_data.length; i++){
-                            var transaction_id = clean_data[i];
+                            var transaction_id = clean_data[i].transaction_id;
                             var dbTr = db_cluster.get_transaction_db(transaction_id);
                             var f = hset_hash_parallel(dbTr, qeue, transaction_id, ':state', 'Delivered');
                             new_state_batch.push(f);
@@ -145,7 +145,7 @@ var pop_notification = function (qeue, max_elems, callback) {
                     //SET NEW STATE for Every popped transaction
                     var new_state_batch = [];
                     for (var i=0;i<clean_data.length; i++){
-                        var transaction_id = clean_data[i];
+                        var transaction_id = clean_data[i].transaction_id;
                         var dbTr = db_cluster.get_transaction_db(transaction_id);
                         var f = hset_hash_parallel(dbTr, qeue, transaction_id, ':state', 'Delivered');
                         new_state_batch.push(f);
@@ -193,7 +193,10 @@ var pop_notification = function (qeue, max_elems, callback) {
                     callback(err);
                 }
                 else {
-                        callback(null, data);
+                    if(data){
+                        data.transaction_id = transaction_id;
+                    }
+                    callback(null, data);
                     }
 
             });
@@ -252,11 +255,11 @@ function push_parallel(db, qeue, priority, transaction_id) {
     };
 }
 
-function hset_hash_parallel(db, qeue, transaction_id, sufix, datastr) {
+function hset_hash_parallel(dbTr, qeue, transaction_id, sufix, datastr) {
     'use strict';
     return function (callback) {
 
-        db.hmset(transaction_id + sufix, qeue.id, datastr, function (err) {
+        dbTr.hmset(transaction_id + sufix, qeue.id, datastr, function (err) {
             if (err) {
                 //error pushing
                 console.dir(err);
