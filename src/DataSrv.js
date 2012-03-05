@@ -19,8 +19,8 @@ var push_transaction = function (provision, callback) {
 
     var priority = provision.priority + ':'; //contains "H" || "L"
     var qeues = provision.qeue; //[{},{}]   //list of ids
-    var ext_trans_id = uuid.v1();
-    var transaction_id = config.db_key_trans_prefix+uuid.v1();
+    var ext_transaction_id = uuid.v1();
+    var transaction_id = config.db_key_trans_prefix+ext_transaction_id;
     //setting up the bach proceses for async module.
     var process_batch = [];
     //feeding the process batch
@@ -42,7 +42,7 @@ var push_transaction = function (provision, callback) {
         }
         else {
             if (callback) {
-                callback(null, ext_trans_id);
+                callback(null, ext_transaction_id);
             }
         }
     });
