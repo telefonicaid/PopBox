@@ -193,8 +193,11 @@ var pop_notification = function (qeue, max_elems, callback) {
                     callback(err);
                 }
                 else {
-                    if(data){
+                    if(data && data.payload){
                         data.transaction_id = transaction_id;
+                    }
+                    else{
+                        data=null;
                     }
                     callback(null, data);
                     }
