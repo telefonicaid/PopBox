@@ -7,7 +7,6 @@ var provisionH = {
     "priority":"H",
     "callback":"http://foo.bar",
     "qeue":[
-        {"id":"1234J"},
         {"id":"4QT9J"}
     ],
     "expirationDate": Math.round((new Date()).getTime() / 1000)+10000,
@@ -18,13 +17,12 @@ var provisionL = {
     "priority":"L",
     "callback":"http://foo.bar",
     "qeue":[
-        {"id":"1234J"},
         {"id":"4QT9J"}
     ],
     "expirationDate": Math.round((new Date()).getTime() / 1000)+10000,
     "expirationDelay": 260
 };
-/*
+exports.push = function(){
 dataSrv.push_transaction(provisionH, function (err, transaction_id) {
     'use strict';
     console.dir("ERRH: " + err);
@@ -51,12 +49,21 @@ dataSrv.push_transaction(provisionL, function (err, transaction_id) {
     //check REDIS
 
 });
-*/
-dataSrv.pop_notification({'id':'4QT9J'},5,function (err, transaction_id) {
+};
+
+exports.pop = function(max){
+    dataSrv.pop_notification({'id':'4QT9J'},max,function (err, transaction_id) {
     'use strict';
-    console.dir("ERR: " + err);
-    console.dir("CLEAN: " + transaction_id);
+    if (err){
+    console.log('ERROR:');
+    console.dir(err);
+    }
+        else{
+        console.log('DATA:');
+        console.dir(transaction_id);
+    }
 });
+};
 
 
 
