@@ -107,7 +107,7 @@ var pop_notification = function (qeue, max_elems, callback) {
                     console.log('ERROR AT TRIM L:' + err);
                 });
                 if (dataL) {
-                    dataH.concat(dataL);
+                    dataH = dataH.concat(dataL);
                 }
                 //purge GHOST from the queue //REPLICATED REFACTOR
                 retrieve_data(dataH, function(err, payload_with_nulls){
