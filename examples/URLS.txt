@@ -1,0 +1,111 @@
+Provision
+=========
+An HTTP request with content-type: application/json
+The body must be a JSON with the data for provision
+The  object must contain a payload, a priority (H or L) and a list objects with an 'id' property
+Optionally a callback, an expiration delay ('expirationDelay') or expiration time ('') could be set
+By default, the provision service listens at port 3000
+
+The response is an object with an 'id' field  with the id of the provisioned transaction
+In case of error, the response will be a 400 and an object with a list of error messages in its "error" property
+
+Example: provisioning message for devices Ax and Bx
+
+POST / HTTP/1.1
+Host: tac01.hi.inet:3000
+User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:10.0.2) Gecko/20100101 Firefox/10.0.2
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Type: application/json; charset=UTF-8
+Content-Length: 207
+Pragma: no-cache
+Cache-Control: no-cache
+
+{
+ "payload": "{\"spanish\": \"hola\", \"english\": \"hello\", \"to\":\"Mr Lopez\"}",
+ "priority":"H",
+ "callback":"http://foo.bar",
+ "qeue":[
+    {"id":"Ax"},
+    {"id":"Bx"}
+   ],
+ "expirationDelay": 360
+}
+
+
+HTTP/1.1 200 OK
+content-type: application/json
+Connection: keep-alive
+Transfer-Encoding: chunked
+
+2d
+{"id":"d84814f0-6776-11e1-a330-3324e9d100c2"}
+0
+
+
+
+Example of error : priority missing, payload spelling
+
+POST / HTTP/1.1
+Host: metis:3000
+User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:10.0.2) Gecko/20100101 Firefox/10.0.2
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Type: application/json; charset=UTF-8
+Content-Length: 192
+Pragma: no-cache
+Cache-Control: no-cache
+
+{
+ "pay_load": "{\"spanish\": \"hola\", \"english\": \"hello\", \"to\":\"Mr Lopez\"}",
+ "callback":"http://foo.bar",
+ "queue":[
+    {"id":"Ax"},
+    {"id":"Bx"}
+   ],
+ "expirationDelay": 360
+}
+
+HTTP/1.1 400 Bad Request
+content-type: application/json
+Connection: keep-alive
+Transfer-Encoding: chunked
+
+34
+{"error":["undefined priority","undefined payload"]}
+0
+
+-----------------------------------------------------------
+
+Consumer
+========
+
+In order to retrieve the messages  for a device, the id from the device must be append to the URL
+The response is a list with the messages as strings. if there are no messages an empty list is returned ([])
+By default, the consumer service listens at port 3003
+
+
+Example: retrieving messages for device Ax
+
+GET /Ax HTTP/1.1
+Host: metis:3003
+User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:10.0.2) Gecko/20100101 Firefox/10.0.2
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+
+HTTP/1.1 200 OK
+content-type: application/json
+Connection: keep-alive
+Transfer-Encoding: chunked
+
+27
+["ALTA prioridad 1","baja prioridad 2"]
+0
+
+
