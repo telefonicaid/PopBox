@@ -18,7 +18,7 @@ var push_transaction = function (provision, callback) {
     //handles a new transaction  (N ids involved)
 
     var priority = provision.priority + ':'; //contains "H" || "L"
-    var qeues = provision.qeue; //[{},{}]   //list of ids
+    var queues = provision.queue; //[{},{}]   //list of ids
     var ext_transaction_id = uuid.v1();
     var transaction_id = config.db_key_trans_prefix+ext_transaction_id;
     //setting up the bach proceses for async module.
@@ -26,11 +26,11 @@ var push_transaction = function (provision, callback) {
     //feeding the process batch
     var dbTr = db_cluster.get_transaction_db(transaction_id); // external??
     process_batch[0] = hset_meta_hash_parallel(dbTr, transaction_id, ':meta', provision);
-    for (var i = 0; i < qeues.length; i++) {
-        var qeue = qeues[i];
-        var db = db_cluster.get_db(qeue.id); //different DB for different Ids
+    for (var i = 0; i < queues.length; i++) {
+        var queue = queues[i];
+        var db = db_cluster.get_db(queue.id); //different DB for different Ids
         //launch push/sets/expire in parallel for one ID
-        process_batch[i + 1] = process_one_id(db, dbTr, transaction_id, qeue, priority);
+        process_batch[i + 1] = process_one_id(db, dbTr, transaction_id, queue, priority);
     }
 
     async.series(process_batch, function (err) {   //parallel execution may apply also
@@ -47,13 +47,13 @@ var push_transaction = function (provision, callback) {
         }
     });
 
-    function process_one_id(db, dbTr, transaction_id, qeue, priority) {
+    function process_one_id(db, dbTr, transaction_id, queue, priority) {
 
         return function (callback) {
             async.parallel(
                 [
-                    push_parallel(db, qeue, priority, transaction_id),
-                    hset_hash_parallel(dbTr, qeue, transaction_id, ':state', 'Pending')
+                    push_parallel(db, queue, priority, transaction_id),
+                    hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Pending')
                 ], function (err) {
                     if (err) {
                         //something goes wrong
@@ -62,7 +62,7 @@ var push_transaction = function (provision, callback) {
                         }
                     }
                     else {
-                        //set expiration time for state collections (not the qeue)
+                        //set expiration time for state collections (not the queue)
                         set_expiration_date(dbTr, transaction_id + ':state', provision, function (err) {
                                 //Everything kept or error
                                 if (callback) {
@@ -78,32 +78,32 @@ var push_transaction = function (provision, callback) {
 
 //uses DEVICE - IMEI
 //callback return err, popped data
-var pop_notification = function (qeue, max_elems, callback) {
+var pop_notification = function (queue, max_elems, callback) {
     'use strict';
     //client asks for queu box
-    var db = db_cluster.get_db(qeue.id); //get the db from cluster
+    var db = db_cluster.get_db(queue.id); //get the db from cluster
 
     //pop the queu  (LRANGE)
     //hight priority first
-    var full_qeue_idH = config.db_key_queue_prefix + 'H:' + qeue.id;
-    var full_qeue_idL = config.db_key_queue_prefix + 'L:' + qeue.id;
+    var full_queue_idH = config.db_key_queue_prefix + 'H:' + queue.id;
+    var full_queue_idL = config.db_key_queue_prefix + 'L:' + queue.id;
 
-    db.lrange(full_qeue_idH, -max_elems, -1, function (errH, dataH) {
+    db.lrange(full_queue_idH, -max_elems, -1, function (errH, dataH) {
         if(!errH){   //buggy
-        db.ltrim(full_qeue_idH, 0, -dataH.length-1, function(err){
+        db.ltrim(full_queue_idH, 0, -dataH.length-1, function(err){
             console.log('ERROR AT TRIM H:' + err);
         });
         if (dataH.length < max_elems) {
             var rest_elems = max_elems - dataH.length;
-            //Extract from both qeues
-            db.lrange(full_qeue_idL, -rest_elems, -1, function (errL, dataL) {
+            //Extract from both queues
+            db.lrange(full_queue_idL, -rest_elems, -1, function (errL, dataL) {
             if(errL){
                 if (callback) {
                     callback(errL, null);
                 }
             }
             else{
-                db.ltrim(full_qeue_idL, 0, -dataL.length-1, function(err){
+                db.ltrim(full_queue_idL, 0, -dataL.length-1, function(err){
                     console.log('ERROR AT TRIM L:' + err);
                 });
                 if (dataL) {
@@ -119,7 +119,7 @@ var pop_notification = function (qeue, max_elems, callback) {
                         for (var i=0;i<clean_data.length; i++){
                             var transaction_id = clean_data[i].transaction_id;
                             var dbTr = db_cluster.get_transaction_db(transaction_id);
-                            var f = hset_hash_parallel(dbTr, qeue, transaction_id, ':state', 'Delivered');
+                            var f = hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Delivered');
                             new_state_batch.push(f);
                         }
                         async.parallel(new_state_batch, function(err){
@@ -137,7 +137,7 @@ var pop_notification = function (qeue, max_elems, callback) {
             });
         }
         else{
-            //just one qeue used   //REPLICATED REFACTOR
+            //just one queue used   //REPLICATED REFACTOR
             retrieve_data(dataH, function(err, payload_with_nulls){
                 if(!err){
                     //Handle post-pop behaviour (callback)
@@ -147,7 +147,7 @@ var pop_notification = function (qeue, max_elems, callback) {
                     for (var i=0;i<clean_data.length; i++){
                         var transaction_id = clean_data[i].transaction_id;
                         var dbTr = db_cluster.get_transaction_db(transaction_id);
-                        var f = hset_hash_parallel(dbTr, qeue, transaction_id, ':state', 'Delivered');
+                        var f = hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Delivered');
                         new_state_batch.push(f);
                     }
                     async.parallel(new_state_batch, function(err){
@@ -241,11 +241,11 @@ exports.block_pop_notification = block_pop_notification;
 exports.get_transaction = get_transaction;
 
 //aux functions
-function push_parallel(db, qeue, priority, transaction_id) {
+function push_parallel(db, queue, priority, transaction_id) {
     'use strict';
     return function (callback) {
-        var full_qeue_id = config.db_key_queue_prefix + priority + qeue.id;
-        db.lpush(full_qeue_id, transaction_id, function (err) {
+        var full_queue_id = config.db_key_queue_prefix + priority + queue.id;
+        db.lpush(full_queue_id, transaction_id, function (err) {
             if (err) {
                 //error pushing
                 console.dir(err);
@@ -258,11 +258,11 @@ function push_parallel(db, qeue, priority, transaction_id) {
     };
 }
 
-function hset_hash_parallel(dbTr, qeue, transaction_id, sufix, datastr) {
+function hset_hash_parallel(dbTr, queue, transaction_id, sufix, datastr) {
     'use strict';
     return function (callback) {
 
-        dbTr.hmset(transaction_id + sufix, qeue.id, datastr, function (err) {
+        dbTr.hmset(transaction_id + sufix, queue.id, datastr, function (err) {
             if (err) {
                 //error pushing
                 console.dir(err);
