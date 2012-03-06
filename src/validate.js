@@ -5,14 +5,14 @@ function errors_trans(trans) {
         errors.push("undefined priority");
     }
 
-    if(!trans.qeue) {
+    if(!trans.queue) {
         errors.push("undefined queue");
     }
-    else if(trans.qeue.constructor != Array) {
+    else if(trans.queue.constructor != Array) {
         errors.push("invalid queue (should be an Array)");
     }
     else {
-        trans.qeue.forEach(function( value, index){
+        trans.queue.forEach(function( value, index){
             if(!value || !value.id) {
                 errors.push("invalid queue element " + index);
             }
