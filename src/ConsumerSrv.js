@@ -2,6 +2,7 @@ var http = require('http');
 var connect = require('connect');
 var url = require('url');
 
+var config = require('./config.js').consumer;
 var dataSrv = require('./DataSrv');
 
 
@@ -13,7 +14,7 @@ app.use('/', function (req, res) {
         var queue_id = path.pathname.slice(1);
         console.log(queue_id);
 
-        dataSrv.pop_notification({id: queue_id}, 1000, function (err, notif_list) {
+        dataSrv.pop_notification({id: queue_id}, config.max_messages, function (err, notif_list) {
             if (err) {
                 res.writeHead(500, {'content-type':'text/plain'});
                 res.write(String(err));
@@ -30,4 +31,4 @@ app.use('/', function (req, res) {
     }
 );
 
-app.listen(3003);
+app.listen(config.port);
