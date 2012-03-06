@@ -218,12 +218,6 @@ var pop_notification = function (queue, max_elems, callback) {
     }
 };
 
-
-//uses DEVICE - IMEI
-//return err, popped data
-var block_pop_notification = function (imei) {
-};
-
 //uses summary flag OPT
 //uses state emum ('pending', 'closed', 'error')
 //callback return transaction info
@@ -235,8 +229,6 @@ var get_transaction = function (state, summary) {
 exports.push_transaction = push_transaction;
 
 exports.pop_notification = pop_notification;
-
-exports.block_pop_notification = block_pop_notification;
 
 exports.get_transaction = get_transaction;
 
