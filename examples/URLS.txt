@@ -4,7 +4,8 @@ An HTTP request with content-type: application/json
 The body must be a JSON with the data for provision
 The  object must contain a payload, a priority (H or L) and a list ('queue') of objects with an 'id' property, 
 for the target devices
-Optionally a callback, an expiration delay ('expirationDelay') or expiration time ('') could be set
+Optionally a callback, an expiration delay ('expirationDelay') or expiration time ('expirationDate') could be set
+(Both values in seconds)
 By default, the provision service listens at port 3000
 
 The response is an object with an 'id' field  with the id of the provisioned transaction
