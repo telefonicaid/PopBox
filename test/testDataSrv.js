@@ -6,7 +6,7 @@ var provisionH = {
     "payload":"MESSAGEH",
     "priority":"H",
     "callback":"http://foo.bar",
-    "qeue":[
+    "queue":[
         {"id":"4QT9J"}
     ],
     "expirationDate": Math.round((new Date()).getTime() / 1000)+10000,
@@ -16,7 +16,7 @@ var provisionL = {
     "payload":"MESSAGEL",
     "priority":"L",
     "callback":"http://foo.bar",
-    "qeue":[
+    "queue":[
         {"id":"4QT9J"}
     ],
     "expirationDate": Math.round((new Date()).getTime() / 1000)+10000,
