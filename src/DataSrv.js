@@ -76,6 +76,7 @@ var push_transaction = function (provision, callback) {
 
 //uses DEVICE - IMEI
 //callback return err, popped data
+
 var pop_notification = function (queue, max_elems, callback) {
     'use strict';
     //client asks for queu box
@@ -108,63 +109,47 @@ var pop_notification = function (queue, max_elems, callback) {
                         if (dataL) {
                             dataH = dataL.concat(dataH);
                         }
-                        //purge GHOST from the queue //REPLICATED REFACTOR
-                        retrieve_data(dataH, function (err, payload_with_nulls) {
-                            if (err) {
-                                manage_error(err, callback);
-                            } else {
-                                //Handle post-pop behaviour (callback)
-                                var clean_data = payload_with_nulls.filter(function(elem){return elem!==null;});
-                                //SET NEW STATE for Every popped transaction
-                                var new_state_batch = [];
-                                new_state_batch = clean_data.map(function(elem){
-                                    var transaction_id = elem.transaction_id;
-                                    var dbTr = db_cluster.get_transaction_db(transaction_id);
-                                    return helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Delivered');
-
-                                });
-                                async.parallel(new_state_batch, function (err) {
-
-                                    if (callback) {
-                                        callback(err, clean_data);
-                                    }
-
-                                });
-
-                            }
-                        });
+                        //purge GHOST from the queue
+                        get_pop_data(dataH, callback, queue);
                     }
                 });
             }
             else {
                 //just one queue used   //REPLICATED REFACTOR
-                retrieve_data(dataH, function (err, payload_with_nulls) {
-                    if (err) {
-                        manage_error(err, callback);
-                    } else {
-                        //Handle post-pop behaviour (callback)
-                        var clean_data = payload_with_nulls.filter(function(elem){return elem!==null;});
-                        //SET NEW STATE for Every popped transaction
-                        var new_state_batch = [];
-                        new_state_batch = clean_data.map(function(elem){
-                            var transaction_id = elem.transaction_id;
-                            var dbTr = db_cluster.get_transaction_db(transaction_id);
-                            return helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Delivered');
-
-                        });
-
-                        async.parallel(new_state_batch, function (err) {
-                            if (callback) {
-                                callback(err, clean_data);
-                            }
-
-                        });
-                    }
-                });
+                get_pop_data(dataH, callback, queue);
             }
         }
 
     });
+
+    function get_pop_data(dataH, callback, queue) {
+        retrieve_data(dataH, function (err, payload_with_nulls) {
+            if (err) {
+                manage_error(err, callback);
+            } else {
+                //Handle post-pop behaviour (callback)
+                var clean_data = payload_with_nulls.filter(function (elem) {
+                    return elem !== null;
+                });
+                //SET NEW STATE for Every popped transaction
+                var new_state_batch = [];
+                new_state_batch = clean_data.map(function (elem) {
+                    var transaction_id = elem.transaction_id;
+                    var dbTr = db_cluster.get_transaction_db(transaction_id);
+                    return helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Delivered');
+
+                });
+                async.parallel(new_state_batch, function (err) {
+
+                    if (callback) {
+                        callback(err, clean_data);
+                    }
+
+                });
+
+            }
+        });
+    }
 
     function retrieve_data(transaction_list, callback) {
         var ghost_buster_batch = [];
