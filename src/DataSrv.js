@@ -17,7 +17,6 @@ var async = require('async');
 var push_transaction = function (provision, callback) {
     'use strict';
     //handles a new transaction  (N ids involved)
-
     var priority = provision.priority + ':'; //contains "H" || "L"
     var queues = provision.queue; //[{},{}]   //list of ids
     var ext_transaction_id = uuid.v1();
@@ -38,7 +37,6 @@ var push_transaction = function (provision, callback) {
         //MAIN Exit point
         if (err) {
             manage_error(err, callback);
-
         }
         else {
             if (callback) {
@@ -48,7 +46,6 @@ var push_transaction = function (provision, callback) {
     });
 
     function process_one_id(db, dbTr, transaction_id, queue, priority) {
-
         return function (callback) {
             async.parallel(
                 [
@@ -57,7 +54,6 @@ var push_transaction = function (provision, callback) {
                 ], function (err) {
                     if (err) {
                         manage_error(err, callback);
-
                     }
                     else {
                         //set expiration time for state collections (not the queue)
@@ -144,21 +140,18 @@ var pop_notification = function (queue, max_elems, callback) {
                     if (callback) {
                         callback(err, clean_data);
                     }
-
                 });
-
             }
         });
     }
 
     function retrieve_data(transaction_list, callback) {
         var ghost_buster_batch = [];
-        ghost_buster_batch = transaction_list.map(function(transaction){
+        ghost_buster_batch = transaction_list.map(function (transaction) {
             var dbTr = db_cluster.get_transaction_db(transaction);
             return check_data(dbTr, transaction);
         });
-
-      async.parallel(ghost_buster_batch, function (err, found_metadata) {
+        async.parallel(ghost_buster_batch, function (err, found_metadata) {
             console.dir(found_metadata);  //and nulls
             if (callback) {
                 callback(err, found_metadata);
@@ -171,7 +164,6 @@ var pop_notification = function (queue, max_elems, callback) {
             dbTr.hgetall(transaction_id + ':meta', function (err, data) {
                 if (err) {
                     manage_error(err, callback);
-
                 }
                 else {
                     if (data && data.payload) {
@@ -191,7 +183,78 @@ var pop_notification = function (queue, max_elems, callback) {
 //uses summary flag OPT
 //uses state emum ('pending', 'closed', 'error')
 //callback return transaction info
-var get_transaction = function (state, summary) {
+var get_transaction = function (ext_transaction_id, state, summary, callback) {
+    'use strict';
+    //check params
+    console.log("ESTE ES EL ESTADPO:" + state);
+    if (state !== 'All' && state !== 'Pending' && state !== 'Delivered') {
+        //Wrong state
+        var err = "Wrong State:" + state;
+        manage_error(err, callback);
+    }
+    else {
+        //obtain transaction info
+        var dbTr = db_cluster.get_transaction_db(ext_transaction_id);
+        var transaction_id = config.db_key_trans_prefix + ext_transaction_id;
+        dbTr.hgetall(transaction_id + ':state', function (err, data) {
+            if (err) {
+                manage_error(err, callback);
+            }
+            else {
+                var process_transaction_data;
+                if (summary) {
+                    process_transaction_data = get_summary;
+                }
+                else {
+                    process_transaction_data = get_data;
+                }
+                //data maybe the empty object (!!)
+
+                var processed_data = process_transaction_data(state, data);
+                if (callback) {
+                    callback(null, processed_data);
+                }
+            }
+        });
+    }
+
+    function get_data(state, data) {
+
+        if (state === 'All') {
+            return data;
+        }
+        else {
+            var filtered_data = {};
+            for (var pname in data) {
+                if (data.hasOwnProperty(pname)) {
+                    if (data[pname] === state) {
+                        filtered_data[pname] = data[pname]; //or state
+                    }
+                }
+            }
+            return filtered_data;
+        }
+    }
+
+    function get_summary(state, data) {
+        var summary_obj = {};
+        var data_array = [];
+        for (var pname in data) {
+            if (data.hasOwnProperty(pname)) {
+                data_array.push(data[pname]);
+            }
+        }
+        summary_obj.total_notifications = data_array.length;
+        var data_aux;
+        data_aux = data_array.filter(function (elem) {
+            return (state === 'All' || state === elem);
+        });
+        //we got the filtered data
+        data_aux.forEach(function (elem) {
+            summary_obj[elem] = ++summary_obj[elem] || 1;
+        });
+        return summary_obj;
+    }
 };
 
 //Public Interface Area
