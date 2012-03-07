@@ -17,7 +17,7 @@ app.use('/block', function (req, res) {
         var queue_id = path.pathname.slice(1);
         console.log(queue_id);
 
-        dataSrvBl.blocking_pop(queue_id, /*blocking time, config*/ 2, function (err, notif) {
+        dataSrvBl.blocking_pop(queue_id, config.pop_timeout, function (err, notif) {
             if (err) {
                 res.writeHead(500, {'content-type':'text/plain'});
                 res.write(String(err));
