@@ -43,6 +43,7 @@ var blocking_push = function (provision, callback) {
                 if (err) {
                     manage_error(err, callback);
                 }
+                if (callback) {callback(null);}
             });
         }
     });
