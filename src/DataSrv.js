@@ -37,9 +37,6 @@ var push_transaction = function (provision, callback) {
     async.series(process_batch, function (err) {   //parallel execution may apply also
         //MAIN Exit point
         if (err) {
-            if (callback) {
-                callback(err);
-            }
             manage_error(err, callback);
 
         }
@@ -59,10 +56,6 @@ var push_transaction = function (provision, callback) {
                     helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Pending')
                 ], function (err) {
                     if (err) {
-                        //something goes wrong
-                        if (callback) {
-                            callback(err);
-                        }
                         manage_error(err, callback);
 
                     }
@@ -94,7 +87,6 @@ var pop_notification = function (queue, max_elems, callback) {
     var full_queue_idL = config.db_key_queue_prefix + 'L:' + queue.id;
 
     db.lrange(full_queue_idH, -max_elems, -1, function (errH, dataH) {
-        if (!errH) {   //buggy
         if (errH) {//errH
             manage_error(errH, callback);
 
@@ -107,9 +99,6 @@ var pop_notification = function (queue, max_elems, callback) {
                 //Extract from both queues
                 db.lrange(full_queue_idL, -rest_elems, -1, function (errL, dataL) {
                     if (errL) {
-                        if (callback) {
-                            callback(errL, null);
-                        }
                         manage_error(errL, callback);
                     }
                     else {
@@ -121,20 +110,19 @@ var pop_notification = function (queue, max_elems, callback) {
                         }
                         //purge GHOST from the queue //REPLICATED REFACTOR
                         retrieve_data(dataH, function (err, payload_with_nulls) {
-                            if (!err) {
                             if (err) {
                                 manage_error(err, callback);
                             } else {
                                 //Handle post-pop behaviour (callback)
-                                var clean_data = clean_null_from_array(payload_with_nulls);
+                                var clean_data = payload_with_nulls.filter(function(elem){return elem!==null;});
                                 //SET NEW STATE for Every popped transaction
                                 var new_state_batch = [];
-                                for (var i = 0; i < clean_data.length; i++) {
-                                    var transaction_id = clean_data[i].transaction_id;
+                                new_state_batch = clean_data.map(function(elem){
+                                    var transaction_id = elem.transaction_id;
                                     var dbTr = db_cluster.get_transaction_db(transaction_id);
-                                    var f = helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Delivered');
-                                    new_state_batch.push(f);
-                                }
+                                    return helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Delivered');
+
+                                });
                                 async.parallel(new_state_batch, function (err) {
 
                                     if (callback) {
@@ -144,11 +132,6 @@ var pop_notification = function (queue, max_elems, callback) {
                                 });
 
                             }
-                            else {
-                                if (callback) {
-                                    callback(err, null);
-                                }
-                            }
                         });
                     }
                 });
@@ -156,52 +139,41 @@ var pop_notification = function (queue, max_elems, callback) {
             else {
                 //just one queue used   //REPLICATED REFACTOR
                 retrieve_data(dataH, function (err, payload_with_nulls) {
-                    if (!err) {
                     if (err) {
                         manage_error(err, callback);
                     } else {
                         //Handle post-pop behaviour (callback)
-                        var clean_data = clean_null_from_array(payload_with_nulls);
+                        var clean_data = payload_with_nulls.filter(function(elem){return elem!==null;});
                         //SET NEW STATE for Every popped transaction
                         var new_state_batch = [];
-                        for (var i = 0; i < clean_data.length; i++) {
-                            var transaction_id = clean_data[i].transaction_id;
+                        new_state_batch = clean_data.map(function(elem){
+                            var transaction_id = elem.transaction_id;
                             var dbTr = db_cluster.get_transaction_db(transaction_id);
-                            var f = helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Delivered');
-                            new_state_batch.push(f);
-                        }
+                            return helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Delivered');
+
+                        });
+
                         async.parallel(new_state_batch, function (err) {
                             if (callback) {
                                 callback(err, clean_data);
                             }
 
                         });
-
-                    }
-                    else {
-                        if (callback) {
-                            callback(err, null);
-                        }
                     }
                 });
-            }
-        }
-        else {//errH
-            if (callback) {
-                callback(errH, null);
             }
         }
 
     });
 
-    function retrieve_data(transactionQ, callback) {
+    function retrieve_data(transaction_list, callback) {
         var ghost_buster_batch = [];
-        for (var i = 0; i < transactionQ.length; i++) {
-            var dbTr = db_cluster.get_transaction_db(transactionQ[i]);
-            ghost_buster_batch[i] = check_data(dbTr, transactionQ[i]);
-        }
+        ghost_buster_batch = transaction_list.map(function(transaction){
+            var dbTr = db_cluster.get_transaction_db(transaction);
+            return check_data(dbTr, transaction);
+        });
 
-        async.parallel(ghost_buster_batch, function (err, found_metadata) {
+      async.parallel(ghost_buster_batch, function (err, found_metadata) {
             console.dir(found_metadata);  //and nulls
             if (callback) {
                 callback(err, found_metadata);
@@ -213,7 +185,6 @@ var pop_notification = function (queue, max_elems, callback) {
         return function (callback) {
             dbTr.hgetall(transaction_id + ':meta', function (err, data) {
                 if (err) {
-                    callback(err);
                     manage_error(err, callback);
 
                 }
@@ -229,17 +200,6 @@ var pop_notification = function (queue, max_elems, callback) {
 
             });
         };
-    }
-
-    function clean_null_from_array(array_with_nulls) {
-        var clean_data = [];
-
-        for (var j = 0; j < array_with_nulls.length; j++) {
-            if (array_with_nulls[j]) {
-                clean_data.push(array_with_nulls[j]);
-            }
-        }
-        return clean_data;
     }
 };
 
