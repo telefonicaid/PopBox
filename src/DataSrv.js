@@ -87,7 +87,7 @@ var pop_notification = function (queue, max_elems, callback) {
         if (errH) {//errH
             manage_error(errH, callback);
 
-        } else {  //buggy
+        } else {  //buggy indexes beware
             db.ltrim(full_queue_idH, 0, -dataH.length - 1, function (err) {
                 console.log('ERROR AT TRIM H:' + err);
             });
@@ -105,13 +105,12 @@ var pop_notification = function (queue, max_elems, callback) {
                         if (dataL) {
                             dataH = dataL.concat(dataH);
                         }
-                        //purge GHOST from the queue
                         get_pop_data(dataH, callback, queue);
                     }
                 });
             }
             else {
-                //just one queue used   //REPLICATED REFACTOR
+                //just one queue used
                 get_pop_data(dataH, callback, queue);
             }
         }
