@@ -1,4 +1,5 @@
 function errors_trans(trans) {
+    "use strict";
     var errors = [];
 
     if(!trans.priority) {

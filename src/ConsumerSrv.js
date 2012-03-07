@@ -11,7 +11,7 @@ var dataSrvBl = require('./DataSrvBlocking');
 var app = connect();
 
 app.use('/block', function (req, res) {
-
+        "use strict";
         var path = url.parse(req.url);
         console.log(path);
         var queue_id = path.pathname.slice(1);
@@ -24,7 +24,7 @@ app.use('/block', function (req, res) {
                 res.end();
             }
             else {
-                message = notif && notif[1]?notif[1]:null;
+                var message = notif && notif[1]?notif[1]:null;
                 res.writeHead(200, {'content-type':'application/json'});
                 res.write(JSON.stringify(message));
                 res.end();
@@ -34,7 +34,7 @@ app.use('/block', function (req, res) {
 );
 
 app.use('/', function (req, res) {
-
+        "use strict";
         var path = url.parse(req.url);
         var queue_id = path.pathname.slice(1);
         console.log(queue_id);
@@ -46,7 +46,7 @@ app.use('/', function (req, res) {
                 res.end();
             }
             else {
-                message_list = notif_list.map(function(notif){return notif.payload;});
+                var message_list = notif_list.map(function(notif){return notif.payload;});
                 message_list.reverse();
                 res.writeHead(200, {'content-type':'application/json'});
                 res.write(JSON.stringify(message_list));

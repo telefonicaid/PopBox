@@ -16,23 +16,25 @@ app.use(connect.bodyParser());
 
 
 app.use('/block', function (req, res) {
+    "use strict";
     insert(req, res, dataSrvBl.blocking_push, validate.errors_trans);
 });
 
 
 app.use('/', function (req, res) {
+    "use strict";
     insert(req, res, dataSrv.push_transaction, validate.errors_trans);
 });
 
 app.listen(config.port);
 
 function insert(req, res, push, validate) {
-
+    "use strict";
     console.log(req.body);
 
     var errors = validate(req.body);
 
-    if (errors.length == 0) {
+    if (errors.length === 0) {
         push(req.body, function (err, trans_id) {
             if (err) {
                 res.writeHead(500, {'content-type':'application/json'});
