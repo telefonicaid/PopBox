@@ -8,10 +8,10 @@ function id_ok_aux(cb, path) {
 
     post_obj(options_prov, trans, function(e, d, res) {
         a.ifError(e);
-        a.ok(d.id, " id in response");
+        a.ok(d.id, 'id in response');
         a.ok(
             /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(d.id),
-            " uuid format"); // uuid
+            'uuid format'); // uuid
         cb(null);
 
     });
@@ -30,8 +30,8 @@ function payload_miss(cb) {
 
     post_obj(options_prov, trans, function(e, d, res) {
         a.ifError(e);
-        a.ok(d.error, "error field in response");
-        a.ok(d.error.indexOf('undefined payload') != -1, "message for missing payload");
+        a.ok(d.error, 'error field in response');
+        a.ok(d.error.indexOf('undefined payload') != -1, 'message for missing payload');
         cb(null);
     });
 }
@@ -41,18 +41,19 @@ function priority_miss(cb) {
 
     post_obj(options_prov, trans, function(e, d, res) {
         a.ifError(e);
-        a.ok(d.error, "error field in response");
-        a.ok(d.error.indexOf('undefined priority') != -1, "message for missing priority");
+        a.ok(d.error, 'error field in response');
+        a.ok(d.error.indexOf('undefined priority') != -1, 'message for missing priority');
         cb(null);
     });
 }
 
 
 exports.test= {};
+exports.test.id_ok_block=id_ok_block;
 exports.test.id_ok = id_ok;
 exports.test.payload_miss = payload_miss;
 exports.test.priority_miss = priority_miss;
-exports.test.id_ok_block=id_ok_block;
+
 
 async.series(exports.test, console.dir);
 
