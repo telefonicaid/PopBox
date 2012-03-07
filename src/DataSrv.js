@@ -40,6 +40,8 @@ var push_transaction = function (provision, callback) {
             if (callback) {
                 callback(err);
             }
+            manage_error(err, callback);
+
         }
         else {
             if (callback) {
@@ -61,6 +63,8 @@ var push_transaction = function (provision, callback) {
                         if (callback) {
                             callback(err);
                         }
+                        manage_error(err, callback);
+
                     }
                     else {
                         //set expiration time for state collections (not the queue)
@@ -91,6 +95,10 @@ var pop_notification = function (queue, max_elems, callback) {
 
     db.lrange(full_queue_idH, -max_elems, -1, function (errH, dataH) {
         if (!errH) {   //buggy
+        if (errH) {//errH
+            manage_error(errH, callback);
+
+        } else {  //buggy
             db.ltrim(full_queue_idH, 0, -dataH.length - 1, function (err) {
                 console.log('ERROR AT TRIM H:' + err);
             });
@@ -102,6 +110,7 @@ var pop_notification = function (queue, max_elems, callback) {
                         if (callback) {
                             callback(errL, null);
                         }
+                        manage_error(errL, callback);
                     }
                     else {
                         db.ltrim(full_queue_idL, 0, -dataL.length - 1, function (err) {
@@ -113,6 +122,9 @@ var pop_notification = function (queue, max_elems, callback) {
                         //purge GHOST from the queue //REPLICATED REFACTOR
                         retrieve_data(dataH, function (err, payload_with_nulls) {
                             if (!err) {
+                            if (err) {
+                                manage_error(err, callback);
+                            } else {
                                 //Handle post-pop behaviour (callback)
                                 var clean_data = clean_null_from_array(payload_with_nulls);
                                 //SET NEW STATE for Every popped transaction
@@ -145,6 +157,9 @@ var pop_notification = function (queue, max_elems, callback) {
                 //just one queue used   //REPLICATED REFACTOR
                 retrieve_data(dataH, function (err, payload_with_nulls) {
                     if (!err) {
+                    if (err) {
+                        manage_error(err, callback);
+                    } else {
                         //Handle post-pop behaviour (callback)
                         var clean_data = clean_null_from_array(payload_with_nulls);
                         //SET NEW STATE for Every popped transaction
@@ -199,6 +214,8 @@ var pop_notification = function (queue, max_elems, callback) {
             dbTr.hgetall(transaction_id + ':meta', function (err, data) {
                 if (err) {
                     callback(err);
+                    manage_error(err, callback);
+
                 }
                 else {
                     if (data && data.payload) {
@@ -236,3 +253,14 @@ var get_transaction = function (state, summary) {
 exports.push_transaction = push_transaction;
 exports.pop_notification = pop_notification;
 exports.get_transaction = get_transaction;
+
+//aux
+function manage_error(err, callback) {
+    'use strict';
+    console.log(err);
+    if (callback) {
+        callback(err);
+    }
+    //Publish errors
+
+}

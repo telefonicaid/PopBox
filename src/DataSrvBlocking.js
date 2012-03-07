@@ -12,9 +12,7 @@ var blocking_pop = function (external_id, blocking_time, callback) {
     var db = db_cluster.get_db(external_id);
     db.brpop(queue_id, blocking_time, function (err, data) {
         if (err) {
-            if (callback) {
-                callback(err);
-            }
+            manage_error(err, callback);
         }
         else {
             //data:: A two-element multi-bulk with the first element being the name
@@ -38,18 +36,12 @@ var blocking_push = function (provision, callback) {
     db.lpush(queue_id, provision.payload, function (err) {
         //set expire
         if (err) {
-            console.log(err);
-            if (callback) {
-                callback(err);
-            }
+            manage_error(err, callback);
         }
         else {
             helper.set_expiration_date(db, queue_id, provision, function (err) {
                 if (err) {
-                    console.log(err);
-                    if (callback) {
-                        callback(err);
-                    }
+                    manage_error(err, callback);
                 }
             });
         }
@@ -60,3 +52,12 @@ var blocking_push = function (provision, callback) {
 
 exports.blocking_pop = blocking_pop;
 exports.blocking_push = blocking_push;
+
+//aux
+function manage_error(err, callback) {
+    'use strict';
+    console.log(err);
+    if (callback) {
+        callback(err);
+    }
+}
