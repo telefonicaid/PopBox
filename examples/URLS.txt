@@ -29,7 +29,7 @@ Cache-Control: no-cache
  "payload": "{\"spanish\": \"hola\", \"english\": \"hello\", \"to\":\"Mr Lopez\"}",
  "priority":"H",
  "callback":"http://foo.bar",
- "qeue":[
+ "queue":[
     {"id":"Ax"},
     {"id":"Bx"}
    ],
