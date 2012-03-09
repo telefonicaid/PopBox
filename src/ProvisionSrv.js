@@ -1,27 +1,26 @@
-var http = require('http');
-var connect = require('connect');
+var express = require('express');
 
 var config = require('./config.js').provision;
 var dataSrv = require('./DataSrv');
 var dataSrvBl = require('./DataSrvBlocking');
 var validate = require('./validate');
 
-var app = connect();
+var app = express.createServer();
 
-app.use(connect.favicon());
+app.use(express.favicon());
 
-app.use(connect.query());
+app.use(express.query());
 
-app.use(connect.bodyParser());
+app.use(express.bodyParser());
 
 
-app.use('/block', function (req, res) {
+app.post('/block', function (req, res) {
     "use strict";
     insert(req, res, dataSrvBl.blocking_push, validate.errors_trans);
 });
 
 
-app.use('/', function (req, res) {
+app.post('/', function (req, res) {
     "use strict";
     insert(req, res, dataSrv.push_transaction, validate.errors_trans);
 });
@@ -37,20 +36,14 @@ function insert(req, res, push, validate) {
     if (errors.length === 0) {
         push(req.body, function (err, trans_id) {
             if (err) {
-                res.writeHead(500, {'content-type':'application/json'});
-                res.write(JSON.stringify({error:err}));
-                res.end();
+                res.send({error:[err]}, 500);
             }
             else {
-                res.writeHead(200, {'content-type':'application/json'});
-                res.write(JSON.stringify({id:trans_id}));
-                res.end();
+                res.send({id:trans_id});
             }
         });
     }
     else {
-        res.writeHead(400, {'content-type':'application/json'});
-        res.write(JSON.stringify({error:errors}));
-        res.end();
+        res.send({error:errors}, 400);
     }
 }
