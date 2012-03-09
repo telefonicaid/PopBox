@@ -1,11 +1,14 @@
 {
-"payload" : "MESSAGE",
-"priority" : "H",
-"callback" :"http://foo.bar",
-"qeue" : [
-{"id" : "1234JX"},
-{"id" : "4QT9JX"}
-],
-"expirationDate" : "UNIXTIMESTAMP",    //if both present expirationDate will be used
-"expirationDelay" : "Seconds"
+    "payload":"{\"spanish\": \"hola\", \"english\": \"hello\", \"to\":\"Mr Lopez\"}",
+    "priority":"H",
+    "callback":"http://foo.bar",
+    "queue":[
+        {
+            "id":"Ax"
+        },
+        {
+            "id":"Bx"
+        }
+    ],
+    "expirationDelay":360
 }
