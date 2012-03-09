@@ -1,56 +1,48 @@
-var http = require('http');
-var connect = require('connect');
-var url = require('url');
-var util = require('util');
+var express = require('express');
 
 var config = require('./config.js').consumer;
 var dataSrv = require('./DataSrv');
 var dataSrvBl = require('./DataSrvBlocking');
 
 
-var app = connect();
+var app = express.createServer();
 
-app.use('/block', function (req, res) {
+app.get('/block/:id', function (req, res) {
         "use strict";
-        var path = url.parse(req.url);
-        console.log(path);
-        var queue_id = path.pathname.slice(1);
+
+        var queue_id = req.param("id");
+
         console.log(queue_id);
 
         dataSrvBl.blocking_pop(queue_id, config.pop_timeout, function (err, notif) {
             if (err) {
-                res.writeHead(500, {'content-type':'text/plain'});
-                res.write(String(err));
-                res.end();
+                res.send(String(err), 500);
             }
             else {
-                var message = notif && notif[1]?notif[1]:null;
-                res.writeHead(200, {'content-type':'application/json'});
-                res.write(JSON.stringify(message));
-                res.end();
+                var message = notif && notif[1] ? notif[1] : null;
+                res.send(message);
             }
         });
     }
 );
 
-app.use('/', function (req, res) {
+app.get('/:id', function (req, res) {
         "use strict";
-        var path = url.parse(req.url);
-        var queue_id = path.pathname.slice(1);
-        console.log(queue_id);
 
-        dataSrv.pop_notification({id: queue_id}, config.max_messages, function (err, notif_list) {
+        var queue_id = req.param("id");
+        var max_msgs = req.param("max", config.max_messages);
+        console.log(queue_id + ", " + max_msgs);
+
+        dataSrv.pop_notification({id:queue_id}, max_msgs, function (err, notif_list) {
             if (err) {
-                res.writeHead(500, {'content-type':'text/plain'});
-                res.write(String(err));
-                res.end();
+                res.send(String(err), 500);
             }
             else {
-                var message_list = notif_list.map(function(notif){return notif.payload;});
+                var message_list = notif_list.map(function (notif) {
+                    return notif.payload;
+                });
                 message_list.reverse();
-                res.writeHead(200, {'content-type':'application/json'});
-                res.write(JSON.stringify(message_list));
-                res.end();
+                res.send(message_list);
             }
         });
     }
