@@ -89,7 +89,6 @@ var pop_notification = function (queue, max_elems, callback) {
 
         } else {  //buggy indexes beware
             db.ltrim(full_queue_idH, 0, -dataH.length - 1, function (err) {
-                console.log('ERROR AT TRIM H:' + err);
             });
             if (dataH.length < max_elems) {
                 var rest_elems = max_elems - dataH.length;
@@ -100,7 +99,6 @@ var pop_notification = function (queue, max_elems, callback) {
                     }
                     else {
                         db.ltrim(full_queue_idL, 0, -dataL.length - 1, function (err) {
-                            console.log('ERROR AT TRIM L:' + err);
                         });
                         if (dataL) {
                             dataH = dataL.concat(dataH);
@@ -151,7 +149,6 @@ var pop_notification = function (queue, max_elems, callback) {
             return check_data(dbTr, transaction);
         });
         async.parallel(ghost_buster_batch, function (err, found_metadata) {
-            console.dir(found_metadata);  //and nulls
             if (callback) {
                 callback(err, found_metadata);
             }
@@ -185,7 +182,6 @@ var pop_notification = function (queue, max_elems, callback) {
 var get_transaction = function (ext_transaction_id, state, summary, callback) {
     'use strict';
     //check params
-    console.log("ESTE ES EL ESTADPO:" + state);
     if (state !== 'All' && state !== 'Pending' && state !== 'Delivered') {
         //Wrong state
         var err = "Wrong State:" + state;
