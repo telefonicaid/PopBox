@@ -10,7 +10,7 @@ var blocking_pop = function (external_id, blocking_time, callback) {
     'use strict';
     var queue_id = config.db_key_blocking_queue_prefix + external_id;
     var db = db_cluster.get_db(external_id);
-    db.brpop(queue_id, blocking_time, function (err, data) {
+    db.brpop(queue_id, blocking_time, function on_pop_data(err, data) {
         if (err) {
             manage_error(err, callback);
         }
@@ -33,13 +33,13 @@ var blocking_push = function (provision, callback) {
     var queue_id = config.db_key_blocking_queue_prefix + external_id;
     //we just need to do a push
     var db = db_cluster.get_db(external_id);
-    db.lpush(queue_id, provision.payload, function (err) {
+    db.lpush(queue_id, provision.payload, function on_push_data(err) {
         //set expire
         if (err) {
             manage_error(err, callback);
         }
         else {
-            helper.set_expiration_date(db, queue_id, provision, function (err) {
+            helper.set_expiration_date(db, queue_id, provision, function on_new_expiration(err) {
                 if (err) {
                     manage_error(err, callback);
                 }
