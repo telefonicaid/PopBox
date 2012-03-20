@@ -1,0 +1,90 @@
+
+In the Provision port, a number of paths provide information about transactions
+
+GET /<<transaction_id>>/
+	Shows the state of the message on each queue of the transaction
+
+GET /<<transaction_id>>/summary
+	Shows number of messages on each state and the total count
+
+GET /<<transaction_id>>/Pending
+	Show the queues of the transaction with the message wating to be delivered
+
+GET /<<transaction_id>>/Delivered
+	Show the queues of the transaction with the messages having been delivered
+	
+Examples
+
+----	
+GET /81aebce0-7278-11e1-bf56-9f693fcde0c7 HTTP/1.1
+Host: metis:3000
+User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 33
+Connection: keep-alive
+
+{"q1":"Pending","q2":"Delivered"}
+----
+
+----
+GET /81aebce0-7278-11e1-bf56-9f693fcde0c7/summary 
+HTTP/1.1
+Host: metis:3000
+User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 51
+Connection: keep-alive
+
+{"total_notifications":2,"Pending":1,"Delivered":1}
+----
+
+----
+GET /81aebce0-7278-11e1-bf56-9f693fcde0c7/Pending HTTP/1.1
+Host: metis:3000
+User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+
+
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 16
+Connection: keep-alive
+
+{"q1":"Pending"}
+----
+
+----
+GET /81aebce0-7278-11e1-bf56-9f693fcde0c7/Delivered HTTP/1.1
+Host: metis:3000
+User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 18
+Connection: keep-alive
+
+{"q2":"Delivered"}	
+----

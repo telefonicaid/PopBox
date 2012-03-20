@@ -1,0 +1,55 @@
+
+
+The provision object for a blocking queue is the same as the ordinary provision
+It will be created by a POST to the path /block, for example http://metis:3000/block
+Only one queue must be referenced in the provision object
+
+
+POST /block HTTP/1.1
+Host: metis:3000
+User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Type: application/json; charset=UTF-8
+Content-Length: 66
+Pragma: no-cache
+Cache-Control: no-cache
+
+{
+"queue" : [{"id":"q1"}],
+"priority":"H",
+"payload": "eeewolrd"
+}
+
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 2
+Connection: keep-alive
+
+{}
+
+
+
+ To consume the message, the path /block should be used in the consumer port. For example
+	http://metis:3003/block/q1
+to retreive a message from q1
+
+GET /block/q1 HTTP/1.1
+Host: metis:3003
+User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: text/html; charset=utf-8
+Content-Length: 8
+Connection: keep-alive
+
+eeewolrd	
+
