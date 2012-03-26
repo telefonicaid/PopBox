@@ -9,11 +9,11 @@ function errors_trans(trans) {
     if(!trans.queue) {
         errors.push("undefined queue");
     }
-    else if(trans.queue.constructor != Array) {
+    else if(trans.queue.constructor !== Array) {
         errors.push("invalid queue type");
     }
     else {
-        trans.queue.forEach(function( value, index){
+        trans.queue.forEach(function( value){
             if(!value || !value.id) {
                 errors.push("invalid queue element");
             }
@@ -28,5 +28,10 @@ function errors_trans(trans) {
 
 }
 
+function valid_trans_id(trans_id){
+    "use strict";
+    return  (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/).test(trans_id);
+}
 
 exports.errors_trans = errors_trans;
+exports.valid_trans_id = valid_trans_id;
