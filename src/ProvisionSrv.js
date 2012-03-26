@@ -24,6 +24,7 @@ app.post('/', function (req, res) {
 });
 
 app.get('/:id_trans/:state?', function (req, res) {
+    "use strict";
     var id = req.param('id_trans', null);
     var state = req.param('state', 'All');
     var summary;
@@ -39,7 +40,7 @@ app.get('/:id_trans/:state?', function (req, res) {
             else {
                 res.send(data);
             }
-        })
+        });
     }
     else {
         res.send({errors:["missing id"]}, 400);
