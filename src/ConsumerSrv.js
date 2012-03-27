@@ -10,9 +10,21 @@ app.get('/block/:id', function (req, res) {
 
         var queue_id = req.param("id");
         var max_msgs = req.param("max", config.max_messages);
-        console.log("Blocking: "+queue_id + ", " + max_msgs);
+        var t_out = req.param("timeout", config.pop_timeout);
 
-        dataSrv.blocking_pop({id:queue_id}, max_msgs, config.pop_timeout, function (err, notif_list) {
+        max_msgs = parseInt(max_msgs, 10);
+        if(isNaN(t_out)) {
+            max_msgs = config.max_messages;
+        }
+
+        t_out = parseInt(t_out, 10);
+        if(isNaN(t_out)) {
+            t_out = config.pop_timeout;
+        }
+
+        console.log("Blocking: %s,%s,%s",queue_id, max_msgs, t_out);
+
+        dataSrv.blocking_pop({id:queue_id}, max_msgs, t_out, function (err, notif_list) {
             var message_list = null;
 
             if (err) {
