@@ -8,6 +8,7 @@ var db_cluster = require('./DBCluster.js');
 var helper = require('./DataHelper.js');
 var uuid = require('node-uuid');
 var async = require('async');
+var emitter = require('emitter_module').get();
 
 
 //Private methods Area
@@ -56,6 +57,14 @@ var push_transaction = function (provision, callback) {
                         manage_error(err, callback);
                     }
                     else {
+                        //Emitt pending event
+                        var ev = {
+                            'transaction':transaction_id,
+                            'queue': queue.id,
+                            'state': 'Pending',
+                            'timestamp': Date()
+                        };
+                        emitter.emit('NEWSTATE', ev);
                         //set expiration time for state collections (not the queue)
                         helper.set_expiration_date(dbTr, transaction_id + ':state', provision, function expiration_date_end(err) {
                                 //Everything kept or error
@@ -139,7 +148,7 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
     });
 
     function get_pop_data(dataH, callback, queue) {
-        retrieve_data(dataH, function on_data(err, payload_with_nulls) {
+        retrieve_data(queue, dataH, function on_data(err, payload_with_nulls) {
             if (err) {
                 manage_error(err, callback);
             } else {
@@ -152,6 +161,7 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
                 new_state_batch = clean_data.map(function prepare_state_batch(elem) {
                     var transaction_id = elem.transaction_id;
                     var dbTr = db_cluster.get_transaction_db(transaction_id);
+
                     return helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Delivered');
 
                 });
@@ -165,11 +175,11 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
         });
     }
 
-    function retrieve_data(transaction_list, callback) {
+    function retrieve_data(queue, transaction_list, callback) {
         var ghost_buster_batch = [];
         ghost_buster_batch = transaction_list.map(function prepare_data_batch(transaction) {
             var dbTr = db_cluster.get_transaction_db(transaction);
-            return check_data(dbTr, transaction);
+            return check_data(queue, dbTr, transaction);
         });
         async.parallel(ghost_buster_batch, function retrieve_data_async_end(err, found_metadata) {
             if (callback) {
@@ -178,8 +188,9 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
         });
     }
 
-    function check_data(dbTr, transaction_id) {
+    function check_data(queue, dbTr, transaction_id) {
         return function (callback) {
+            var ev= {};
             dbTr.hgetall(transaction_id + ':meta', function on_data(err, data) {
                 if (err) {
                     manage_error(err, callback);
@@ -187,9 +198,25 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
                 else {
                     if (data && data.payload) {
                         data.transaction_id = transaction_id;
+                        //EMIT Delivered
+                        ev = {
+                            'transaction':transaction_id,
+                            'queue': queue.id,
+                            'state': 'Delivered',
+                            'timestamp': Date()
+                        };
+                        emitter.emit('NEWSTATE', ev);
                     }
                     else {
                         data = null;
+                        //EMIT Expired
+                        ev = {
+                            'transaction':transaction_id,
+                            'queue': queue.id,
+                            'state': 'Expired',
+                            'timestamp': Date()
+                        };
+                        emitter.emit('NEWSTATE', ev);
                     }
                     callback(null, data);
                 }
