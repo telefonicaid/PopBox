@@ -14,7 +14,7 @@ app.get('/block/:id', function (req, res) {
         var max_msgs = req.param("max", config.max_messages);
         console.log("Blocking: "+queue_id + ", " + max_msgs);
 
-        dataSrvBl.blocking_pop({id:queue_id}, max_msgs, config.pop_timeout, function (err, notif) {
+        dataSrv.blocking_pop({id:queue_id}, max_msgs, config.pop_timeout, function (err, notif) {
             if (err) {
                 res.send(String(err), 500);
             }
