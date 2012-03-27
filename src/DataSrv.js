@@ -88,16 +88,21 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
         if (errH && !first_elem) {//errH
             manage_error(errH, callback);
 
-        } else {  //buggy indexes beware
-            dataH = [first_elem].concat(dataH); //forget about first elem priority (-2)
-            db.ltrim(full_queue_idH, 0, -dataH.length - 2, function on_trimH(err) {
+        } else if (!errH || first_elem[0]===full_queue_idH) {  //buggy indexes beware
+            var k=-1;
+            if (first_elem[0]===full_queue_idH){
+                dataH = [first_elem[1]].concat(dataH);
+                k= -2;
+            }
+            //forget about first elem priority (-2)
+            db.ltrim(full_queue_idH, 0, -dataH.length - k, function on_trimH(err) {
                 //the trim fails!! duplicates warning!!
             });
             if (dataH.length < max_elems) {
                 var rest_elems = max_elems - dataH.length;
                 //Extract from both queues
                 db.lrange(full_queue_idL, -rest_elems, -1, function on_rangeL(errL, dataL) {
-                    if (errL) {
+                    if (errL && first_elem[0]!==full_queue_idL) {
                         //fail but we may have data of previous range
                         if(dataH){
                             //if there is dataH dismiss the low priority error
@@ -107,8 +112,13 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
                             manage_error(errL, callback);
                         }
                     }
-                    else {
-                        db.ltrim(full_queue_idL, 0, -dataL.length - 1, function on_trimL(err) {
+                    else if(!errL || first_elem[0]===full_queue_idL){
+                        var k=-1;
+                        if (first_elem[0]===full_queue_idL){
+                            dataL = [first_elem[1]].concat(dataL);
+                            k= -2;
+                        }
+                        db.ltrim(full_queue_idL, 0, -dataL.length - k, function on_trimL(err) {
                             //the trim fails!! duplicates warning!!
                         });
                         if (dataL) {
@@ -211,7 +221,7 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
             }
             else{
                 //we got one elem -> need to check the rest
-                var first_elem = data[1];
+                var first_elem = data;
                 pop_notification(queue, max_elems-1, function onPop(err, clean_data){
                     if(err){
                         if (callback){
@@ -224,7 +234,7 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
                             callback(null, clean_data);
                         }
                     }
-                }, first_elem);
+                }, first_elem); //last optional param
             }
         }
     });
