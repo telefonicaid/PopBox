@@ -2,8 +2,6 @@ var express = require('express');
 
 var config = require('./config.js').consumer;
 var dataSrv = require('./DataSrv');
-var dataSrvBl = require('./DataSrvBlocking');
-
 
 var app = express.createServer();
 
@@ -14,13 +12,20 @@ app.get('/block/:id', function (req, res) {
         var max_msgs = req.param("max", config.max_messages);
         console.log("Blocking: "+queue_id + ", " + max_msgs);
 
-        dataSrv.blocking_pop({id:queue_id}, max_msgs, config.pop_timeout, function (err, notif) {
+        dataSrv.blocking_pop({id:queue_id}, max_msgs, config.pop_timeout, function (err, notif_list) {
+            var message_list = null;
+
             if (err) {
                 res.send(String(err), 500);
             }
             else {
-                var message = notif && notif[1] ? notif[1] : null;
-                res.send(message);
+                console.log(notif_list);
+                if (notif_list) {
+                    message_list = notif_list.map(function (notif) {
+                        return notif.payload;
+                    });
+                }
+                res.send(message_list);
             }
         });
     }
