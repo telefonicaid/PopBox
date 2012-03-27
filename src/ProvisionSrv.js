@@ -4,7 +4,7 @@ var config = require('./config.js').provision;
 var dataSrv = require('./DataSrv');
 var dataSrvBl = require('./DataSrvBlocking');
 var validate = require('./validate');
-
+var emitter = require('emitter_module').get();
 var app = express.createServer();
 
 app.use(express.favicon());
@@ -53,13 +53,31 @@ function insert(req, res, push, validate) {
     console.log(req.body);
 
     var errors = validate(req.body);
+    var ev = {};
+
 
     if (errors.length === 0) {
         push(req.body, function (err, trans_id) {
             if (err) {
+                ev = {
+                    'transaction':trans_id,
+                    'postdata':req.body,
+                    'action':'USERPUSH',
+                    'timestamp':Date(),
+                    'error':err
+                };
+                emitter.emit("ACTION", ev);
+
                 res.send({error:[err]}, 500);
             }
             else {
+                ev = {
+                    'transaction':trans_id,
+                    'postdata':req.body,
+                    'action':'USERPUSH',
+                    'timestamp':Date()
+                };
+                emitter.emit("ACTION", ev);
                 res.send({id:trans_id});
             }
         });
