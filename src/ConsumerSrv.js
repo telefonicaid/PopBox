@@ -46,7 +46,6 @@ app.get('/:id', function (req, res) {
                 var message_list = notif_list.map(function (notif) {
                     return notif.payload;
                 });
-                message_list.reverse();
                 res.send(message_list);
             }
         });
