@@ -319,11 +319,23 @@ var get_transaction = function (ext_transaction_id, state, summary, callback) {
     }
 };
 
+var queue_size = function(queue, callback){
+    'use strict';
+    var queue_id = queue.id;
+    var db = db_cluster.get_db(queue_id);
+    db.llen(queue_id, function onLength(err, length){
+        if (callback){
+            callback(err, length);
+        }
+    });
+};
+
 //Public Interface Area
 exports.push_transaction = push_transaction;
 exports.pop_notification = pop_notification;
 exports.get_transaction = get_transaction;
 exports.blocking_pop = blocking_pop;
+exports.queue_size = queue_size;
 
 //aux
 function manage_error(err, callback) {
