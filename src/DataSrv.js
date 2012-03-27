@@ -73,7 +73,7 @@ var push_transaction = function (provision, callback) {
 //USES QUEU ID
 //callback return err, popped data
 
-var pop_notification = function (queue, max_elems, callback) {
+var pop_notification = function (queue, max_elems, callback, first_elem) {
     'use strict';
     //client asks for queu box
     var db = db_cluster.get_db(queue.id); //get the db from cluster
@@ -84,11 +84,13 @@ var pop_notification = function (queue, max_elems, callback) {
     var full_queue_idL = config.db_key_queue_prefix + 'L:' + queue.id;
 
     db.lrange(full_queue_idH, -max_elems, -1, function on_rangeH(errH, dataH) {
-        if (errH) {//errH
+
+        if (errH && !first_elem) {//errH
             manage_error(errH, callback);
 
         } else {  //buggy indexes beware
-            db.ltrim(full_queue_idH, 0, -dataH.length - 1, function on_trimH(err) {
+            dataH = [first_elem].concat(dataH); //forget about first elem priority (-2)
+            db.ltrim(full_queue_idH, 0, -dataH.length - 2, function on_trimH(err) {
                 //the trim fails!! duplicates warning!!
             });
             if (dataH.length < max_elems) {
@@ -218,13 +220,11 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
                         }
                     }
                     else{
-                        //concat the data
-                        var first_plus_clean = [first_elem].concat(clean_data);
                         if(callback){
-                            callback(null, first_plus_clean);
+                            callback(null, clean_data);
                         }
                     }
-                });
+                }, first_elem);
             }
         }
     });
