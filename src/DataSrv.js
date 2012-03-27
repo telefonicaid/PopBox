@@ -84,7 +84,9 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
     var full_queue_idL = config.db_key_queue_prefix + 'L:' + queue.id;
 
     db.lrange(full_queue_idH, -max_elems, -1, function on_rangeH(errH, dataH) {
-
+        console.log("errH"+errH);
+        console.log("first elem"); console.dir(first_elem);
+        console.log("conditon !errH || first_elem[0]===full_queue_idH:"+(!errH || first_elem[0]===full_queue_idH));
         if (errH && !first_elem) {//errH
             manage_error(errH, callback);
 
@@ -92,7 +94,7 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
             var k=-1;
             if (first_elem[0]===full_queue_idH){
                 dataH = [first_elem[1]].concat(dataH);
-                k= -2;
+                k= 0;
             }
             //forget about first elem priority (-2)
             db.ltrim(full_queue_idH, 0, -dataH.length - k, function on_trimH(err) {
@@ -116,7 +118,7 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
                         var k=-1;
                         if (first_elem[0]===full_queue_idL){
                             dataL = [first_elem[1]].concat(dataL);
-                            k= -2;
+                            k= 0;
                         }
                         db.ltrim(full_queue_idL, 0, -dataL.length - k, function on_trimL(err) {
                             //the trim fails!! duplicates warning!!
