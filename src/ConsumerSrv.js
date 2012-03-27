@@ -13,7 +13,7 @@ app.get('/block/:id', function (req, res) {
         var t_out = req.param("timeout", config.pop_timeout);
 
         max_msgs = parseInt(max_msgs, 10);
-        if(isNaN(t_out)) {
+        if(isNaN(max_msgs)) {
             max_msgs = config.max_messages;
         }
 
