@@ -33,7 +33,7 @@ var push_transaction = function (provision, callback) {
         process_batch[i + 1] = process_one_id(db, dbTr, transaction_id, queue, priority);
     }
 
-    async.series(process_batch, function (err) {   //parallel execution may apply also
+    async.series(process_batch, function push_end(err) {   //parallel execution may apply also
         //MAIN Exit point
         if (err) {
             manage_error(err, callback);
@@ -46,18 +46,18 @@ var push_transaction = function (provision, callback) {
     });
 
     function process_one_id(db, dbTr, transaction_id, queue, priority) {
-        return function (callback) {
+        return function process_one_id_async(callback) {
             async.parallel(
                 [
                     helper.push_parallel(db, queue, priority, transaction_id),
                     helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Pending')
-                ], function (err) {
+                ], function parallel_end(err) {
                     if (err) {
                         manage_error(err, callback);
                     }
                     else {
                         //set expiration time for state collections (not the queue)
-                        helper.set_expiration_date(dbTr, transaction_id + ':state', provision, function (err) {
+                        helper.set_expiration_date(dbTr, transaction_id + ':state', provision, function expiration_date_end(err) {
                                 //Everything kept or error
                                 if (callback) {
                                     callback(err);
@@ -70,7 +70,7 @@ var push_transaction = function (provision, callback) {
     }
 };
 
-//uses DEVICE - IMEI
+//USES QUEU ID
 //callback return err, popped data
 
 var pop_notification = function (queue, max_elems, callback) {
@@ -83,22 +83,31 @@ var pop_notification = function (queue, max_elems, callback) {
     var full_queue_idH = config.db_key_queue_prefix + 'H:' + queue.id;
     var full_queue_idL = config.db_key_queue_prefix + 'L:' + queue.id;
 
-    db.lrange(full_queue_idH, -max_elems, -1, function (errH, dataH) {
+    db.lrange(full_queue_idH, -max_elems, -1, function on_rangeH(errH, dataH) {
         if (errH) {//errH
             manage_error(errH, callback);
 
         } else {  //buggy indexes beware
-            db.ltrim(full_queue_idH, 0, -dataH.length - 1, function (err) {
+            db.ltrim(full_queue_idH, 0, -dataH.length - 1, function on_trimH(err) {
+                //the trim fails!! duplicates warning!!
             });
             if (dataH.length < max_elems) {
                 var rest_elems = max_elems - dataH.length;
                 //Extract from both queues
-                db.lrange(full_queue_idL, -rest_elems, -1, function (errL, dataL) {
+                db.lrange(full_queue_idL, -rest_elems, -1, function on_rangeL(errL, dataL) {
                     if (errL) {
-                        manage_error(errL, callback);
+                        //fail but we may have data of previous range
+                        if(dataH){
+                            //if there is dataH dismiss the low priority error
+                            get_pop_data(dataH, callback, queue);
+                        }
+                        else{
+                            manage_error(errL, callback);
+                        }
                     }
                     else {
-                        db.ltrim(full_queue_idL, 0, -dataL.length - 1, function (err) {
+                        db.ltrim(full_queue_idL, 0, -dataL.length - 1, function on_trimL(err) {
+                            //the trim fails!! duplicates warning!!
                         });
                         if (dataL) {
                             dataH = dataL.concat(dataH);
@@ -116,23 +125,23 @@ var pop_notification = function (queue, max_elems, callback) {
     });
 
     function get_pop_data(dataH, callback, queue) {
-        retrieve_data(dataH, function (err, payload_with_nulls) {
+        retrieve_data(dataH, function on_data(err, payload_with_nulls) {
             if (err) {
                 manage_error(err, callback);
             } else {
                 //Handle post-pop behaviour (callback)
-                var clean_data = payload_with_nulls.filter(function (elem) {
+                var clean_data = payload_with_nulls.filter(function not_null(elem) {
                     return elem !== null;
                 });
                 //SET NEW STATE for Every popped transaction
                 var new_state_batch = [];
-                new_state_batch = clean_data.map(function (elem) {
+                new_state_batch = clean_data.map(function prepare_state_batch(elem) {
                     var transaction_id = elem.transaction_id;
                     var dbTr = db_cluster.get_transaction_db(transaction_id);
                     return helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Delivered');
 
                 });
-                async.parallel(new_state_batch, function (err) {
+                async.parallel(new_state_batch, function new_state_async_end(err) {
 
                     if (callback) {
                         callback(err, clean_data);
@@ -144,11 +153,11 @@ var pop_notification = function (queue, max_elems, callback) {
 
     function retrieve_data(transaction_list, callback) {
         var ghost_buster_batch = [];
-        ghost_buster_batch = transaction_list.map(function (transaction) {
+        ghost_buster_batch = transaction_list.map(function prepare_data_batch(transaction) {
             var dbTr = db_cluster.get_transaction_db(transaction);
             return check_data(dbTr, transaction);
         });
-        async.parallel(ghost_buster_batch, function (err, found_metadata) {
+        async.parallel(ghost_buster_batch, function retrieve_data_async_end(err, found_metadata) {
             if (callback) {
                 callback(err, found_metadata);
             }
@@ -157,7 +166,7 @@ var pop_notification = function (queue, max_elems, callback) {
 
     function check_data(dbTr, transaction_id) {
         return function (callback) {
-            dbTr.hgetall(transaction_id + ':meta', function (err, data) {
+            dbTr.hgetall(transaction_id + ':meta', function on_data(err, data) {
                 if (err) {
                     manage_error(err, callback);
                 }
@@ -176,6 +185,52 @@ var pop_notification = function (queue, max_elems, callback) {
     }
 };
 
+var blocking_pop = function (queue, max_elems, blocking_time, callback) {
+    'use strict';
+    var queue_id = queue.id;
+    var db = db_cluster.get_db(queue_id);
+    var full_queue_idH = config.db_key_queue_prefix + 'H:' + queue.id;
+    var full_queue_idL = config.db_key_queue_prefix + 'L:' + queue.id;
+    //Do the blocking part (over the two lists)
+    db.brpop(full_queue_idH, full_queue_idL, blocking_time, function on_pop_data(err, data) {
+        if (err) {
+            manage_error(err, callback);
+        }
+        else {
+            //data:: A two-element multi-bulk with the first element being the name
+            // of the key where an element was popped and the second element being
+            // the value of the popped element.
+
+            //if data == null => timeout || empty queue --> nothing to do
+            if (!data){
+                if (callback) {
+                    callback(null, null);
+                }
+            }
+            else{
+                //we got one elem -> need to check the rest
+                var first_elem = data[1];
+                pop_notification(queue, max_elems-1, function onPop(err, clean_data){
+                    if(err){
+                        if (callback){
+                            err.data=true; //flag for err+data
+                            callback(err, first_elem); //something weird
+                        }
+                    }
+                    else{
+                        //concat the data
+                        var first_plus_clean = [first_elem].concat(clean_data);
+                        if(callback){
+                            callback(null, first_plus_clean);
+                        }
+                    }
+                });
+            }
+        }
+    });
+};
+
+
 //uses summary flag OPT
 //uses state emum ('pending', 'closed', 'error')
 //callback return transaction info
@@ -191,7 +246,7 @@ var get_transaction = function (ext_transaction_id, state, summary, callback) {
         //obtain transaction info
         var dbTr = db_cluster.get_transaction_db(ext_transaction_id);
         var transaction_id = config.db_key_trans_prefix + ext_transaction_id;
-        dbTr.hgetall(transaction_id + ':state', function (err, data) {
+        dbTr.hgetall(transaction_id + ':state', function on_data(err, data) {
             if (err) {
                 manage_error(err, callback);
             }
@@ -241,11 +296,11 @@ var get_transaction = function (ext_transaction_id, state, summary, callback) {
         }
         summary_obj.total_notifications = data_array.length;
         var data_aux;
-        data_aux = data_array.filter(function (elem) {
+        data_aux = data_array.filter(function filter_state(elem) {
             return (state === 'All' || state === elem);
         });
         //we got the filtered data
-        data_aux.forEach(function (elem) {
+        data_aux.forEach(function inc_summary(elem) {
             summary_obj[elem] = ++summary_obj[elem] || 1;
         });
         return summary_obj;
@@ -256,6 +311,7 @@ var get_transaction = function (ext_transaction_id, state, summary, callback) {
 exports.push_transaction = push_transaction;
 exports.pop_notification = pop_notification;
 exports.get_transaction = get_transaction;
+exports.blocking_pop = blocking_pop;
 
 //aux
 function manage_error(err, callback) {

@@ -11,10 +11,10 @@ app.get('/block/:id', function (req, res) {
         "use strict";
 
         var queue_id = req.param("id");
+        var max_msgs = req.param("max", config.max_messages);
+        console.log("Blocking: "+queue_id + ", " + max_msgs);
 
-        console.log(queue_id);
-
-        dataSrvBl.blocking_pop(queue_id, config.pop_timeout, function (err, notif) {
+        dataSrv.blocking_pop({id:queue_id}, max_msgs, config.pop_timeout, function (err, notif) {
             if (err) {
                 res.send(String(err), 500);
             }
