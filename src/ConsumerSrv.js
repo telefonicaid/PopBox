@@ -26,8 +26,17 @@ app.get('/block/:id', function (req, res) {
 
         dataSrv.blocking_pop({id:queue_id}, max_msgs, t_out, function (err, notif_list) {
             var message_list = null;
+            var ev = {};
 
             if (err) {
+                ev =  {
+                    'queue':queue_id,
+                    'max_msg':max_msgs,
+                    'action': 'USERPOP',
+                    'timestamp':Date(),
+                    'error':err
+                };
+                emitter.emit("ACTION", ev);
                 res.send(String(err), 500);
             }
             else {
@@ -37,6 +46,14 @@ app.get('/block/:id', function (req, res) {
                         return notif.payload;
                     });
                 }
+                ev = {
+                    'queue':queue_id,
+                    'max_msg':max_msgs,
+                    'total_msg': message_list.length,
+                    'action': 'USERPOP',
+                    'timestamp':Date()
+                };
+                emitter.emit("ACTION", ev);
                 res.send(message_list);
             }
         });
