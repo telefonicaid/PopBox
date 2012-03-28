@@ -8,7 +8,7 @@ var db_cluster = require('./DBCluster.js');
 var helper = require('./DataHelper.js');
 var uuid = require('node-uuid');
 var async = require('async');
-var emitter = require('emitter_module').get();
+var emitter = require('./emitter_module').get();
 
 
 //Private methods Area

@@ -4,7 +4,7 @@ var config = require('./config.js').provision;
 var dataSrv = require('./DataSrv');
 var dataSrvBl = require('./DataSrvBlocking');
 var validate = require('./validate');
-var emitter = require('emitter_module').get();
+var emitter = require('./emitter_module').get();
 var app = express.createServer();
 
 app.use(express.favicon());

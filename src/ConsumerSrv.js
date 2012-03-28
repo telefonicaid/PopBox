@@ -2,7 +2,7 @@ var express = require('express');
 
 var config = require('./config.js').consumer;
 var dataSrv = require('./DataSrv');
-var emitter = require('emitter_module').get();
+var emitter = require('./emitter_module').get();
 var app = express.createServer();
 
 app.get('/block/:id', function (req, res) {
