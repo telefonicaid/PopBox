@@ -59,10 +59,10 @@ var push_transaction = function (provision, callback) {
                     else {
                         //Emitt pending event
                         var ev = {
-                            'transaction':transaction_id,
+                            'transaction':ext_transaction_id,
                             'queue': queue.id,
                             'state': 'Pending',
-                            'timestamp': Date()
+                            'timestamp': new Date()
                         };
                         emitter.emit('NEWSTATE', ev);
                         //set expiration time for state collections (not the queue)
@@ -191,6 +191,7 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
     function check_data(queue, dbTr, transaction_id) {
         return function (callback) {
             var ev= {};
+            var ext_transaction_id = transaction_id.split('|')[1];
             dbTr.hgetall(transaction_id + ':meta', function on_data(err, data) {
                 if (err) {
                     manage_error(err, callback);
@@ -199,11 +200,12 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
                     if (data && data.payload) {
                         data.transaction_id = transaction_id;
                         //EMIT Delivered
+
                         ev = {
-                            'transaction':transaction_id,
+                            'transaction':ext_transaction_id,
                             'queue': queue.id,
                             'state': 'Delivered',
-                            'timestamp': Date()
+                            'timestamp': new Date()
                         };
                         emitter.emit('NEWSTATE', ev);
                     }
@@ -211,10 +213,10 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
                         data = null;
                         //EMIT Expired
                         ev = {
-                            'transaction':transaction_id,
+                            'transaction':ext_transaction_id,
                             'queue': queue.id,
                             'state': 'Expired',
-                            'timestamp': Date()
+                            'timestamp': new Date()
                         };
                         emitter.emit('NEWSTATE', ev);
                     }

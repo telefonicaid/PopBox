@@ -63,7 +63,7 @@ function insert(req, res, push, validate) {
                     'transaction':trans_id,
                     'postdata':req.body,
                     'action':'USERPUSH',
-                    'timestamp':Date(),
+                    'timestamp':new Date(),
                     'error':err
                 };
                 emitter.emit("ACTION", ev);
@@ -75,7 +75,7 @@ function insert(req, res, push, validate) {
                     'transaction':trans_id,
                     'postdata':req.body,
                     'action':'USERPUSH',
-                    'timestamp':Date()
+                    'timestamp':new Date()
                 };
                 emitter.emit("ACTION", ev);
                 res.send({id:trans_id});
