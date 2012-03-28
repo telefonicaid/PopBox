@@ -33,7 +33,7 @@ app.get('/block/:id', function (req, res) {
                     'queue':queue_id,
                     'max_msg':max_msgs,
                     'action': 'USERPOP',
-                    'timestamp':Date(),
+                    'timestamp':new Date(),
                     'error':err
                 };
                 emitter.emit("ACTION", ev);
@@ -51,7 +51,7 @@ app.get('/block/:id', function (req, res) {
                     'max_msg':max_msgs,
                     'total_msg': message_list.length,
                     'action': 'USERPOP',
-                    'timestamp':Date()
+                    'timestamp':new Date()
                 };
                 emitter.emit("ACTION", ev);
                 res.send(message_list);
@@ -74,7 +74,7 @@ app.get('/:id', function (req, res) {
                     'queue':queue_id,
                     'max_msg':max_msgs,
                     'action': 'USERPOP',
-                    'timestamp':Date(),
+                    'timestamp':new Date(),
                     'error':err
                 };
                 emitter.emit("ACTION", ev);
@@ -90,7 +90,7 @@ app.get('/:id', function (req, res) {
                     'max_msg':max_msgs,
                     'total_msg': message_list.length,
                     'action': 'USERPOP',
-                    'timestamp':Date()
+                    'timestamp':new Date()
                 };
                 emitter.emit("ACTION", ev);
                 res.send(message_list);
