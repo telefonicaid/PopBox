@@ -5,6 +5,9 @@ var dataSrv = require('./DataSrv');
 var emitter = require('./emitter_module').get();
 var app = express.createServer();
 
+var ev_lsnr = require('./ev_lsnr');
+ev_lsnr.init(emitter);
+
 app.get('/block/:id', function (req, res) {
         "use strict";
 

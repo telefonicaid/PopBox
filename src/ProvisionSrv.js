@@ -5,6 +5,10 @@ var dataSrv = require('./DataSrv');
 var dataSrvBl = require('./DataSrvBlocking');
 var validate = require('./validate');
 var emitter = require('./emitter_module').get();
+var ev_lsnr = require('./ev_lsnr');
+ev_lsnr.init(emitter);
+
+
 var app = express.createServer();
 
 app.use(express.favicon());
