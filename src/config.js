@@ -17,3 +17,9 @@ exports.ev_lsnr.mongo_host = "tac01";
 exports.ev_lsnr.mongo_port = 27017;
 exports.ev_lsnr.mongo_db =  'popbox';
 exports.ev_lsnr.collection= 'popbox_ev';
+
+
+exports.agent = {};
+exports.agent.max_messages = 1000;
+exports.agent.port = 3001;
+exports.agent.pop_timeout = 30;

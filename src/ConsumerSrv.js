@@ -8,7 +8,7 @@ var app = express.createServer();
 var ev_lsnr = require('./ev_lsnr');
 ev_lsnr.init(emitter);
 
-app.get('/block/:id', function (req, res) {
+app.get('/queue/:id', function (req, res) {
         "use strict";
 
         var queue_id = req.param("id");
@@ -49,45 +49,6 @@ app.get('/block/:id', function (req, res) {
                         return notif.payload;
                     });
                 }
-                ev = {
-                    'queue':queue_id,
-                    'max_msg':max_msgs,
-                    'total_msg': message_list.length,
-                    'action': 'USERPOP',
-                    'timestamp':new Date()
-                };
-                emitter.emit("ACTION", ev);
-                res.send(message_list);
-            }
-        });
-    }
-);
-
-app.get('/:id', function (req, res) {
-        "use strict";
-
-        var queue_id = req.param("id");
-        var max_msgs = req.param("max", config.max_messages);
-        var ev = {};
-        console.log(queue_id + ", " + max_msgs);
-
-        dataSrv.pop_notification({id:queue_id}, max_msgs, function (err, notif_list) {
-            if (err) {
-                ev =  {
-                    'queue':queue_id,
-                    'max_msg':max_msgs,
-                    'action': 'USERPOP',
-                    'timestamp':new Date(),
-                    'error':err
-                };
-                emitter.emit("ACTION", ev);
-                res.send(String(err), 500);
-            }
-            else {
-                var message_list = notif_list.map(function (notif) {
-                    return notif.payload;
-                });
-                message_list.reverse();
                 ev = {
                     'queue':queue_id,
                     'max_msg':max_msgs,
