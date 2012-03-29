@@ -120,4 +120,4 @@ Transfer-Encoding: chunked
 ------------------------------------------------
 ------------------------------------------------
 
-curl -v --header "Content-type: application/json" -d @Provision.json http://localhost:3001/
+curl -v --header "Content-type: application/json" -d @Provision.json http://localhost:3001/trans
