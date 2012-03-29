@@ -6,15 +6,15 @@ The  object must contain a payload, a priority (H or L) and a list ('queue') of 
 for the target devices
 Optionally a callback, an expiration delay ('expirationDelay') or expiration time ('expirationDate') could be set
 (Both values in seconds)
-By default, the provision service listens at port 3000
+By default, the provision service listens at port 3001 at path "/trans"
 
 The response is an object with an 'id' field  with the id of the provisioned transaction
 In case of error, the response will be a 400 and an object with a list of error messages in its "error" property
 
 Example: provisioning message for devices Ax and Bx
 
-POST / HTTP/1.1
-Host: tac01.hi.inet:3000
+POST /trans HTTP/1.1
+Host: tac01.hi.inet:3001
 User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:10.0.2) Gecko/20100101 Firefox/10.0.2
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
@@ -50,8 +50,8 @@ Transfer-Encoding: chunked
 
 Example of error : priority missing, payload spelling
 
-POST / HTTP/1.1
-Host: metis:3000
+POST /trans HTTP/1.1
+Host: metis:3001
 User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:10.0.2) Gecko/20100101 Firefox/10.0.2
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
@@ -86,14 +86,19 @@ Transfer-Encoding: chunked
 Consumer
 ========
 
-In order to retrieve the messages  for a device, the id from the device must be append to the URL
+In order to retrieve the messages  for a device, the id from the device must be append to the URL "queue"
 The response is a list with the messages as strings. if there are no messages an empty list is returned ([])
-By default, the consumer service listens at port 3003
+By default, the consumer service listens at port 3001
+Two parameters could be append
+"timeout": if the queue is empty , it will wait the value in seconds before returning an empty list ([]) or data arrived during the waiting period
+"max" : maximum number of mesages to retrieve. If there are more, they will be in te queue for later requests
+ 
 
+ 
 
 Example: retrieving messages for device Ax
 
-GET /Ax HTTP/1.1
+GET /queue/Ax HTTP/1.1
 Host: metis:3003
 User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:10.0.2) Gecko/20100101 Firefox/10.0.2
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
