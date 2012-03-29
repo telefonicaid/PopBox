@@ -117,7 +117,7 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
                         //fail but we may have data of previous range
                         if(dataH){
                             //if there is dataH dismiss the low priority error
-                            get_pop_data(dataH, callback, queue);
+                            get_pop_data(dataH, queue, callback);
                         }
                         else{
                             manage_error(errL, callback);
@@ -135,97 +135,17 @@ var pop_notification = function (queue, max_elems, callback, first_elem) {
                         if (dataL) {
                             dataH = dataL.concat(dataH);
                         }
-                        get_pop_data(dataH, callback, queue);
+                        get_pop_data(dataH, queue, callback);
                     }
                 });
             }
             else {
                 //just one queue used
-                get_pop_data(dataH, callback, queue);
+                get_pop_data(dataH, queue, callback);
             }
         }
 
     });
-
-    function get_pop_data(dataH, callback, queue) {
-        retrieve_data(queue, dataH, function on_data(err, payload_with_nulls) {
-            if (err) {
-                manage_error(err, callback);
-            } else {
-                //Handle post-pop behaviour (callback)
-                var clean_data = payload_with_nulls.filter(function not_null(elem) {
-                    return elem !== null;
-                });
-                //SET NEW STATE for Every popped transaction
-                var new_state_batch = [];
-                new_state_batch = clean_data.map(function prepare_state_batch(elem) {
-                    var transaction_id = elem.transaction_id;
-                    var dbTr = db_cluster.get_transaction_db(transaction_id);
-
-                    return helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Delivered');
-
-                });
-                async.parallel(new_state_batch, function new_state_async_end(err) {
-
-                    if (callback) {
-                        callback(err, clean_data);
-                    }
-                });
-            }
-        });
-    }
-
-    function retrieve_data(queue, transaction_list, callback) {
-        var ghost_buster_batch = [];
-        ghost_buster_batch = transaction_list.map(function prepare_data_batch(transaction) {
-            var dbTr = db_cluster.get_transaction_db(transaction);
-            return check_data(queue, dbTr, transaction);
-        });
-        async.parallel(ghost_buster_batch, function retrieve_data_async_end(err, found_metadata) {
-            if (callback) {
-                callback(err, found_metadata);
-            }
-        });
-    }
-
-    function check_data(queue, dbTr, transaction_id) {
-        return function (callback) {
-            var ev= {};
-            var ext_transaction_id = transaction_id.split('|')[1];
-            dbTr.hgetall(transaction_id + ':meta', function on_data(err, data) {
-                if (err) {
-                    manage_error(err, callback);
-                }
-                else {
-                    if (data && data.payload) {
-                        data.transaction_id = transaction_id;
-                        //EMIT Delivered
-
-                        ev = {
-                            'transaction':ext_transaction_id,
-                            'queue': queue.id,
-                            'state': 'Delivered',
-                            'timestamp': new Date()
-                        };
-                        emitter.emit('NEWSTATE', ev);
-                    }
-                    else {
-                        data = null;
-                        //EMIT Expired
-                        ev = {
-                            'transaction':ext_transaction_id,
-                            'queue': queue.id,
-                            'state': 'Expired',
-                            'timestamp': new Date()
-                        };
-                        emitter.emit('NEWSTATE', ev);
-                    }
-                    callback(null, data);
-                }
-
-            });
-        };
-    }
 };
 
 var blocking_pop = function (queue, max_elems, blocking_time, callback) {
@@ -253,6 +173,8 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
             else{
                 //we got one elem -> need to check the rest
                 var first_elem = data;
+
+                if (max_elems>1){
                 pop_notification(queue, max_elems-1, function onPop(err, clean_data){
                     if(err){
                         if (callback){
@@ -266,12 +188,98 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
                         }
                     }
                 }, first_elem); //last optional param
+                }
+                else{
+                   //just first_elem
+                    get_pop_data([first_elem[1]], queue, callback);
+                }
             }
         }
     });
 };
 
+function get_pop_data(dataH, queue, callback) {
+    "use strict";
+    retrieve_data(queue, dataH, function on_data(err, payload_with_nulls) {
+        if (err) {
+            manage_error(err, callback);
+        } else {
+            //Handle post-pop behaviour (callback)
+            var clean_data = payload_with_nulls.filter(function not_null(elem) {
+                return elem !== null;
+            });
+            //SET NEW STATE for Every popped transaction
+            var new_state_batch = [];
+            new_state_batch = clean_data.map(function prepare_state_batch(elem) {
+                var transaction_id = elem.transaction_id;
+                var dbTr = db_cluster.get_transaction_db(transaction_id);
 
+                return helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Delivered');
+
+            });
+            async.parallel(new_state_batch, function new_state_async_end(err) {
+
+                if (callback) {
+                    callback(err, clean_data);
+                }
+            });
+        }
+    });
+}
+
+function retrieve_data(queue, transaction_list, callback) {
+    "use strict";
+    var ghost_buster_batch = [];
+    ghost_buster_batch = transaction_list.map(function prepare_data_batch(transaction) {
+        var dbTr = db_cluster.get_transaction_db(transaction);
+        return check_data(queue, dbTr, transaction);
+    });
+    async.parallel(ghost_buster_batch, function retrieve_data_async_end(err, found_metadata) {
+        if (callback) {
+            callback(err, found_metadata);
+        }
+    });
+}
+
+function check_data(queue, dbTr, transaction_id) {
+    "use strict";
+    return function (callback) {
+        var ev= {};
+        var ext_transaction_id = transaction_id.split('|')[1];
+        dbTr.hgetall(transaction_id + ':meta', function on_data(err, data) {
+            if (err) {
+                manage_error(err, callback);
+            }
+            else {
+                if (data && data.payload) {
+                    data.transaction_id = transaction_id;
+                    //EMIT Delivered
+
+                    ev = {
+                        'transaction':ext_transaction_id,
+                        'queue': queue.id,
+                        'state': 'Delivered',
+                        'timestamp': new Date()
+                    };
+                    emitter.emit('NEWSTATE', ev);
+                }
+                else {
+                    data = null;
+                    //EMIT Expired
+                    ev = {
+                        'transaction':ext_transaction_id,
+                        'queue': queue.id,
+                        'state': 'Expired',
+                        'timestamp': new Date()
+                    };
+                    emitter.emit('NEWSTATE', ev);
+                }
+                callback(null, data);
+            }
+
+        });
+    };
+}
 //uses summary flag OPT
 //uses state emum ('pending', 'closed', 'error')
 //callback return transaction info
