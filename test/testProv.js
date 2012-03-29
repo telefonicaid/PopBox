@@ -3,6 +3,7 @@ var a = require('assert');
 var async = require('async');
 var prov_config = require('../src/config').provision;
 var cons_config = require('../src/config').consumer;
+var agt_config = require('../src/config').agent;
 var validate = require("../src/validate");
 
 function id_ok(cb) {
@@ -64,13 +65,13 @@ function pop(cb) {
 
 function push_and_pop(cb) {
     "use strict";
-    var options_prov = { port:prov_config.port, path:'/'};
+    var options_prov = { host: "relayA", port:agt_config.port, path:'/trans'};
     var trans = { payload:'1234567890ÑñÁá', priority:'H', 'queue':[
         {'id':'Ax'},
         {'id':'Bx'}
-    ], 'expirationDelay':360 };
-    var options_consA = { port:cons_config.port, path:'/block/Ax', method: 'GET'};
-    var options_consB = { port:cons_config.port, path:'/block/Bx', method: 'GET'};
+    ], 'expirationDelay': 86400 };
+    var options_consA = {  host: "relayA", port:agt_config.port, path:'/queue/Ax', method: 'GET'};
+    var options_consB = {  host: "relayA", port:agt_config.port, path:'/queue/Bx', method: 'GET'};
 
     async.series(
         [
