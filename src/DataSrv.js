@@ -157,7 +157,7 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
     //Do the blocking part (over the two lists)
     db.brpop(full_queue_idH, full_queue_idL, blocking_time, function on_pop_data(err, data) {
         if (err) {
-            db.end();
+            enddb(db);
             manage_error(err, callback);
 
         }
@@ -178,7 +178,8 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
 
                 if (max_elems>1){
                 pop_notification(db, queue, max_elems-1, function onPop(err, clean_data){
-                    db.end(); //add free() when pool
+                    enddb(db);
+                    //add free() when pool
                     if(err){
                         if (callback){
                             err.data=true; //flag for err+data
@@ -193,7 +194,8 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
                 }, first_elem); //last optional param
                 }
                 else{
-                    db.end();
+                    enddb(db);
+
                    //just first_elem
                     get_pop_data([first_elem[1]], callback, queue);
                 }
@@ -202,6 +204,10 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
     });
 };
 
+function enddb(db){
+    console.log("trying to close");
+    console.log("end() result %s", db.end());
+}
 function get_pop_data(dataH, callback, queue) {
     "use strict";
     retrieve_data(queue, dataH, function on_data(err, payload_with_nulls) {
