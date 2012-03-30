@@ -82,10 +82,10 @@ var push_transaction = function (provision, callback) {
 //USES QUEU ID
 //callback return err, popped data
 
-var pop_notification = function (queue, max_elems, callback, first_elem) {
+var pop_notification = function (db, queue, max_elems, callback, first_elem) {
     'use strict';
     //client asks for queu box
-    var db = db_cluster.get_db(queue.id); //get the db from cluster
+    //var db = db_cluster.get_db(queue.id); //get the db from cluster
 
     //pop the queu  (LRANGE)
     //hight priority first
@@ -175,7 +175,8 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
                 var first_elem = data;
 
                 if (max_elems>1){
-                pop_notification(queue, max_elems-1, function onPop(err, clean_data){
+                pop_notification(db, queue, max_elems-1, function onPop(err, clean_data){
+                    db.quit(); //add free() when pool
                     if(err){
                         if (callback){
                             err.data=true; //flag for err+data
