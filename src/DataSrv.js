@@ -168,6 +168,7 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
 
             //if data == null => timeout || empty queue --> nothing to do
             if (!data){
+                enddb(db);
                 if (callback) {
                     callback(null, null);
                 }
