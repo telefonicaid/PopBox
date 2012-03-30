@@ -20,5 +20,12 @@ var config = require('./config.js');
 
     };
 
+var free = function(db){
+    //return to the pool TechDebt
+    "use strict";
+    db.end();
+};
+
 exports.get_db = get_db;
 exports.get_transaction_db = get_transaction_db;
+exports.free = free;

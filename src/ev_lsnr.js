@@ -6,8 +6,7 @@ var config = require('./config').ev_lsnr;
 var clients = [];
 
 function init(emitter, callback) {
-
-
+    "use strict";
     var client = new mongodb.Db(config.mongo_db, new mongodb.Server(config.mongo_host, config.mongo_port, {}));
     client.open(function (err, p_client) {
         client.collection(config.collection, function (err, c) {
