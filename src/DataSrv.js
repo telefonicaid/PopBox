@@ -157,7 +157,9 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
     //Do the blocking part (over the two lists)
     db.brpop(full_queue_idH, full_queue_idL, blocking_time, function on_pop_data(err, data) {
         if (err) {
+            db.quit();
             manage_error(err, callback);
+
         }
         else {
             //data:: A two-element multi-bulk with the first element being the name
@@ -191,6 +193,7 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
                 }, first_elem); //last optional param
                 }
                 else{
+                    db.quit();
                    //just first_elem
                     get_pop_data([first_elem[1]], callback, queue);
                 }
