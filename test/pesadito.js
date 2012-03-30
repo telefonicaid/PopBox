@@ -15,14 +15,14 @@ var en_proceso = 0,
 
 function pop(q, cb) {
     "use strict";
-    var options = { port:3001, path:'/queue/'+ q+ "?timeout=1", method:'GET'};
-    post_obj( options, "", cb);
+    var options = { port:3001, path:'/queue/' + q + "?timeout=1", method:'GET', agent:false};
+    post_obj(options, "", cb);
 }
 
 
 function post_obj(options, content, cb) {
     "use strict";
-    var data ="";
+    var data = "";
     options = options || {};
     options.host = options.host || 'relayA';
     options.method = options.method || 'POST';
@@ -39,23 +39,13 @@ function post_obj(options, content, cb) {
         res.setEncoding('utf8');
         res.on('data', function (chunk) {
             data += chunk;
-            console.log(data);
+            console.log("data " + data);
         });
         res.on('end', function () {
+
+            console.log("end " + data);
             en_proceso--;
             hechas++;
-            try {
-                //require('util').log(data);
-                try {
-                    o = JSON.parse(data);
-                } catch(eee) {
-                    require('util').log("AQUI ME LA PEGO");
-                    require('util').log(eee);
-                }
-            }
-            catch(ex) {
-                  console.log(ex);
-            }
             cb();
         });
     });
@@ -67,17 +57,15 @@ function post_obj(options, content, cb) {
         cb();
     });
 
-    if (content !== null) {
-        console.log(JSON.stringify(content));
-// write data to request body
-        req.write(JSON.stringify(content));
-    }
-    req.end();
+   req.end();
 }
-for(var i=0; i< 1; i += 1) {
-     pop("q"+i, print_stats);
+
+http.Agent.maxSockets = 1000;
+
+for (var i = 0; i < 1000; i += 1) {
+    pop("q" + i, print_stats);
 }
 
 function print_stats() {
-    console.log("en_proceso %d, hechas %d, errores %d",en_proceso, hechas, errores);
+    console.log("en_proceso %d, hechas %d, errores %d", en_proceso, hechas, errores);
 }
