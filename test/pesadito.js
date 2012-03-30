@@ -15,7 +15,7 @@ var en_proceso = 0,
 
 function pop(q, cb) {
     "use strict";
-    var options = { port:3001, path:'/queue/' + q + "?timeout=1", method:'GET', agent:false};
+    var options = { port:3001, path:'/queue/' + q + "?timeout=1", method:'GET'};
     post_obj(options, "", cb);
 }
 
@@ -30,7 +30,7 @@ function post_obj(options, content, cb) {
 
     options.headers['content-type'] = 'application/json';
 
-    en_proceso++;
+
     var req = http.request(options, function (res) {
 
         var o; //returned object from request
@@ -58,9 +58,10 @@ function post_obj(options, content, cb) {
     });
 
    req.end();
+   en_proceso++;
 }
 
-http.Agent.maxSockets = 1000;
+http.Agent.maxSockets = 200;
 
 for (var i = 0; i < 1000; i += 1) {
     pop("q" + i, print_stats);
