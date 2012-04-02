@@ -1,3 +1,9 @@
+//
+// Copyright (c) Telefonica I+D. All rights reserved.
+//
+//
+
+
 //Encapsulate DB/queue accesses
 //Deals with data clustering and scalability
 //SmartStub approach

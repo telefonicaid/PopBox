@@ -1,3 +1,8 @@
+//
+// Copyright (c) Telefonica I+D. All rights reserved.
+//
+//
+
 var express = require('express');
 
 var config = require('./config.js').provision;

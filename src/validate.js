@@ -1,3 +1,8 @@
+//
+// Copyright (c) Telefonica I+D. All rights reserved.
+//
+//
+
 function errors_trans(trans) {
     "use strict";
     var errors = [];

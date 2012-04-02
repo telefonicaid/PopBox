@@ -1,3 +1,8 @@
+//
+// Copyright (c) Telefonica I+D. All rights reserved.
+//
+//
+
 //Implements the logic for Blocking messages (1:1)
 //Require Area
 var config = require('./config.js');

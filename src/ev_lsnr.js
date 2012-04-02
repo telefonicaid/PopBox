@@ -1,3 +1,8 @@
+//
+// Copyright (c) Telefonica I+D. All rights reserved.
+//
+//
+
 var mongodb = require('mongodb');
 
 var config = require('./config').ev_lsnr;
