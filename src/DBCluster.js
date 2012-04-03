@@ -1,3 +1,8 @@
+//
+// Copyright (c) Telefonica I+D. All rights reserved.
+//
+//
+
 //clustering and database management (object)
 
 var redis_module = require('redis');

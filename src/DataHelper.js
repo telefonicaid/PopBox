@@ -1,3 +1,8 @@
+//
+// Copyright (c) Telefonica I+D. All rights reserved.
+//
+//
+
 //Require Area
 var config = require('./config.js');
 
