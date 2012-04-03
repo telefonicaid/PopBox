@@ -36,6 +36,7 @@ var push_transaction = function (provision, callback) {
 
     async.series(process_batch, function push_end(err) {   //parallel execution may apply also
         //MAIN Exit point
+        db_cluster.free(db);
         if (err) {
             manage_error(err, callback);
         }
