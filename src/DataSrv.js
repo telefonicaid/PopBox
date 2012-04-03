@@ -36,7 +36,6 @@ var push_transaction = function (provision, callback) {
 
     async.series(process_batch, function push_end(err) {   //parallel execution may apply also
         //MAIN Exit point
-        db_cluster.free(db);
         if (err) {
             manage_error(err, callback);
         }
@@ -54,6 +53,7 @@ var push_transaction = function (provision, callback) {
                     helper.push_parallel(db, queue, priority, transaction_id),
                     helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Pending')
                 ], function parallel_end(err) {
+                    db_cluster.free(db);
                     if (err) {
                         manage_error(err, callback);
                     }
