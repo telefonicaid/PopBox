@@ -20,6 +20,9 @@ var config = require('./config.js');
 
     var get_transaction_db = function(transaction_id){
         'use strict';
+        if(!rc || !rc.connected){
+            rc = redis_module.createClient(redis_module.DEFAULT_PORT, config.redis_server);
+        }
         //return a client for transactions
         return rc;
 

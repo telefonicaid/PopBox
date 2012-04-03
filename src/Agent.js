@@ -143,3 +143,8 @@ function insert(req, res, push, validate) {
         res.send({error:errors}, 400);
     }
 }
+
+process.on('uncaughtException', function (err) {
+    "use strict";
+    console.log("PROCESS %s", err);
+});
