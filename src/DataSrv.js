@@ -53,6 +53,7 @@ var push_transaction = function (provision, callback) {
                     helper.push_parallel(db, queue, priority, transaction_id),
                     helper.hset_hash_parallel(dbTr, queue, transaction_id, ':state', 'Pending')
                 ], function parallel_end(err) {
+                    db_cluster.free(db);
                     if (err) {
                         manage_error(err, callback);
                     }
@@ -82,10 +83,10 @@ var push_transaction = function (provision, callback) {
 //USES QUEU ID
 //callback return err, popped data
 
-var pop_notification = function (queue, max_elems, callback, first_elem) {
+var pop_notification = function (db, queue, max_elems, callback, first_elem) {
     'use strict';
     //client asks for queu box
-    var db = db_cluster.get_db(queue.id); //get the db from cluster
+    //var db = db_cluster.get_db(queue.id); //get the db from cluster
 
     //pop the queu  (LRANGE)
     //hight priority first
@@ -157,7 +158,9 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
     //Do the blocking part (over the two lists)
     db.brpop(full_queue_idH, full_queue_idL, blocking_time, function on_pop_data(err, data) {
         if (err) {
+            db_cluster.free(db);
             manage_error(err, callback);
+
         }
         else {
             //data:: A two-element multi-bulk with the first element being the name
@@ -166,6 +169,7 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
 
             //if data == null => timeout || empty queue --> nothing to do
             if (!data){
+                db_cluster.free(db);
                 if (callback) {
                     callback(null, null);
                 }
@@ -175,7 +179,8 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
                 var first_elem = data;
 
                 if (max_elems>1){
-                pop_notification(queue, max_elems-1, function onPop(err, clean_data){
+                pop_notification(db, queue, max_elems-1, function onPop(err, clean_data){
+                    db_cluster.free(db);                    //add free() when pool
                     if(err){
                         if (callback){
                             err.data=true; //flag for err+data
@@ -190,6 +195,8 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
                 }, first_elem); //last optional param
                 }
                 else{
+                    db_cluster.free(db);
+
                    //just first_elem
                     get_pop_data([first_elem[1]], callback, queue);
                 }
