@@ -61,9 +61,9 @@ var push_transaction = function (provision, callback) {
                         //Emitt pending event
                         var ev = {
                             'transaction':ext_transaction_id,
-                            'queue': queue.id,
-                            'state': 'Pending',
-                            'timestamp': new Date()
+                            'queue':queue.id,
+                            'state':'Pending',
+                            'timestamp':new Date()
                         };
                         emitter.emit('NEWSTATE', ev);
                         //set expiration time for state collections (not the queue)
@@ -94,17 +94,18 @@ var pop_notification = function (db, queue, max_elems, callback, first_elem) {
     var full_queue_idL = config.db_key_queue_prefix + 'L:' + queue.id;
 
     db.lrange(full_queue_idH, -max_elems, -1, function on_rangeH(errH, dataH) {
-        console.log("errH"+errH);
-        console.log("first elem"); console.dir(first_elem);
-        console.log("conditon !errH || first_elem[0]===full_queue_idH:"+(!errH || first_elem[0]===full_queue_idH));
+        console.log("errH" + errH);
+        console.log("first elem");
+        console.dir(first_elem);
+        console.log("conditon !errH || first_elem[0]===full_queue_idH:" + (!errH || first_elem[0] === full_queue_idH));
         if (errH && !first_elem) {//errH
             manage_error(errH, callback);
 
-        } else if (!errH || first_elem[0]===full_queue_idH) {  //buggy indexes beware
-            var k=-1;
-            if (first_elem[0]===full_queue_idH){
+        } else if (!errH || first_elem[0] === full_queue_idH) {  //buggy indexes beware
+            var k = -1;
+            if (first_elem[0] === full_queue_idH) {
                 dataH = [first_elem[1]].concat(dataH);
-                k= 0;
+                k = 0;
             }
             //forget about first elem priority (-2)
             db.ltrim(full_queue_idH, 0, -dataH.length - k, function on_trimH(err) {
@@ -114,21 +115,21 @@ var pop_notification = function (db, queue, max_elems, callback, first_elem) {
                 var rest_elems = max_elems - dataH.length;
                 //Extract from both queues
                 db.lrange(full_queue_idL, -rest_elems, -1, function on_rangeL(errL, dataL) {
-                    if (errL && first_elem[0]!==full_queue_idL) {
+                    if (errL && first_elem[0] !== full_queue_idL) {
                         //fail but we may have data of previous range
-                        if(dataH){
+                        if (dataH) {
                             //if there is dataH dismiss the low priority error
                             get_pop_data(dataH, callback, queue);
                         }
-                        else{
+                        else {
                             manage_error(errL, callback);
                         }
                     }
-                    else if(!errL || first_elem[0]===full_queue_idL){
-                        var k=-1;
-                        if (first_elem[0]===full_queue_idL){
+                    else if (!errL || first_elem[0] === full_queue_idL) {
+                        var k = -1;
+                        if (first_elem[0] === full_queue_idL) {
                             dataL = [first_elem[1]].concat(dataL);
-                            k= 0;
+                            k = 0;
                         }
                         db.ltrim(full_queue_idL, 0, -dataL.length - k, function on_trimL(err) {
                             //the trim fails!! duplicates warning!!
@@ -168,36 +169,36 @@ var blocking_pop = function (queue, max_elems, blocking_time, callback) {
             // the value of the popped element.
 
             //if data == null => timeout || empty queue --> nothing to do
-            if (!data){
+            if (!data) {
                 db_cluster.free(db);
                 if (callback) {
                     callback(null, null);
                 }
             }
-            else{
+            else {
                 //we got one elem -> need to check the rest
                 var first_elem = data;
 
-                if (max_elems>1){
-                pop_notification(db, queue, max_elems-1, function onPop(err, clean_data){
-                    db_cluster.free(db);                    //add free() when pool
-                    if(err){
-                        if (callback){
-                            err.data=true; //flag for err+data
-                            callback(err, first_elem); //something weird
+                if (max_elems > 1) {
+                    pop_notification(db, queue, max_elems - 1, function onPop(err, clean_data) {
+                        db_cluster.free(db);                    //add free() when pool
+                        if (err) {
+                            if (callback) {
+                                err.data = true; //flag for err+data
+                                callback(err, first_elem); //something weird
+                            }
                         }
-                    }
-                    else{
-                        if(callback){
-                            callback(null, clean_data);
+                        else {
+                            if (callback) {
+                                callback(null, clean_data);
+                            }
                         }
-                    }
-                }, first_elem); //last optional param
+                    }, first_elem); //last optional param
                 }
-                else{
+                else {
                     db_cluster.free(db);
 
-                   //just first_elem
+                    //just first_elem
                     get_pop_data([first_elem[1]], callback, queue);
                 }
             }
@@ -251,7 +252,7 @@ function retrieve_data(queue, transaction_list, callback) {
 function check_data(queue, dbTr, transaction_id) {
     "use strict";
     return function (callback) {
-        var ev= {};
+        var ev = {};
         var ext_transaction_id = transaction_id.split('|')[1];
         dbTr.hgetall(transaction_id + ':meta', function on_data(err, data) {
             if (err) {
@@ -264,9 +265,9 @@ function check_data(queue, dbTr, transaction_id) {
 
                     ev = {
                         'transaction':ext_transaction_id,
-                        'queue': queue.id,
-                        'state': 'Delivered',
-                        'timestamp': new Date()
+                        'queue':queue.id,
+                        'state':'Delivered',
+                        'timestamp':new Date()
                     };
                     emitter.emit('NEWSTATE', ev);
                 }
@@ -275,9 +276,9 @@ function check_data(queue, dbTr, transaction_id) {
                     //EMIT Expired
                     ev = {
                         'transaction':ext_transaction_id,
-                        'queue': queue.id,
-                        'state': 'Expired',
-                        'timestamp': new Date()
+                        'queue':queue.id,
+                        'state':'Expired',
+                        'timestamp':new Date()
                     };
                     emitter.emit('NEWSTATE', ev);
                 }
@@ -363,12 +364,13 @@ var get_transaction = function (ext_transaction_id, state, summary, callback) {
     }
 };
 
-var queue_size = function(queue, callback){
+var queue_size = function (queue, callback) {
     'use strict';
     var queue_id = queue.id;
     var db = db_cluster.get_db(queue_id);
-    db.llen(queue_id, function onLength(err, length){
-        if (callback){
+    db.llen(queue_id, function onLength(err, length) {
+        db_cluster.free(db);
+        if (callback) {
             callback(err, length);
         }
     });
