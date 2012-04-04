@@ -47,21 +47,35 @@ app.get('/trans/:id_trans/:state?', function (req, res) {
     }
 });
 
+app.get('/queue/:id/size', function (req, res) {
+    "use strict";
+    var queue_id = req.param("id");
+    console.log("pidiendo size de %s", queue_id);
+
+    dataSrv.queue_size(queue_id, function (err, length) {
+        console.log("size de %s %j %j", queue_id, err, length);
+        if (err) {
+            res.send(String(err), 500);
+        }
+        else {
+            res.send(String(length));
+        }
+    });
+});
 
 app.get('/queue/:id', function (req, res) {
         "use strict";
-
         var queue_id = req.param("id");
         var max_msgs = req.param("max", config.max_messages);
         var t_out = req.param("timeout", config.pop_timeout);
 
         max_msgs = parseInt(max_msgs, 10);
-        if(isNaN(max_msgs)) {
+        if (isNaN(max_msgs)) {
             max_msgs = config.max_messages;
         }
 
         t_out = parseInt(t_out, 10);
-        if(isNaN(t_out)) {
+        if (isNaN(t_out)) {
             t_out = config.pop_timeout;
         }
 
@@ -72,10 +86,10 @@ app.get('/queue/:id', function (req, res) {
             var ev = {};
 
             if (err) {
-                ev =  {
+                ev = {
                     'queue':queue_id,
                     'max_msg':max_msgs,
-                    'action': 'USERPOP',
+                    'action':'USERPOP',
                     'timestamp':new Date(),
                     'error':err
                 };
@@ -92,8 +106,8 @@ app.get('/queue/:id', function (req, res) {
                 ev = {
                     'queue':queue_id,
                     'max_msg':max_msgs,
-                    'total_msg': message_list.length,
-                    'action': 'USERPOP',
+                    'total_msg':message_list.length,
+                    'action':'USERPOP',
                     'timestamp':new Date()
                 };
                 emitter.emit("ACTION", ev);
