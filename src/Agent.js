@@ -4,13 +4,13 @@
 //
 
 var express = require('express');
-
+var async = require('async');
 var config = require('./config.js').agent;
 var dataSrv = require('./DataSrv');
 var validate = require('./validate');
 var emitter = require('./emitter_module').get();
 var ev_lsnr = require('./ev_lsnr');
-ev_lsnr.init(emitter);
+var cb_lsnr = require('./ev_callback_lsnr');
 
 
 var app = express.createServer();
@@ -116,8 +116,11 @@ app.get('/queue/:id', function (req, res) {
         });
     }
 );
-
-app.listen(config.port);
+//Add subscribers
+async.paralle([ev_lsnr.init(emitter),cb_lsnr.init(emitter)], function onSubscribed(){
+    "use strict";
+    app.listen(config.port);
+});
 
 function insert(req, res, push, validate) {
     "use strict";
