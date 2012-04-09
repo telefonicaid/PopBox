@@ -19,6 +19,7 @@ function do_callback(data) {
     "use strict";
     if (data.callback) {
         var options = url.parse(data.callback);
+        options.method = 'POST';
         var cb_req = http.request(options);  //FIRE AND FORGET
         var str_data = JSON.stringify(data);
         cb_req.on('error', function foo(err) {
