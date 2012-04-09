@@ -28,3 +28,5 @@ function do_callback(data) {
         cb_req.end();
     }
 }
+
+exports.init = init;
