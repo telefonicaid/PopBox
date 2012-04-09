@@ -267,6 +267,7 @@ function check_data(queue, dbTr, transaction_id) {
                         'transaction':ext_transaction_id,
                         'queue':queue.id,
                         'state':'Delivered',
+                        'callback': data.callback,
                         'timestamp':new Date()
                     };
                     emitter.emit('NEWSTATE', ev);
