@@ -10,8 +10,9 @@ var config = require('./config').ev_lsnr;
 
 var clients = [];
 
-function init(emitter, callback) {
+function init(emitter) {
     "use strict";
+    return function (callback){
     var client = new mongodb.Db(config.mongo_db, new mongodb.Server(config.mongo_host, config.mongo_port, {}));
     client.open(function (err, p_client) {
         client.collection(config.collection, function (err, c) {
@@ -49,6 +50,7 @@ function init(emitter, callback) {
         });
     });
     clients.push(client);
+    };
 }
 
 exports.init = init;
