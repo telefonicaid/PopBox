@@ -117,7 +117,7 @@ app.get('/queue/:id', function (req, res) {
     }
 );
 //Add subscribers
-async.paralle([ev_lsnr.init(emitter),cb_lsnr.init(emitter)], function onSubscribed(){
+async.parallel([ev_lsnr.init(emitter),cb_lsnr.init(emitter)], function onSubscribed(){
     "use strict";
     app.listen(config.port);
 });
