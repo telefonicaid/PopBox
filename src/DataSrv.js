@@ -32,24 +32,24 @@ var pushTransaction = function(provision, callback) {
   }
 
   async.series(processBatch,
-    function pushEnd(err) {   //parallel execution may apply also
-      //MAIN Exit point
-      if (err) {
-        manageError(err, callback);
-      } else {
-        if (callback) {
-          callback(null, extTransactionId);
-        }
-      }
-    });
+               function pushEnd(err) {   //parallel execution may apply also
+                 //MAIN Exit point
+                 if (err) {
+                   manageError(err, callback);
+                 } else {
+                   if (callback) {
+                     callback(null, extTransactionId);
+                   }
+                 }
+               });
 
   function processOneId(db, dbTr, transactionId, queue, priority) {
     return function processOneIdAsync(callback) {
       async.parallel([
-        helper.push_parallel(db, queue, priority, transactionId),
-        helper.hset_hash_parallel(dbTr, queue, transactionId, ':state',
-          'Pending')
-      ], function parallel_end(err) {
+                       helper.push_parallel(db, queue, priority, transactionId),
+                       helper.hset_hash_parallel(dbTr, queue, transactionId,
+                                                 ':state', 'Pending')
+                     ], function parallel_end(err) {
         var ev = null;
         dbCluster.free(db);
         if (err) {
@@ -65,12 +65,12 @@ var pushTransaction = function(provision, callback) {
           emitter.emit('NEWSTATE', ev);
           //set expiration time for state collections (not the queue)
           helper.set_expiration_date(dbTr, transactionId + ':state', provision,
-            function expiration_date_end(err) {
-              //Everything kept or error
-              if (callback) {
-                callback(err);
-              }
-            });
+                                     function expiration_date_end(err) {
+                                       //Everything kept or error
+                                       if (callback) {
+                                         callback(err);
+                                       }
+                                     });
         }
       });
     };
@@ -93,7 +93,7 @@ var popNotification = function(db, queue, maxElems, callback, firstElem) {
     console.log('first elem');
     console.dir(firstElem);
     console.log('conditon !errH || firstElem[0]===full_queue_idH:' +
-      (!errH || firstElem[0] === fullQueueIdH));
+                  (!errH || firstElem[0] === fullQueueIdH));
     if (errH && !firstElem) {//errH
       manageError(errH, callback);
 
@@ -114,35 +114,35 @@ var popNotification = function(db, queue, maxElems, callback, firstElem) {
           restElems = maxElems - dataH.length;
           //Extract from both queues
           db.lrange(fullQueueIdL, -restElems, -1,
-            function on_rangeL(errL, dataL) {
-              if (errL && firstElem[0] !== fullQueueIdL) {
-                //fail but we may have data of previous range
-                if (dataH) {
-                  //if there is dataH dismiss the low priority error
-                  getPopData(dataH, callback, queue);
-                } else {
-                  manageError(errL, callback);
-                }
-              } else {
-                if (!errL || firstElem[0] === fullQueueIdL) {
-                  var k = -1;
-                  if (firstElem[0] === fullQueueIdL) {
-                    dataL = [
-                      firstElem[1]
-                    ].concat(dataL);
-                    k = 0;
-                  }
-                  db.ltrim(fullQueueIdL, 0, -dataL.length - k,
-                    function on_trimL(err) {
-                      //the trim fails!! duplicates warning!!
+                    function on_rangeL(errL, dataL) {
+                      if (errL && firstElem[0] !== fullQueueIdL) {
+                        //fail but we may have data of previous range
+                        if (dataH) {
+                          //if there is dataH dismiss the low priority error
+                          getPopData(dataH, callback, queue);
+                        } else {
+                          manageError(errL, callback);
+                        }
+                      } else {
+                        if (!errL || firstElem[0] === fullQueueIdL) {
+                          var k = -1;
+                          if (firstElem[0] === fullQueueIdL) {
+                            dataL = [
+                              firstElem[1]
+                            ].concat(dataL);
+                            k = 0;
+                          }
+                          db.ltrim(fullQueueIdL, 0, -dataL.length - k,
+                                   function on_trimL(err) {
+                                     //the trim fails!! duplicates warning!!
+                                   });
+                          if (dataL) {
+                            dataH = dataL.concat(dataH);
+                          }
+                          getPopData(dataH, callback, queue);
+                        }
+                      }
                     });
-                  if (dataL) {
-                    dataH = dataL.concat(dataH);
-                  }
-                  getPopData(dataH, callback, queue);
-                }
-              }
-            });
         } else {
           //just one queue used
           getPopData(dataH, callback, queue);
@@ -155,56 +155,56 @@ var popNotification = function(db, queue, maxElems, callback, firstElem) {
 
 var blockingPop = function(queue, maxElems, blockingTime, callback) {
   'use strict';
-  var queueId = queue.id,
-    db = dbCluster.getDb(queueId),
-    fullQueueIdH = config.db_key_queue_prefix + 'H:' + queue.id,
-    fullQueueIdL = config.db_key_queue_prefix + 'L:' + queue.id,
+  var queueId = queue.id, //
+    db = dbCluster.getDb(queueId), //
+    fullQueueIdH = config.db_key_queue_prefix + 'H:' + queue.id, //
+    fullQueueIdL = config.db_key_queue_prefix + 'L:' + queue.id, //
     firstElem = null;
   //Do the blocking part (over the two lists)
   db.brpop(fullQueueIdH, fullQueueIdL, blockingTime,
-    function onPopData(err, data) {
-      if (err) {
-        dbCluster.free(db);
-        manageError(err, callback);
+           function onPopData(err, data) {
+             if (err) {
+               dbCluster.free(db);
+               manageError(err, callback);
 
-      } else {
-        //data:: A two-element multi-bulk with the first element being the name
-        // of the key where an element was popped and the second element being
-        // the value of the popped element.
-        //if data == null => timeout || empty queue --> nothing to do
-        if (!data) {
-          dbCluster.free(db);
-          if (callback) {
-            callback(null, null);
-          }
-        } else {
-          //we got one elem -> need to check the rest
-          firstElem = data;
-          if (maxElems > 1) {
-            popNotification(db, queue, maxElems - 1,
-              function onPop(err, clean_data) {
-                dbCluster.free(db);                    //add free() when pool
-                if (err) {
-                  if (callback) {
-                    err.data = true; //flag for err+data
-                    callback(err, firstElem); //something weird
-                  }
-                } else {
-                  if (callback) {
-                    callback(null, clean_data);
-                  }
-                }
-              }, firstElem); //last optional param
-          } else {
-            dbCluster.free(db);
-            //just first_elem
-            getPopData([
-              firstElem[1]
-            ], callback, queue);
-          }
-        }
-      }
-    });
+             } else {
+       //data:: A two-element multi-bulk with the first element being the name
+       // of the key where an element was popped and the second element being
+       // the value of the popped element.
+       //if data == null => timeout || empty queue --> nothing to do
+               if (!data) {
+                 dbCluster.free(db);
+                 if (callback) {
+                   callback(null, null);
+                 }
+               } else {
+                 //we got one elem -> need to check the rest
+                 firstElem = data;
+                 if (maxElems > 1) {
+                   popNotification(db, queue, maxElems - 1,
+                                   function onPop(err, clean_data) {
+                                     dbCluster.free(db); //add free() when pool
+                                     if (err) {
+                                       if (callback) {
+                                         err.data = true; //flag for err+data
+                                         callback(err, firstElem); //weird
+                                       }
+                                     } else {
+                                       if (callback) {
+                                         callback(null, clean_data);
+                                       }
+                                     }
+                                   }, firstElem); //last optional param
+                 } else {
+                   dbCluster.free(db);
+                   //just first_elem
+                   getPopData([
+                                firstElem[1]
+                              ], callback, queue);
+                 }
+               }
+             }
+           });
 };
 
 function getPopData(dataH, callback, queue) {
@@ -224,11 +224,10 @@ function getPopData(dataH, callback, queue) {
         transactionId = elem.transactionId;
         dbTr = dbCluster.getTransactionDb(transactionId);
         return helper.hset_hash_parallel(dbTr, queue, transactionId, ':state',
-          'Delivered');
+                                         'Delivered');
 
       });
       async.parallel(newStateBatch, function newStateAsyncEnd(err) {
-
         if (callback) {
           callback(err, cleanData);
         }
@@ -247,11 +246,11 @@ function retrieveData(queue, transactionList, callback) {
       return checkData(queue, dbTr, transaction);
     });
   async.parallel(ghostBusterBatch,
-    function retrieveDataAsyncEnd(err, foundMetadata) {
-      if (callback) {
-        callback(err, foundMetadata);
-      }
-    });
+                 function retrieveDataAsyncEnd(err, foundMetadata) {
+                   if (callback) {
+                     callback(err, foundMetadata);
+                   }
+                 });
 }
 
 function checkData(queue, dbTr, transactionId) {
@@ -296,10 +295,10 @@ function checkData(queue, dbTr, transactionId) {
 
 var getTransaction = function(extTransactionId, state, summary, callback) {
   'use strict';
-  var err = null,
-    dbTr = null,
-    transactionId = null,
-    processTransactionData = null,
+  var err = null, //
+    dbTr = null, //
+    transactionId = null, //
+    processTransactionData = null, //
     processedData = null;
 
   //check params
