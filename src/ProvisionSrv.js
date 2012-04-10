@@ -25,7 +25,7 @@ app.use(express.bodyParser());
 
 app.post('/trans', function (req, res) {
     "use strict";
-    insert(req, res, dataSrv.push_transaction, validate.errors_trans);
+    insert(req, res, dataSrv.pushTransaction, validate.errors_trans);
 });
 
 app.get('/trans/:id_trans/:state?', function (req, res) {
@@ -38,7 +38,7 @@ app.get('/trans/:id_trans/:state?', function (req, res) {
         state = 'All';
     }
     if (id) {
-        dataSrv.get_transaction(id, state, summary, function (e, data) {
+        dataSrv.getTransaction(id, state, summary, function (e, data) {
             if (e) {
                 res.send({errors:[e]}, 400);
             }

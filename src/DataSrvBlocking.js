@@ -14,7 +14,7 @@ var helper = require('./DataHelper.js');
 var blocking_pop = function (external_id, blocking_time, callback) {
     'use strict';
     var queue_id = config.db_key_blocking_queue_prefix + external_id;
-    var db = db_cluster.get_db(external_id);
+    var db = db_cluster.getDb(external_id);
     db.brpop(queue_id, blocking_time, function on_pop_data(err, data) {
         if (err) {
             manage_error(err, callback);
@@ -37,7 +37,7 @@ var blocking_push = function (provision, callback) {
     var external_id = provision.queue[0].id;
     var queue_id = config.db_key_blocking_queue_prefix + external_id;
     //we just need to do a push
-    var db = db_cluster.get_db(external_id);
+    var db = db_cluster.getDb(external_id);
     db.lpush(queue_id, provision.payload, function on_push_data(err) {
         //set expire
         if (err) {
@@ -56,7 +56,7 @@ var blocking_push = function (provision, callback) {
 
 //exports
 
-exports.blocking_pop = blocking_pop;
+exports.blockingPop = blocking_pop;
 exports.blocking_push = blocking_push;
 
 //aux

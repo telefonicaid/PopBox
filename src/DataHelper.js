@@ -40,7 +40,7 @@ var hset_hash_parallel = function (dbTr, queue, transaction_id, sufix, datastr) 
     };
 };
 
-var hset_meta_hash_parallel = function (dbTr, transaction_id, sufix, provision) {
+var hsetMetaHashParallel = function (dbTr, transaction_id, sufix, provision) {
     'use strict';
     return function (callback) {
         var meta = {
@@ -105,6 +105,6 @@ var set_expiration_date = function (dbTr, key, provision, callback) {
 //export area
 exports.push_parallel = push_parallel;
 exports.hset_hash_parallel = hset_hash_parallel;
-exports.hset_meta_hash_parallel = hset_meta_hash_parallel;
+exports.hset_meta_hash_parallel = hsetMetaHashParallel;
 exports.get_notifications = get_notifications; //non impl
 exports.set_expiration_date = set_expiration_date;

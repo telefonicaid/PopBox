@@ -6,7 +6,7 @@
 exports.redis_server = 'Relay1';
 exports.selected_db = 0; //0..15 for   0 ->pre-production 1->test
 exports.db_key_queue_prefix = 'PB:Q|';
-exports.db_key_trans_prefix = 'PB:T|';
+exports.dbKeyTransPrefix = 'PB:T|';
 exports.db_key_blocking_queue_prefix = 'PB:B|';
 
 exports.consumer = {};

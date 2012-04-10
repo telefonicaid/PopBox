@@ -32,7 +32,7 @@ app.get('/queue/:id', function (req, res) {
 
         console.log("Blocking: %s,%s,%s",queue_id, max_msgs, t_out);
 
-        dataSrv.blocking_pop({id:queue_id}, max_msgs, t_out, function (err, notif_list) {
+        dataSrv.blockingPop({id:queue_id}, max_msgs, t_out, function (err, notif_list) {
             var message_list = null;
             var ev = {};
 

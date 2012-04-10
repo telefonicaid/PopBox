@@ -20,7 +20,7 @@ app.use(express.bodyParser());
 
 app.post('/trans', function (req, res) {
     "use strict";
-    insert(req, res, dataSrv.push_transaction, validate.errors_trans);
+    insert(req, res, dataSrv.pushTransaction, validate.errors_trans);
 });
 
 app.get('/trans/:id_trans/:state?', function (req, res) {
@@ -33,7 +33,7 @@ app.get('/trans/:id_trans/:state?', function (req, res) {
         state = 'All';
     }
     if (id) {
-        dataSrv.get_transaction(id, state, summary, function (e, data) {
+        dataSrv.getTransaction(id, state, summary, function (e, data) {
             if (e) {
                 res.send({errors:[e]}, 400);
             }
@@ -52,7 +52,7 @@ app.get('/queue/:id/size', function (req, res) {
     var queue_id = req.param("id");
     console.log("pidiendo size de %s", queue_id);
 
-    dataSrv.queue_size(queue_id, function (err, length) {
+    dataSrv.queueSize(queue_id, function (err, length) {
         console.log("size de %s %j %j", queue_id, err, length);
         if (err) {
             res.send(String(err), 500);
@@ -81,7 +81,7 @@ app.get('/queue/:id', function (req, res) {
 
         console.log("Blocking: %s,%s,%s", queue_id, max_msgs, t_out);
 
-        dataSrv.blocking_pop({id:queue_id}, max_msgs, t_out, function (err, notif_list) {
+        dataSrv.blockingPop({id:queue_id}, max_msgs, t_out, function (err, notif_list) {
             var message_list = [];
             var ev = {};
 
