@@ -11,7 +11,7 @@ var helper = require('./DataHelper.js');
 
 //Private methods
 
-var blocking_pop = function (external_id, blocking_time, callback) {
+var blocking_pop = function(external_id, blocking_time, callback) {
     'use strict';
     var queue_id = config.db_key_blocking_queue_prefix + external_id;
     var db = db_cluster.getDb(external_id);
@@ -32,7 +32,7 @@ var blocking_pop = function (external_id, blocking_time, callback) {
 
 };
 
-var blocking_push = function (provision, callback) {
+var blocking_push = function(provision, callback) {
     'use strict';
     var external_id = provision.queue[0].id;
     var queue_id = config.db_key_blocking_queue_prefix + external_id;

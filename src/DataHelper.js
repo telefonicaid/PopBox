@@ -6,11 +6,11 @@
 //Require Area
 var config = require('./config.js');
 
-var push_parallel = function (db, queue, priority, transaction_id) {
+var push_parallel = function(db, queue, priority, transaction_id) {
     'use strict';
-    return function (callback) {
+    return function(callback) {
         var full_queue_id = config.db_key_queue_prefix + priority + queue.id;
-        db.lpush(full_queue_id, transaction_id, function (err) {
+        db.lpush(full_queue_id, transaction_id, function(err) {
             if (err) {
                 //error pushing
                 console.dir(err);
@@ -23,11 +23,11 @@ var push_parallel = function (db, queue, priority, transaction_id) {
     };
 };
 
-var hset_hash_parallel = function (dbTr, queue, transaction_id, sufix, datastr) {
+var hset_hash_parallel = function(dbTr, queue, transaction_id, sufix, datastr) {
     'use strict';
-    return function (callback) {
+    return function(callback) {
 
-        dbTr.hmset(transaction_id + sufix, queue.id, datastr, function (err) {
+        dbTr.hmset(transaction_id + sufix, queue.id, datastr, function(err) {
             if (err) {
                 //error pushing
                 console.dir(err);
@@ -40,23 +40,23 @@ var hset_hash_parallel = function (dbTr, queue, transaction_id, sufix, datastr) 
     };
 };
 
-var hsetMetaHashParallel = function (dbTr, transaction_id, sufix, provision) {
+var hsetMetaHashParallel = function(dbTr, transaction_id, sufix, provision) {
     'use strict';
-    return function (callback) {
+    return function(callback) {
         var meta = {
-            'payload':provision.payload,
-            'priority':provision.priority,
-            'callback':provision.callback,
-            'expirationDate':provision.expirationDate
+            'payload': provision.payload,
+            'priority': provision.priority,
+            'callback': provision.callback,
+            'expirationDate': provision.expirationDate
         };
-        dbTr.hmset(transaction_id + sufix, meta, function (err) {
+        dbTr.hmset(transaction_id + sufix, meta, function(err) {
             if (err) {
                 //error pushing
                 console.dir(err);
             }
             else {
                 //pushing ok
-                set_expiration_date(dbTr, transaction_id + sufix, provision, function (err) {
+                set_expiration_date(dbTr, transaction_id + sufix, provision, function(err) {
                     if (callback) {
                         callback(err);
                     }
@@ -67,15 +67,15 @@ var hsetMetaHashParallel = function (dbTr, transaction_id, sufix, provision) {
     };
 };
 
-var get_notifications = function (dbTr, clean_data, callback) {
+var get_notifications = function(dbTr, clean_data, callback) {
     //look for messages
 
 };
 
-var set_expiration_date = function (dbTr, key, provision, callback) {
+var set_expiration_date = function(dbTr, key, provision, callback) {
     'use strict';
     if (provision.expirationDate) {
-        dbTr.expireat(key, provision.expirationDate, function (err) {
+        dbTr.expireat(key, provision.expirationDate, function(err) {
             if (err) {
                 //error setting expiration date
                 console.dir(err);
@@ -89,7 +89,7 @@ var set_expiration_date = function (dbTr, key, provision, callback) {
     else {
         var expirationDelay = provision.expirationDelay || 3600; //1 hour default
 
-        dbTr.expire(key, expirationDelay, function (err) {
+        dbTr.expire(key, expirationDelay, function(err) {
             if (err) {
                 //error setting expiration date
                 console.dir(err);

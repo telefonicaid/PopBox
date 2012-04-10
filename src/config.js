@@ -18,10 +18,10 @@ exports.provision = {};
 exports.provision.port = 3000;
 
 exports.ev_lsnr = {};
-exports.ev_lsnr.mongo_host = "tac01";
+exports.ev_lsnr.mongo_host = 'tac01';
 exports.ev_lsnr.mongo_port = 27017;
-exports.ev_lsnr.mongo_db =  'popbox';
-exports.ev_lsnr.collection= 'popbox_ev';
+exports.ev_lsnr.mongo_db = 'popbox';
+exports.ev_lsnr.collection = 'popbox_ev';
 
 
 exports.agent = {};

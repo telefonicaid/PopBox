@@ -18,13 +18,13 @@ var app = express.createServer();
 app.use(express.query());
 app.use(express.bodyParser());
 
-app.post('/trans', function (req, res) {
-    "use strict";
+app.post('/trans', function(req, res) {
+    'use strict';
     insert(req, res, dataSrv.pushTransaction, validate.errors_trans);
 });
 
-app.get('/trans/:id_trans/:state?', function (req, res) {
-    "use strict";
+app.get('/trans/:id_trans/:state?', function(req, res) {
+    'use strict';
     var id = req.param('id_trans', null);
     var state = req.param('state', 'All');
     var summary;
@@ -33,9 +33,9 @@ app.get('/trans/:id_trans/:state?', function (req, res) {
         state = 'All';
     }
     if (id) {
-        dataSrv.getTransaction(id, state, summary, function (e, data) {
+        dataSrv.getTransaction(id, state, summary, function(e, data) {
             if (e) {
-                res.send({errors:[e]}, 400);
+                res.send({errors: [e]}, 400);
             }
             else {
                 res.send(data);
@@ -43,17 +43,17 @@ app.get('/trans/:id_trans/:state?', function (req, res) {
         });
     }
     else {
-        res.send({errors:["missing id"]}, 400);
+        res.send({errors: ['missing id']}, 400);
     }
 });
 
-app.get('/queue/:id/size', function (req, res) {
-    "use strict";
-    var queue_id = req.param("id");
-    console.log("pidiendo size de %s", queue_id);
+app.get('/queue/:id/size', function(req, res) {
+    'use strict';
+    var queue_id = req.param('id');
+    console.log('pidiendo size de %s', queue_id);
 
-    dataSrv.queueSize(queue_id, function (err, length) {
-        console.log("size de %s %j %j", queue_id, err, length);
+    dataSrv.queueSize(queue_id, function(err, length) {
+        console.log('size de %s %j %j', queue_id, err, length);
         if (err) {
             res.send(String(err), 500);
         }
@@ -63,11 +63,11 @@ app.get('/queue/:id/size', function (req, res) {
     });
 });
 
-app.get('/queue/:id', function (req, res) {
-        "use strict";
-        var queue_id = req.param("id");
-        var max_msgs = req.param("max", config.max_messages);
-        var t_out = req.param("timeout", config.pop_timeout);
+app.get('/queue/:id', function(req, res) {
+        'use strict';
+        var queue_id = req.param('id');
+        var max_msgs = req.param('max', config.max_messages);
+        var t_out = req.param('timeout', config.pop_timeout);
 
         max_msgs = parseInt(max_msgs, 10);
         if (isNaN(max_msgs)) {
@@ -79,51 +79,51 @@ app.get('/queue/:id', function (req, res) {
             t_out = config.pop_timeout;
         }
 
-        console.log("Blocking: %s,%s,%s", queue_id, max_msgs, t_out);
+        console.log('Blocking: %s,%s,%s', queue_id, max_msgs, t_out);
 
-        dataSrv.blockingPop({id:queue_id}, max_msgs, t_out, function (err, notif_list) {
+        dataSrv.blockingPop({id: queue_id}, max_msgs, t_out, function(err, notif_list) {
             var message_list = [];
             var ev = {};
 
             if (err) {
                 ev = {
-                    'queue':queue_id,
-                    'max_msg':max_msgs,
-                    'action':'USERPOP',
-                    'timestamp':new Date(),
-                    'error':err
+                    'queue': queue_id,
+                    'max_msg': max_msgs,
+                    'action': 'USERPOP',
+                    'timestamp': new Date(),
+                    'error': err
                 };
-                emitter.emit("ACTION", ev);
+                emitter.emit('ACTION', ev);
                 res.send(String(err), 500);
             }
             else {
                 console.log(notif_list);
                 if (notif_list) {
-                    message_list = notif_list.map(function (notif) {
+                    message_list = notif_list.map(function(notif) {
                         return notif.payload;
                     });
                 }
                 ev = {
-                    'queue':queue_id,
-                    'max_msg':max_msgs,
-                    'total_msg':message_list.length,
-                    'action':'USERPOP',
-                    'timestamp':new Date()
+                    'queue': queue_id,
+                    'max_msg': max_msgs,
+                    'total_msg': message_list.length,
+                    'action': 'USERPOP',
+                    'timestamp': new Date()
                 };
-                emitter.emit("ACTION", ev);
+                emitter.emit('ACTION', ev);
                 res.send(message_list);
             }
         });
     }
 );
 //Add subscribers
-async.parallel([ev_lsnr.init(emitter),cb_lsnr.init(emitter)], function onSubscribed(){
-    "use strict";
+async.parallel([ev_lsnr.init(emitter), cb_lsnr.init(emitter)], function onSubscribed() {
+    'use strict';
     app.listen(config.port);
 });
 
 function insert(req, res, push, validate) {
-    "use strict";
+    'use strict';
     console.log(req.body);
 
     var errors = validate(req.body);
@@ -131,37 +131,37 @@ function insert(req, res, push, validate) {
 
 
     if (errors.length === 0) {
-        push(req.body, function (err, trans_id) {
+        push(req.body, function(err, trans_id) {
             if (err) {
                 ev = {
-                    'transaction':trans_id,
-                    'postdata':req.body,
-                    'action':'USERPUSH',
-                    'timestamp':new Date(),
-                    'error':err
+                    'transaction': trans_id,
+                    'postdata': req.body,
+                    'action': 'USERPUSH',
+                    'timestamp': new Date(),
+                    'error': err
                 };
-                emitter.emit("ACTION", ev);
+                emitter.emit('ACTION', ev);
 
-                res.send({error:[err]}, 500);
+                res.send({error: [err]}, 500);
             }
             else {
                 ev = {
-                    'transaction':trans_id,
-                    'postdata':req.body,
-                    'action':'USERPUSH',
-                    'timestamp':new Date()
+                    'transaction': trans_id,
+                    'postdata': req.body,
+                    'action': 'USERPUSH',
+                    'timestamp': new Date()
                 };
-                emitter.emit("ACTION", ev);
-                res.send({id:trans_id});
+                emitter.emit('ACTION', ev);
+                res.send({id: trans_id});
             }
         });
     }
     else {
-        res.send({error:errors}, 400);
+        res.send({error: errors}, 400);
     }
 }
 
-process.on('uncaughtException', function (err) {
-    "use strict";
-    console.log("PROCESS %s", err);
+process.on('uncaughtException', function(err) {
+    'use strict';
+    console.log('PROCESS %s', err);
 });

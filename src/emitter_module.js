@@ -6,13 +6,13 @@
 var events = require('events');
 
 var eventEmitter = new events.EventEmitter();
-eventEmitter.on("NEWSTATE", function newstate(data) {
-    console.log("eNEW STATE ARRIVED");
+eventEmitter.on('NEWSTATE', function newstate(data) {
+    console.log('eNEW STATE ARRIVED');
     console.dir(data);
 });
 
-eventEmitter.on("ACTION", function newstate(data) {
-    console.log("eNEW ACTION ARRIVED");
+eventEmitter.on('ACTION', function newstate(data) {
+    console.log('eNEW ACTION ARRIVED');
     console.dir(data);
 });
 function get() {
