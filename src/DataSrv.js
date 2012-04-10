@@ -77,11 +77,15 @@ var pushTransaction = function(provision, callback) {
   }
 };
 
-var popNotification = function(db, queue, maxElems, callback, firstElem) {
+/**
+ * @param {Object} db Valid REDIS client.
+ * @param {Object} queue Object representing a queue, queue.id must be present.
+ * @param {number} maxElems maximun number of elements to be extracted.
+ * @param {function(Object, Array.Object)} callback takes (err, poppedData).
+ * @param {Object} firstElem  First popped elem (brpop).
+ */
+var popNotification = function(db, queue, maxElems, callback, opt_firstElem) {
   'use strict';
-  //client asks for queu box
-  //var db = db_cluster.get_db(queue.id); //get the db from cluster
-
   //pop the queu  (LRANGE)
   //hight priority first
   var fullQueueIdH = config.db_key_queue_prefix + 'H:' +
@@ -89,20 +93,15 @@ var popNotification = function(db, queue, maxElems, callback, firstElem) {
     queue.id, restElems = 0;
 
   db.lrange(fullQueueIdH, -maxElems, -1, function onRangeH(errH, dataH) {
-    console.log('errH' + errH);
-    console.log('first elem');
-    console.dir(firstElem);
-    console.log('conditon !errH || firstElem[0]===full_queue_idH:' +
-                  (!errH || firstElem[0] === fullQueueIdH));
-    if (errH && !firstElem) {//errH
+    if (errH && !opt_firstElem) {//errH
       manageError(errH, callback);
 
     } else {
-      if (!errH || firstElem[0] === fullQueueIdH) {  //buggy indexes beware
+      if (!errH || opt_firstElem[0] === fullQueueIdH) {  //buggy indexes beware
         var k = -1;
-        if (firstElem[0] === fullQueueIdH) {
+        if (opt_firstElem[0] === fullQueueIdH) {
           dataH = [
-            firstElem[1]
+            opt_firstElem[1]
           ].concat(dataH);
           k = 0;
         }
@@ -115,7 +114,7 @@ var popNotification = function(db, queue, maxElems, callback, firstElem) {
           //Extract from both queues
           db.lrange(fullQueueIdL, -restElems, -1,
                     function on_rangeL(errL, dataL) {
-                      if (errL && firstElem[0] !== fullQueueIdL) {
+                      if (errL && opt_firstElem[0] !== fullQueueIdL) {
                         //fail but we may have data of previous range
                         if (dataH) {
                           //if there is dataH dismiss the low priority error
@@ -124,11 +123,11 @@ var popNotification = function(db, queue, maxElems, callback, firstElem) {
                           manageError(errL, callback);
                         }
                       } else {
-                        if (!errL || firstElem[0] === fullQueueIdL) {
+                        if (!errL || opt_firstElem[0] === fullQueueIdL) {
                           var k = -1;
-                          if (firstElem[0] === fullQueueIdL) {
+                          if (opt_firstElem[0] === fullQueueIdL) {
                             dataL = [
-                              firstElem[1]
+                              opt_firstElem[1]
                             ].concat(dataL);
                             k = 0;
                           }
@@ -370,8 +369,14 @@ var getTransaction = function(extTransactionId, state, summary, callback) {
   }
 };
 
+/**
+ *
+ * @param {PopBox.Provision} queue must contain an id.
+ * @param {function(Object, number)} callback takes (err, number).
+ */
 var queueSize = function(queue, callback) {
   'use strict';
+  queue.nohay = 0;
   var queueId = queue.id, db = dbCluster.getDb(queueId);
   db.llen(queueId, function onLength(err, length) {
     dbCluster.free(db);
@@ -383,46 +388,32 @@ var queueSize = function(queue, callback) {
 
 //Public Interface Area
 
-
 /**
- * @param {Object} provision MUST be a Valid JSON see Provision.json.
+ * @param {PopBox.Provision} provision MUST be a Valid JSON see Provision.json.
  * @param {function(Object, string)} callback takes (err, transactionId).
  */
 exports.pushTransaction = pushTransaction;
-
-
-/**
- * @param {Object} db Valid REDIS client.
- * @param {Object} queue Object representing a queue, queue.id must be present.
- * @param {number} maxElems maximun number of elements to be extracted.
- * @param {function(Object, Array.Object)} callback takes (err, poppedData).
- * @param {Object=} firstElem Optional param.
- */
-exports.popNotification = popNotification;
-
 
 /**
  *
  * @param {string} extTransactionId valid uuid.v1.
  * @param {string} state enum takes one of 'All', 'Pending', 'Delivered'.
- * @param {boolean=} summary true for summary, optional.
+ * @param {boolean} summary true for summary, optional.
  * @param {function(Object, Object)} callback takes (err, transactionInfo).
  */
 exports.getTransaction = getTransaction;
 
-
 /**
- * @param {Object} queue Object representing a queue, queue.id must be present.
+ * @param {PopBox.Queue} queue Object representing a queue, queue.id must be present.
  * @param {number} maxElems maximun number of elements to be extracted.
  * @param {number} blockingTime max time to be blocked, 0-forever.
  * @param {function(Object, Array.Object)} callback takes (err, poppedData).
  */
 exports.blockingPop = blockingPop;
 
-
 /**
  *
- * @param {Object} queue must contain an id.
+ * @param {PopBox.Queue} queue must contain an id.
  * @param {function(Object, number)} callback takes (err, number).
  */
 exports.queueSize = queueSize;
