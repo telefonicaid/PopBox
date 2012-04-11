@@ -3,32 +3,40 @@ var http = require('http');
 var url = require('url');
 
 var init = function(emitter) {
-    'use strict';
-    return function(callback) {
+  'use strict';
+  return function asyncInit(callback) {
     emitter.on('NEWSTATE', function(data) {
-        //Just act on delivered
-        if (data.state === 'Delivered') {
-            do_callback(data);
-        }
+      //Just act on delivered
+      if (data.state === 'Delivered') {
+        doCallback(data);
+      }
     });
-    callback && callback(null);
-};
+    if (callback) {
+      callback(null);
+    }
+  };
 };
 
-function do_callback(data) {
-    'use strict';
-    if (data.callback) {
-        var options = url.parse(data.callback);
-        options.headers = {'content-type': 'application/json'};
-        options.method = 'POST';
-        var cb_req = http.request(options);  //FIRE AND FORGET
-        var str_data = JSON.stringify(data);
-        cb_req.on('error', function foo(err) {
-            console.log('callback err::' + err);
-        });
-        cb_req.write(str_data);
-        cb_req.end();
-    }
+function doCallback(data) {
+  'use strict';
+  if (data.callback) {
+    var options = url.parse(data.callback);
+    options.headers = {'content-type': 'application/json'};
+    options.method = 'POST';
+    var cbReq = http.request(options);  //FIRE AND FORGET
+    var strData = JSON.stringify(data);
+    cbReq.on('error', function foo(err) {
+      console.log('callback err::' + err);
+    });
+    cbReq.write(strData);
+    cbReq.end();
+  }
 }
 
+//Public area
+/**
+ *
+ * @param {EventEmitter} emitter from event.js.
+ * @return {function(function)} asyncInit funtion ready for async.
+ */
 exports.init = init;

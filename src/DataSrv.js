@@ -8,7 +8,7 @@ var dbCluster = require('./DBCluster.js');
 var helper = require('./DataHelper.js');
 var uuid = require('node-uuid');
 var async = require('async');
-var emitter = require('./emitter_module').get();
+var emitter = require('./emitter_module').get_emitter();
 
 //Private methods Area
 var pushTransaction = function(provision, callback) {
@@ -46,9 +46,9 @@ var pushTransaction = function(provision, callback) {
   function processOneId(db, dbTr, transactionId, queue, priority) {
     return function processOneIdAsync(callback) {
       async.parallel([
-                       helper.push_parallel(db, queue, priority, transactionId),
-                       helper.hset_hash_parallel(dbTr, queue, transactionId,
-                                                 ':state', 'Pending')
+                       helper.pushParallel(db, queue, priority, transactionId),
+                       helper.hsetHashParallel(dbTr, queue, transactionId,
+                                               ':state', 'Pending')
                      ], function parallel_end(err) {
         var ev = null;
         dbCluster.free(db);
@@ -64,27 +64,21 @@ var pushTransaction = function(provision, callback) {
           };
           emitter.emit('NEWSTATE', ev);
           //set expiration time for state collections (not the queue)
-          helper.set_expiration_date(dbTr, transactionId + ':state', provision,
-                                     function expiration_date_end(err) {
-                                       //Everything kept or error
-                                       if (callback) {
-                                         callback(err);
-                                       }
-                                     });
+          helper.setExpirationDate(dbTr, transactionId + ':state', provision,
+                                   function expiration_date_end(err) {
+                                     //Everything kept or error
+                                     if (callback) {
+                                       callback(err);
+                                     }
+                                   });
         }
       });
     };
   }
 };
 
-/**
- * @param {Object} db Valid REDIS client.
- * @param {Object} queue Object representing a queue, queue.id must be present.
- * @param {number} maxElems maximun number of elements to be extracted.
- * @param {function(Object, Array.Object)} callback takes (err, poppedData).
- * @param {Object} firstElem  First popped elem (brpop).
- */
-var popNotification = function(db, queue, maxElems, callback, opt_firstElem) {
+
+var popNotification = function(db, queue, maxElems, callback, firstElem) {
   'use strict';
   //pop the queu  (LRANGE)
   //hight priority first
@@ -93,15 +87,15 @@ var popNotification = function(db, queue, maxElems, callback, opt_firstElem) {
     queue.id, restElems = 0;
 
   db.lrange(fullQueueIdH, -maxElems, -1, function onRangeH(errH, dataH) {
-    if (errH && !opt_firstElem) {//errH
+    if (errH && !firstElem) {//errH
       manageError(errH, callback);
 
     } else {
-      if (!errH || opt_firstElem[0] === fullQueueIdH) {  //buggy indexes beware
+      if (!errH || firstElem[0] === fullQueueIdH) {  //buggy indexes beware
         var k = -1;
-        if (opt_firstElem[0] === fullQueueIdH) {
+        if (firstElem[0] === fullQueueIdH) {
           dataH = [
-            opt_firstElem[1]
+            firstElem[1]
           ].concat(dataH);
           k = 0;
         }
@@ -114,7 +108,7 @@ var popNotification = function(db, queue, maxElems, callback, opt_firstElem) {
           //Extract from both queues
           db.lrange(fullQueueIdL, -restElems, -1,
                     function on_rangeL(errL, dataL) {
-                      if (errL && opt_firstElem[0] !== fullQueueIdL) {
+                      if (errL && firstElem[0] !== fullQueueIdL) {
                         //fail but we may have data of previous range
                         if (dataH) {
                           //if there is dataH dismiss the low priority error
@@ -123,11 +117,11 @@ var popNotification = function(db, queue, maxElems, callback, opt_firstElem) {
                           manageError(errL, callback);
                         }
                       } else {
-                        if (!errL || opt_firstElem[0] === fullQueueIdL) {
+                        if (!errL || firstElem[0] === fullQueueIdL) {
                           var k = -1;
-                          if (opt_firstElem[0] === fullQueueIdL) {
+                          if (firstElem[0] === fullQueueIdL) {
                             dataL = [
-                              opt_firstElem[1]
+                              firstElem[1]
                             ].concat(dataL);
                             k = 0;
                           }
@@ -167,10 +161,10 @@ var blockingPop = function(queue, maxElems, blockingTime, callback) {
                manageError(err, callback);
 
              } else {
-       //data:: A two-element multi-bulk with the first element being the name
-       // of the key where an element was popped and the second element being
-       // the value of the popped element.
-       //if data == null => timeout || empty queue --> nothing to do
+               //data:: A two-element multi-bulk with the first element being
+               // the name of the key where an element was popped and the second
+               // element being the value of the popped element.
+               //if data == null => timeout || empty queue --> nothing to do
                if (!data) {
                  dbCluster.free(db);
                  if (callback) {
@@ -222,8 +216,8 @@ function getPopData(dataH, callback, queue) {
       newStateBatch = cleanData.map(function prepareStateBatch(elem) {
         transactionId = elem.transactionId;
         dbTr = dbCluster.getTransactionDb(transactionId);
-        return helper.hset_hash_parallel(dbTr, queue, transactionId, ':state',
-                                         'Delivered');
+        return helper.hsetHashParallel(dbTr, queue, transactionId, ':state',
+                                       'Delivered');
 
       });
       async.parallel(newStateBatch, function newStateAsyncEnd(err) {
@@ -404,7 +398,7 @@ exports.pushTransaction = pushTransaction;
 exports.getTransaction = getTransaction;
 
 /**
- * @param {PopBox.Queue} queue Object representing a queue, queue.id must be present.
+ * @param {PopBox.Queue} queue Object representing a queue.
  * @param {number} maxElems maximun number of elements to be extracted.
  * @param {number} blockingTime max time to be blocked, 0-forever.
  * @param {function(Object, Array.Object)} callback takes (err, poppedData).

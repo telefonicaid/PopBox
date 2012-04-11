@@ -15,7 +15,7 @@ function id_ok(cb) {
         a.ifError(e);
         a.ok(d.id, 'id in response');
         a.ok(
-            validate.valid_trans_id(d.id),
+            validate.validTransId(d.id),
             'uuid format'); // uuid
         cb(null,d,res);
 

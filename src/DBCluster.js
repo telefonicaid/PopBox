@@ -5,27 +5,27 @@
 
 //clustering and database management (object)
 
-var redis_module = require('redis');
+var redisModule = require('redis');
 var config = require('./config.js');
 
-var rc = redis_module.createClient(redis_module.DEFAULT_PORT,
-                                   config.redis_server);
+var rc = redisModule.createClient(redisModule.DEFAULT_PORT,
+                                  config.redis_server);
 rc.select(config.selected_db);
 
-var getDb = function(queu_id) {
+var getDb = function(queueId) {
   'use strict';
-  var rc = redis_module.createClient(redis_module.DEFAULT_PORT,
-                                     config.redis_server);
+  var rc = redisModule.createClient(redisModule.DEFAULT_PORT,
+                                    config.redis_server);
   rc.select(config.selected_db);
   //returns a client from a cluster
   return rc;
 };
 
-var getTransactionDb = function(transaction_id) {
+var getTransactionDb = function(transactionId) {
   'use strict';
   if (!rc || !rc.connected) {
     rc =
-      redis_module.createClient(redis_module.DEFAULT_PORT, config.redis_server);
+      redisModule.createClient(redisModule.DEFAULT_PORT, config.redis_server);
   }
   //return a client for transactions
   return rc;
@@ -41,19 +41,19 @@ var free = function(db) {
 /**
  *
  * @param {string} queu_id identifier.
- * @return {Object} rc redis client for QUEUES.
+ * @return {RedisClient} rc redis client for QUEUES.
  */
 exports.get_db = getDb;
 
 /**
  *
  * @param {string} transaction_id valid uuid identifier.
- * @return {Object}  rc redis Client for Transactions.
+ * @return {RedisClient}  rc redis Client for Transactions.
  */
 exports.get_transaction_db = getTransactionDb;
 
 /**
  *
- * @param {Object} db Redis DB to be closed.
+ * @param {RedisClient} db Redis DB to be closed.
  */
 exports.free = free;
