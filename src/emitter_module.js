@@ -18,4 +18,4 @@ function getEmitter() {
  *
  * @return {EventEmitter} returns a ''singleton instance'' of EventEmitter.
  */
-exports.get = getEmitter;
+exports.getEmitter = getEmitter;

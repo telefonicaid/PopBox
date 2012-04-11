@@ -6,7 +6,7 @@
  *
  * @type {String}
  */
-exports.redis_server = 'Relay1';
+exports.redis_server = 'localhost';
 /**
  *
  * @type {Number}
@@ -66,7 +66,7 @@ exports.ev_lsnr = {};
  *
  * @type {String}
  */
-exports.ev_lsnr.mongo_host = 'tac01';
+exports.ev_lsnr.mongo_host = 'localhost';
 /**
  *
  * @type {Number}

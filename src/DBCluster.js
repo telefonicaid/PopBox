@@ -43,14 +43,14 @@ var free = function(db) {
  * @param {string} queu_id identifier.
  * @return {RedisClient} rc redis client for QUEUES.
  */
-exports.get_db = getDb;
+exports.getDb = getDb;
 
 /**
  *
  * @param {string} transaction_id valid uuid identifier.
  * @return {RedisClient}  rc redis Client for Transactions.
  */
-exports.get_transaction_db = getTransactionDb;
+exports.getTransactionDb = getTransactionDb;
 
 /**
  *

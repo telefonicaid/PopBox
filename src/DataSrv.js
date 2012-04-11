@@ -8,7 +8,7 @@ var dbCluster = require('./DBCluster.js');
 var helper = require('./DataHelper.js');
 var uuid = require('node-uuid');
 var async = require('async');
-var emitter = require('./emitter_module').get_emitter();
+var emitter = require('./emitter_module').getEmitter();
 
 //Private methods Area
 var pushTransaction = function(provision, callback) {

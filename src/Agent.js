@@ -8,7 +8,7 @@ var async = require('async');
 var config = require('./config.js').agent;
 var dataSrv = require('./DataSrv');
 var validate = require('./validate');
-var emitter = require('./emitter_module').get_emitter();
+var emitter = require('./emitter_module').getEmitter();
 var ev_lsnr = require('./ev_lsnr');
 var cb_lsnr = require('./ev_callback_lsnr');
 
