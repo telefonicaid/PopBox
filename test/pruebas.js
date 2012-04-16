@@ -9,30 +9,12 @@ var enProceso = 0,
     HOST_SRV = 'relayA',
     PORT = 3001,
     EXPIRATION_DELAY = 86400,
-    PAYLOAD = new Array(1024).join('*'),
-    superProv = {};
-
-(function() {
-  'use strict';
-  var queue;
-
-  superProv.payload = new Array(1024).join('*');
-  superProv.queue = [];
-
-  for (var i = 0; i < 20000; i++) {
-    queue = '0123456789012';
-    superProv.queue.push({id: queue});
-  }
-  superProv.priority = 'H';
-  superProv.expirationDelay = EXPIRATION_DELAY;
-  superProv.callback = null;
-
-}());
+    PAYLOAD = new Array(1024).join('*');
 
 http.globalAgent.maxSockets = 20000;
 
-//pesadito(2000);
-superProvision();
+//pesadito(20000);
+superProvision(1500);
 
 function pesadito(num) {
   'use strict';
@@ -52,14 +34,27 @@ function pesadito(num) {
   }
 }
 
-function superProvision() {
+function superProvision(num) {
   'use strict';
+  var queue;
 
+  var superProv = {};
+
+  superProv.payload = new Array(1024).join('*');
+  superProv.queue = [];
+
+  for (var i = 0; i < num; i++) {
+    queue = '0123456789012';
+    superProv.queue.push({id: queue});
+  }
+  superProv.priority = 'H';
+  superProv.expirationDelay = EXPIRATION_DELAY;
+  superProv.callback = null;
   console.log(superProv);
 
   console.time('superProvision');
 
-  doSuperPush(function() {
+  doSuperPush(superProv, function() {
     console.timeEnd('superProvision');
   });
 
@@ -70,7 +65,8 @@ function superProvision() {
 function doPop(queue, timeout, cb) {
   'use strict';
   var options = { host: HOST_SRV, port: PORT, path: '/queue/' + queue + '?timeout=' + timeout, method: 'GET'};
-  postObj(options, '', cb);
+
+  postObj(options, null, cb);
 }
 
 function doPush(queue, message, cb) {
@@ -85,11 +81,11 @@ function doPush(queue, message, cb) {
   postObj(options, trans, cb);
 }
 
-function doSuperPush(cb) {
+function doSuperPush(superData, cb) {
   'use strict';
   var options = { host: HOST_PROV, port: PORT, path: '/trans'};
 
-  postObj(options, superProv, cb);
+  postObj(options, superData, cb);
 }
 
 function postObj(options, content, cb) {
@@ -101,18 +97,19 @@ function postObj(options, content, cb) {
   options.method = options.method || 'POST';
   options.headers = options.headers || {};
 
-  options.headers['content-type'] = 'application/json';
-
+  if (options.method === 'POST') {
+    options.headers['content-type'] = 'application/json';
+  }
 
   var req = http.request(options, function(res) {
 
     var o; //returned object from request
-    console.log('STATUS: ' + res.statusCode);
-    console.log('HEADERS: ' + JSON.stringify(res.headers));
+    //console.log('STATUS: ' + res.statusCode);
+    //console.log('HEADERS: ' + JSON.stringify(res.headers));
     res.setEncoding('utf8');
     res.on('data', function(chunk) {
       data += chunk;
-      console.log('data ' + data);
+      //console.log('data ' + data);
     });
     res.on('end', function() {
 
@@ -130,7 +127,7 @@ function postObj(options, content, cb) {
     cb();
   });
 
-  if (content !== null) {
+  if (content !== null && typeof content !== "undefined") {
     // write data to request body
     req.write(JSON.stringify(content));
   }
