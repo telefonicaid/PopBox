@@ -1,7 +1,5 @@
 var http = require('http');
 
-
-
 var enProceso = 0,
     hechas = 0,
     errores = 0,
@@ -14,15 +12,20 @@ var enProceso = 0,
 http.globalAgent.maxSockets = 20000;
 
 //pesadito(20000);
-superProvision(1500);
+//superProvision(10000);
+forever();
 
-function pesadito(num) {
+function forever() {
+  'use strict';
+   pesadito(300, forever) ;
+}
+function pesadito(num, cb) {
   'use strict';
 
   console.time('pesadito');
 
   for (var i = 0; i < num; i += 1) {
-    doPop('q' + i, 1, printStats);
+    doPop('q' + i, 30, printStats);
   }
 
   function printStats() {
@@ -30,6 +33,9 @@ function pesadito(num) {
         errores);
     if (enProceso === 0) {
       console.timeEnd('pesadito');
+      if(cb) {
+        cb();
+      }
     }
   }
 }
