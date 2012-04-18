@@ -33,10 +33,20 @@ var getTransactionDb = function(transactionId) {
 
 };
 
-var hashMe = function(id, mod){
-    "use strict";
-    var num = id.charCodeAt(0);
-    return num%mod;
+var hashMe = function(id, mod) {
+  "use strict";
+  var i,
+    len,
+    sum = 0;
+
+  if (typeof id !== 'string') {
+    throw new TypeError('id must be a string');
+  }
+  len = id.length;
+  for (i = 0; i < len; i++) {
+    sum += id.charCodeAt(i);
+  }
+  return sum % mod;
 };
 
 var free = function(db) {

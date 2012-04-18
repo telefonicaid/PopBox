@@ -25,13 +25,13 @@ var pushTransaction = function(provision, callback) {
     helper.hsetMetaHashParallel(dbTr, transactionId, ':meta', provision);
   for (i = 0; i < queues.length; i += 1) {
     queue = queues[i];
-    db = dbCluster.getDb(queue.id); //different DB for different Ids
+
     //launch push/sets/expire in parallel for one ID
     processBatch[i + 1] =
-      processOneId(db, dbTr, transactionId, queue, priority);
+      processOneId(dbTr, transactionId, queue, priority);
   }
 
-  async.series(processBatch,
+  async.parallel(processBatch,
                function pushEnd(err) {   //parallel execution may apply also
                  //MAIN Exit point
                  if (err) {
@@ -43,8 +43,9 @@ var pushTransaction = function(provision, callback) {
                  }
                });
 
-  function processOneId(db, dbTr, transactionId, queue, priority) {
+  function processOneId(dbTr, transactionId, queue, priority) {
     return function processOneIdAsync(callback) {
+      var db = dbCluster.getDb(queue.id); //different DB for different Ids
       async.parallel([
                        helper.pushParallel(db, queue, priority, transactionId),
                        helper.hsetHashParallel(dbTr, queue, transactionId,
