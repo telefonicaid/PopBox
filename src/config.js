@@ -6,7 +6,12 @@
  *
  * @type {String}
  */
-exports.redis_server = 'localhost';
+exports.redisServers = ['localhost'];
+/**
+ *
+ * @type {String}
+ */
+exports.tranRedisServer = 'localhost';
 /**
  *
  * @type {Number}

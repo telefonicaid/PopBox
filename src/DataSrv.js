@@ -16,7 +16,7 @@ var pushTransaction = function(provision, callback) {
   //handles a new transaction  (N ids involved)
   var priority = provision.priority + ':', //contains "H" || "L"
     queues = provision.queue, //[{},{}]   //list of ids
-    extTransactionId = uuid.v1(), transactionId = config.dbKeyTransPrefix +
+    extTransactionId = uuid.v4(), transactionId = config.dbKeyTransPrefix +
       extTransactionId, //setting up the bach proceses for async module.
     processBatch = [], //feeding the process batch
     dbTr = dbCluster.getTransactionDb(transactionId), i = 0, queue, db;
