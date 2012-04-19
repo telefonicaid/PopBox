@@ -16,16 +16,24 @@ for (var i = 0; i < config.redisServers.length; i++) {
   var cli = redisModule.createClient(redisModule.DEFAULT_PORT,
       config.redisServers[i]);
   cli.select(config.selected_db);
+  cli.isOwn = false;
   fooArray.push(cli);
 }
 
 var getDb = function(queueId) {
   'use strict';
   var hash = hashMe(queueId, config.redisServers.length);
-  //var rc = redisModule.createClient(redisModule.DEFAULT_PORT,
-  //                                  config.redisServers[hash]);
   var rc = fooArray[hash];
-  //rc.select(config.selected_db);
+  return rc;
+};
+
+var getOwnDb = function(queueId) {
+  'use strict';
+  var hash = hashMe(queueId, config.redisServers.length);
+  var rc = redisModule.createClient(redisModule.DEFAULT_PORT,
+      config.redisServers[hash]);
+  rc.select(config.selected_db);
+  rc.isOwn = true;
   //returns a client from a cluster
   return rc;
 };
@@ -61,7 +69,9 @@ var hashMe = function(id, mod) {
 var free = function(db) {
   //return to the pool TechDebt
   'use strict';
-  //db.end();
+  if (db.isOwn) {
+    db.end();
+  }
 };
 
 /**
@@ -71,6 +81,12 @@ var free = function(db) {
  */
 exports.getDb = getDb;
 
+/**
+ *
+ * @param {string} queuw_id identifier.
+ * @return {RedisClient} rc redis client for QUEUES.
+ */
+exports.getOwnDb = getOwnDb;
 /**
  *
  * @param {string} transaction_id valid uuid identifier.

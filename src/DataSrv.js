@@ -150,7 +150,7 @@ var popNotification = function(db, queue, maxElems, callback, firstElem) {
 var blockingPop = function(queue, maxElems, blockingTime, callback) {
   'use strict';
   var queueId = queue.id, //
-    db = dbCluster.getDb(queueId), //
+    db = dbCluster.getOwnDb(queueId), //
     fullQueueIdH = config.db_key_queue_prefix + 'H:' + queue.id, //
     fullQueueIdL = config.db_key_queue_prefix + 'L:' + queue.id, //
     firstElem = null;
