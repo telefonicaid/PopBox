@@ -63,13 +63,16 @@ function pop(cb) {
 
 function push_and_pop(cb) {
     "use strict";
-    var options_prov = { host: 'localhost', port:agt_config.port, path:'/trans'};
+
+  var h = 'localhost';
+
+    var options_prov = { host: h, port:agt_config.port, path:'/trans'};
     var trans = { payload:'1234567890ÑñÁá', priority:'H', 'queue':[
         {'id':'Ax'},
         {'id':'Bx'}
     ], 'expirationDelay': 86400 };
-    var options_consA = {  host:  'localhost', port:agt_config.port, path:'/queue/Ax', method: 'GET'};
-    var options_consB = {  host:  'localhost', port:agt_config.port, path:'/queue/Bx', method: 'GET'};
+    var options_consA = {  host: h, port:agt_config.port, path:'/queue/Ax', method: 'GET'};
+    var options_consB = {  host: h, port:agt_config.port, path:'/queue/Bx', method: 'GET'};
 
     async.series(
         [

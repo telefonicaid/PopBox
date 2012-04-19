@@ -75,6 +75,9 @@ app.get('/queue/:id', function(req, res) {
   if (isNaN(tOut)) {
     tOut = config.pop_timeout;
   }
+  if(tOut === 0) {
+    tOut = 1;
+  }
 
   console.log('Blocking: %s,%s,%s', queueId, maxMsgs, tOut);
 
@@ -120,7 +123,7 @@ async.parallel([ev_lsnr.init(emitter), cb_lsnr.init(emitter)],
 
 function insert(req, res, push, validate) {
   'use strict';
-  console.log(req.body);
+//  console.log(req.body);
 
   var errors = validate(req.body);
   var ev = {};

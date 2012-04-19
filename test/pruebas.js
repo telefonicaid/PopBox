@@ -12,8 +12,8 @@ var enProceso = 0,
 http.globalAgent.maxSockets = 20000;
 
 //pesadito(20000);
-//superProvision(10000);
-forever();
+superProvision(60000);
+//forever();
 
 function forever() {
   'use strict';
@@ -25,7 +25,7 @@ function pesadito(num, cb) {
   console.time('pesadito');
 
   for (var i = 0; i < num; i += 1) {
-    doPop('q' + i, 30, printStats);
+    doPop(String(i), 30, printStats);
   }
 
   function printStats() {
@@ -50,13 +50,13 @@ function superProvision(num) {
   superProv.queue = [];
 
   for (var i = 0; i < num; i++) {
-    queue = '0123456789012';
+    queue = String(i);
     superProv.queue.push({id: queue});
   }
   superProv.priority = 'H';
   superProv.expirationDelay = EXPIRATION_DELAY;
   superProv.callback = null;
-  console.log(superProv);
+
 
   console.time('superProvision');
 
