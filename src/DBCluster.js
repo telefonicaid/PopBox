@@ -13,8 +13,8 @@ var rc = redisModule.createClient(redisModule.DEFAULT_PORT,
 rc.select(config.selected_db); //false pool for pushing
 var fooArray = [];
 for (var i = 0; i < config.redisServers.length; i++) {
-  var cli = redisModule.createClient(redisModule.DEFAULT_PORT,
-      config.redisServers[i]);
+  var port = config.redisServers[i].port || redisModule.DEFAULT_PORT;
+  var cli = redisModule.createClient(port,config.redisServers[i].host);
   cli.select(config.selected_db);
   cli.isOwn = false;
   fooArray.push(cli);

@@ -6,7 +6,7 @@
  *
  * @type {String}
  */
-exports.redisServers = ['localhost', 'localhost'];
+exports.redisServers = [{host:'localhost'}, {host:'localhost', port:'6789'}];
 /**
  *
  * @type {String}
