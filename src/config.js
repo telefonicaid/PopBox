@@ -57,7 +57,6 @@ exports.ev_lsnr.mongo_db = 'popbox';
  * @type {String}
  */
 exports.ev_lsnr.collection = 'popbox_ev';
-
 /**
  *
  * @type {Object}
@@ -78,3 +77,13 @@ exports.agent.port = 3001;
  * @type {Number}
  */
 exports.agent.pop_timeout = 30;
+/**
+ *
+ * @type {Object}
+ */
+exports.cluster= {};
+/**
+ *
+ * @type {Number} number of CPUS to be used in cluster mode (-1 for all)
+ */
+exports.cluster.numcpus = 1;
