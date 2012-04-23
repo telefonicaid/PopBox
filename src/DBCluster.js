@@ -11,26 +11,27 @@ var config = require('./config.js');
 var rc = redisModule.createClient(redisModule.DEFAULT_PORT,
     config.tranRedisServer);
 rc.select(config.selected_db); //false pool for pushing
-var fooArray = [];
+var dbArray = [];
 for (var i = 0; i < config.redisServers.length; i++) {
   var port = config.redisServers[i].port || redisModule.DEFAULT_PORT;
   var cli = redisModule.createClient(port,config.redisServers[i].host);
   cli.select(config.selected_db);
   cli.isOwn = false;
-  fooArray.push(cli);
+  dbArray.push(cli);
 }
 
 var getDb = function(queueId) {
   'use strict';
   var hash = hashMe(queueId, config.redisServers.length);
-  var rc = fooArray[hash];
+  var rc = dbArray[hash];
   return rc;
 };
 
 var getOwnDb = function(queueId) {
   'use strict';
   var hash = hashMe(queueId, config.redisServers.length);
-  var rc = redisModule.createClient(redisModule.DEFAULT_PORT,
+  var port = config.redisServers[hash].port || redisModule.DEFAULT_PORT;
+  var rc = redisModule.createClient(port,
       config.redisServers[hash]);
   rc.select(config.selected_db);
   rc.isOwn = true;
