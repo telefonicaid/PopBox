@@ -100,7 +100,8 @@ if (cluster.isMaster) {
     dataSrv.blockingPop({id: queueId}, maxMsgs, tOut, function(err, notifList) {
       var messageList = [];
       var ev = {};
-
+      //stablish the timeout depending on blocking time
+      res.connection.setTimeout(tOut*1000+1000);
       if (err) {
         ev = {
           'queue': queueId,
