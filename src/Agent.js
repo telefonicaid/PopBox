@@ -33,10 +33,43 @@ if (cluster.isMaster) {
 
   app.use(express.query());
   app.use(express.bodyParser());
+  app.use(express.limit("1mb"));
 
   app.post('/trans', function(req, res) {
     'use strict';
-    insert(req, res, dataSrv.pushTransaction, validate.errorsTrans);
+
+    var errors =  validate.errorsTrans(req.body);
+    var ev = {};
+
+    req.connection.setTimeout(config.agent.prov_timeout * 1000);
+
+    if (errors.length === 0) {
+      dataSrv.pushTransaction(req.body, function(err, trans_id) {
+        if (err) {
+          ev = {
+            'transaction': trans_id,
+            'postdata': req.body,
+            'action': 'USERPUSH',
+            'timestamp': new Date(),
+            'error': err
+          };
+          emitter.emit('ACTION', ev);
+
+          res.send({error: [err]}, 500);
+        } else {
+          ev = {
+            'transaction': trans_id,
+            'postdata': req.body,
+            'action': 'USERPUSH',
+            'timestamp': new Date()
+          };
+          emitter.emit('ACTION', ev);
+          res.send({id: trans_id});
+        }
+      });
+    } else {
+      res.send({error: errors}, 400);
+    }
   });
 
   app.get('/trans/:id_trans/:state?', function(req, res) {
@@ -94,6 +127,11 @@ if (cluster.isMaster) {
     if (tOut === 0) {
       tOut = 1;
     }
+    if(tOut > config.agent.max_pop_timeout) {
+      tOut = config.agent.max_pop_timeout;
+    }
+
+    req.connection.setTimeout((tOut+config.agent.grace_timeout)*1000);
 
     console.log('Blocking: %s,%s,%s', queueId, maxMsgs, tOut);
 
@@ -101,7 +139,7 @@ if (cluster.isMaster) {
       var messageList = [];
       var ev = {};
       //stablish the timeout depending on blocking time
-      res.connection.setTimeout(tOut*1000+1000);
+
       if (err) {
         ev = {
           'queue': queueId,

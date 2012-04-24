@@ -2,10 +2,13 @@
 // Copyright (c) Telefonica I+D. All rights reserved.
 //
 //
+var config = require('./config.js');
 
 function errorsTrans(trans) {
   'use strict';
-  var errors = [];
+  var errors = [],
+      maxNumQueues = config.agent.max_num_queues,
+      maxPayloadSize = config.agent.max_payload_size;
 
   if (!trans.priority) {
     errors.push('undefined priority');
@@ -13,20 +16,29 @@ function errorsTrans(trans) {
 
   if (!trans.queue) {
     errors.push('undefined queue');
-  } else {
-    if (trans.queue.constructor !== Array) {
-      errors.push('invalid queue type');
-    } else {
-      trans.queue.forEach(function(value) {
-        if (!value || !value.id) {
-          errors.push('invalid queue element');
-        }
-      });
-    }
+  }
+  else if (trans.queue.constructor !== Array) {
+    errors.push('invalid queue type');
+  }
+  else if (trans.queue.length > maxPayloadSize) {
+    errors.push('too many queues: maximum '+''+maxNumQueues+')');
+  }
+  else {
+      if (!trans.queue.every(function(value) {
+        return (value && "id" in value);
+      })) {
+        errors.push('invalid queue element');
+      }
   }
 
   if (!trans.payload) {
     errors.push('undefined payload');
+  }
+
+  if (trans.payload &&
+      trans.payload.length &&
+      trans.payload.length > maxPayloadSize) {
+    errors.push('payload greater than '+maxPayloadSize);
   }
 
   return errors;
@@ -40,7 +52,7 @@ function validTransId(transId) {
 }
 /**
  *
- * @param {Provision} trans Provison Object.
+ * @param {Provision} trans Provision Object.
  * @return {Array.String} return array with error information.
  */
 exports.errorsTrans = errorsTrans;
