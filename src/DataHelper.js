@@ -1,105 +1,136 @@
+//
+// Copyright (c) Telefonica I+D. All rights reserved.
+//
+//
+
 //Require Area
 var config = require('./config.js');
 
-var push_parallel = function (db, queue, priority, transaction_id) {
-    'use strict';
-    return function (callback) {
-        var full_queue_id = config.db_key_queue_prefix + priority + queue.id;
-        db.lpush(full_queue_id, transaction_id, function (err) {
-            if (err) {
-                //error pushing
-                console.dir(err);
-            }
+var pushParallel = function(db, queue, priority, transaction_id) {
+  'use strict';
+  return function asyncPushParallel(callback) {
+    var fullQueueId = config.db_key_queue_prefix + priority + queue.id;
+    db.lpush(fullQueueId, transaction_id, function(err) {
+      if (err) {
+        //error pushing
+        console.dir(err);
+      }
 
-            if (callback) {
-                callback(err);
-            }
-        });
+      if (callback) {
+        callback(err);
+      }
+    });
+  };
+};
+
+var hsetHashParallel = function(dbTr, queue, transactionId, sufix, datastr) {
+  'use strict';
+  return function asyncHsetHashParallel(callback) {
+
+    dbTr.hmset(transactionId + sufix, queue.id, datastr, function(err) {
+      if (err) {
+        //error pushing
+        console.dir(err);
+      }
+
+      if (callback) {
+        callback(err);
+      }
+    });
+  };
+};
+
+var hsetMetaHashParallel = function(dbTr, transaction_id, sufix, provision) {
+  'use strict';
+  return function asyncHsetMetaHash(callback) {
+    var meta = {
+      'payload': provision.payload,
+      'priority': provision.priority,
+      'callback': provision.callback,
+      'expirationDate': provision.expirationDate
     };
+    dbTr.hmset(transaction_id + sufix, meta, function(err) {
+      if (err) {
+        //error pushing
+        console.dir(err);
+      } else {
+        //pushing ok
+        setExpirationDate(dbTr, transaction_id + sufix, provision,
+                          function(err) {
+                            if (callback) {
+                              callback(err);
+                            }
+                          });
+
+      }
+    });
+  };
 };
 
-var hset_hash_parallel = function (dbTr, queue, transaction_id, sufix, datastr) {
-    'use strict';
-    return function (callback) {
+var setExpirationDate = function(dbTr, key, provision, callback) {
+  'use strict';
+  if (provision.expirationDate) {
+    dbTr.expireat(key, provision.expirationDate, function(err) {
+      if (err) {
+        //error setting expiration date
+        console.dir(err);
+      }
+      if (callback) {
+        callback(err);
+      }
 
-        dbTr.hmset(transaction_id + sufix, queue.id, datastr, function (err) {
-            if (err) {
-                //error pushing
-                console.dir(err);
-            }
+    });
+  } else {
+    var expirationDelay = provision.expirationDelay || 3600; //1 hour default
 
-            if (callback) {
-                callback(err);
-            }
-        });
-    };
+    dbTr.expire(key, expirationDelay, function(err) {
+      if (err) {
+        //error setting expiration date
+        console.dir(err);
+      }
+      if (callback) {
+        callback(err);
+      }
+
+    });
+  }
 };
 
-var hset_meta_hash_parallel = function (dbTr, transaction_id, sufix, provision) {
-    'use strict';
-    return function (callback) {
-        var meta = {
-            'payload':provision.payload,
-            'priority':provision.priority,
-            'callback':provision.callback,
-            'expirationDate':provision.expirationDate
-        };
-        dbTr.hmset(transaction_id + sufix, meta, function (err) {
-            if (err) {
-                //error pushing
-                console.dir(err);
-            }
-            else {
-                //pushing ok
-                set_expiration_date(dbTr, transaction_id + sufix, provision, function (err) {
-                    if (callback) {
-                        callback(err);
-                    }
-                });
+//Public area
 
-            }
-        });
-    };
-};
-
-var get_notifications = function (dbTr, clean_data, callback) {
-    //look for messages
-
-};
-
-var set_expiration_date = function (dbTr, key, provision, callback) {
-    'use strict';
-    if (provision.expirationDate) {
-        dbTr.expireat(key, provision.expirationDate, function (err) {
-            if (err) {
-                //error setting expiration date
-                console.dir(err);
-            }
-            if (callback) {
-                callback(err);
-            }
-
-        });
-    }
-    else {
-        var expirationDelay = provision.expirationDelay || 3600; //1 hour default
-
-        dbTr.expire(key, expirationDelay, function (err) {
-            if (err) {
-                //error setting expiration date
-                console.dir(err);
-            }
-            if (callback) {
-                callback(err);
-            }
-
-        });
-    }
-};
-
-//export area
-exports.push_parallel = push_parallel;
-exports.hset_hash_parallel = hset_hash_parallel;
-exports.hset_meta_hash_parallel = hset_meta_hash_parallel;
-exports.get_notifications = get_notifications; //non impl
-exports.set_expiration_date = set_expiration_date;
+/**
+ *
+ * @param {RedisClient} db valid redis client.
+ * @param {PopBox.Queue} queue object.
+ * @param {string} priority enum type 'H' || 'L' for high low priority.
+ * @param {string} transaction_id valid transaction identifier.
+ * @return {function(function)} asyncPushParallel ready for async module.
+ */
+exports.pushParallel = pushParallel;
+/**
+ *
+ * @param {RedisClient} dbTr valid redis client.
+ * @param {PopBox.Queue} queue object with a valid id.
+ * @param {string} transactionId valid uuid.
+ * @param {string} sufix for redis key.
+ * @param {string} datastr to be kept.
+ * @return {function(function)} asyncHsetHashParallel function ready for async.
+ */
+exports.hsetHashParallel = hsetHashParallel;
+/**
+ *
+ * @param {RedisClient} dbTr  valid redis client.
+ * @param {string} transaction_id valid transaction identifier.
+ * @param {string} sufix for the key, usually ':meta' or ':state'.
+ * @param {Provision} provision object.
+ * @return {function(function)} asyncHsetMetaHash function ready for async.
+ */
+exports.hsetMetaHashParallel = hsetMetaHashParallel;
+/**
+ *
+ * @param {Object} dbTr valid redis Client.
+ * @param {string} key collection Key to expire.
+ * @param {Provision} provision provision object to extract expiration times.
+ * @param {function(Object)} callback with error param.
+ */
+exports.setExpirationDate = setExpirationDate;

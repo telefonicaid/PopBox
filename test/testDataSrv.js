@@ -26,13 +26,13 @@ var provisionL = {
 };
 exports.push = function () {
     'use strict';
-    dataSrv.push_transaction(provisionH, function (err, transaction_id) {
+    dataSrv.pushTransaction(provisionH, function (err, transaction_id) {
         a.ifError(err);
         a.ok(transaction_id, "Generated T_ID_H: ");
 
     });
 
-    dataSrv.push_transaction(provisionL, function (err, transaction_id) {
+    dataSrv.pushTransaction(provisionL, function (err, transaction_id) {
         a.ifError(err);
         a.ok(transaction_id, "Generated T_ID_L: ");
 
@@ -42,7 +42,7 @@ exports.push = function () {
 exports.pop = function (id, max, callback) {
     'use strict';
     return function (callback) {
-        dataSrv.pop_notification({'id':id}, max, function (err, transaction_id) {
+        dataSrv.popNotification({'id':id}, max, function (err, transaction_id) {
             void (callback && callback(err, transaction_id));
 
         });
@@ -50,7 +50,7 @@ exports.pop = function (id, max, callback) {
 };
 var get_data = function (ext_transaction_id, state, summary) {
     'use strict';
-    dataSrv.get_transaction(ext_transaction_id, state, summary, function (err, data) {
+    dataSrv.getTransaction(ext_transaction_id, state, summary, function (err, data) {
         a.ifError(err);
         a.ok(data, "get_data");
     });

@@ -1,21 +1,19 @@
 var http = require('http');
 var a = require('assert');
 var async = require('async');
-var prov_config = require('../src/config').provision;
-var cons_config = require('../src/config').consumer;
 var agt_config = require('../src/config').agent;
 var validate = require("../src/validate");
 
 function id_ok(cb) {
    "use strict";
-    var options_prov = { port: prov_config.port, path:'/'};
+    var options_prov = { port: agt_config.port, path:'/'};
     var trans = { 'payload':'x', 'priority':'H', 'queue':[ {'id':'Ax'}, {'id':'Bx'}], 'expirationDelay':360 };
 
     post_obj(options_prov, trans, function(e, d, res) {
         a.ifError(e);
         a.ok(d.id, 'id in response');
         a.ok(
-            validate.valid_trans_id(d.id),
+            validate.validTransId(d.id),
             'uuid format'); // uuid
         cb(null,d,res);
 
@@ -24,7 +22,7 @@ function id_ok(cb) {
 
 function id_ok_block(cb) {
     "use strict";
-    var options_prov = { port: prov_config.port, path:'/block'};
+    var options_prov = { port: agt_config.port, path:'/block'};
     var trans = { 'payload':'x', 'priority':'H', 'queue':[ {'id':'Ax'}, {'id':'Bx'}], 'expirationDelay':360 };
 
     post_obj(options_prov, trans, function(e, d, res) {
@@ -37,7 +35,7 @@ function id_ok_block(cb) {
 
 function payload_miss(cb) {
     "use strict";
-    var options_prov = { port: prov_config.port, path:'/'};
+    var options_prov = { port: agt_config.port, path:'/'};
     var trans = { /*missing payload*/ 'priority':'H', 'queue':[ {'id':'Ax'}, {'id':'Bx'}], 'expirationDelay':360 };
 
     post_obj(options_prov, trans, function(e, d, res) {
@@ -49,7 +47,7 @@ function payload_miss(cb) {
 }
 function priority_miss(cb) {
     "use strict";
-    var options_prov = { port: prov_config.port, path:'/'};
+    var options_prov = { port: agt_config.port, path:'/'};
     var trans = { payload: 'M', /* missing priority, */ 'queue':[ {'id':'Ax'}, {'id':'Bx'}], 'expirationDelay':360 };
 
     post_obj(options_prov, trans, function(e, d, res) {
@@ -65,13 +63,16 @@ function pop(cb) {
 
 function push_and_pop(cb) {
     "use strict";
-    var options_prov = { host: "relayA", port:agt_config.port, path:'/trans'};
+
+  var h = 'localhost';
+
+    var options_prov = { host: h, port:agt_config.port, path:'/trans'};
     var trans = { payload:'1234567890ÑñÁá', priority:'H', 'queue':[
         {'id':'Ax'},
         {'id':'Bx'}
     ], 'expirationDelay': 86400 };
-    var options_consA = {  host: "relayA", port:agt_config.port, path:'/queue/Ax', method: 'GET'};
-    var options_consB = {  host: "relayA", port:agt_config.port, path:'/queue/Bx', method: 'GET'};
+    var options_consA = {  host: h, port:agt_config.port, path:'/queue/Ax', method: 'GET'};
+    var options_consB = {  host: h, port:agt_config.port, path:'/queue/Bx', method: 'GET'};
 
     async.series(
         [
