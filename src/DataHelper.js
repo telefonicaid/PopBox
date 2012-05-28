@@ -169,3 +169,6 @@ exports.setExpirationDate = setExpirationDate;
  * @param callback
  */
 exports.setKey = setKey;
+
+exports.getKey = getKey;
+
