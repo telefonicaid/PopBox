@@ -46,27 +46,29 @@ if (cluster.isMaster) {
     appSec.port = Number(config.agent.port) + 1;
 
     servers.forEach( function (server) {
-        server.use(express.query());
+      'use strict';
+      server.use(express.query());
         server.use(express.bodyParser());
         server.use(express.limit("1mb"));
 
-        server.post('/trans', function(req, res) {logic.postTrans(server.prefix,req,res)});
+        server.post('/trans', function(req, res) {logic.postTrans(server.prefix,req,res);});
         server.get('/trans/:id_trans/:state?', logic.transState);
-        server.get('/queue/:id/size', function(req, res) {logic.queueSize(server.prefix, req, res)});
-        server.post('/queue', function(req, res) {logic.postQueue(server.prefix, req, res)});
-        server.get('/queue/:id', function(req, res) {logic.getQueue(server.prefix, req, res)});
+        server.get('/queue/:id/size', function(req, res) {logic.checkPerm(server.prefix, req, res, logic.queueSize);});
+        server.post('/queue', function(req, res) {logic.postQueue(server.prefix, req, res);});
+        server.get('/queue/:id', function(req, res) {logic.checkPerm(server.prefix, req, res, logic.getQueue);});
 
-    })
+    });
 
-    appSec.post('/queue', function(req, res) {logic.postQueue(server.prefix,req,res)});
-
-
+  //App specific handlers
+  appSec.post('/queue', function(req, res) {
+    'use strict';
+    logic.postQueue(appSec.prefix,req,res);});
 
 //Add subscribers
     async.parallel([evLsnr.init(emitter), cbLsnr.init(emitter)],
         function onSubscribed() {
             'use strict';
-            servers.forEach(function(server){server.listen(server.port)});
+            servers.forEach(function(server){server.listen(server.port);});
         });
 }
 
