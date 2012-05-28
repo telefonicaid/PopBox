@@ -11,7 +11,7 @@ var async = require('async');
 var emitter = require('./emitter_module').getEmitter();
 
 //Private methods Area
-var pushTransaction = function(provision, callback) {
+var pushTransaction = function(appPrefix, provision, callback) {
   'use strict';
   //handles a new transaction  (N ids involved)
   var priority = provision.priority + ':', //contains "H" || "L"
@@ -25,6 +25,7 @@ var pushTransaction = function(provision, callback) {
     helper.hsetMetaHashParallel(dbTr, transactionId, ':meta', provision);
   for (i = 0; i < queues.length; i += 1) {
     queue = queues[i];
+    queue.id  = queue.id;
 
     //launch push/sets/expire in parallel for one ID
     processBatch[i + 1] =
@@ -47,7 +48,7 @@ var pushTransaction = function(provision, callback) {
     return function processOneIdAsync(callback) {
       var db = dbCluster.getDb(queue.id); //different DB for different Ids
       async.parallel([
-                       helper.pushParallel(db, queue, priority, transactionId),
+                       helper.pushParallel(db, {id: appPrefix + queue.id} , priority, transactionId),
                        helper.hsetHashParallel(dbTr, queue, transactionId,
                                                ':state', 'Pending')
                      ], function parallel_end(err) {
@@ -79,12 +80,12 @@ var pushTransaction = function(provision, callback) {
 };
 
 
-var popNotification = function(db, queue, maxElems, callback, firstElem) {
+var popNotification = function(db, appPrefix, queue, maxElems, callback, firstElem) {
   'use strict';
   //pop the queu  (LRANGE)
   //hight priority first
-  var fullQueueIdH = config.db_key_queue_prefix + 'H:' +
-    queue.id, fullQueueIdL = config.db_key_queue_prefix + 'L:' +
+  var fullQueueIdH = config.db_key_queue_prefix + 'H:' +  appPrefix  +
+    queue.id, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix   +
     queue.id, restElems = 0;
 
   db.lrange(fullQueueIdH, -maxElems, -1, function onRangeH(errH, dataH) {
@@ -147,12 +148,12 @@ var popNotification = function(db, queue, maxElems, callback, firstElem) {
 };
 
 
-var blockingPop = function(queue, maxElems, blockingTime, callback) {
+var blockingPop = function(appPrefix, queue, maxElems, blockingTime, callback) {
   'use strict';
   var queueId = queue.id, //
     db = dbCluster.getOwnDb(queueId), //
-    fullQueueIdH = config.db_key_queue_prefix + 'H:' + queue.id, //
-    fullQueueIdL = config.db_key_queue_prefix + 'L:' + queue.id, //
+    fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id, //
+    fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id, //
     firstElem = null;
   //Do the blocking part (over the two lists)
   db.brpop(fullQueueIdH, fullQueueIdL, blockingTime,
@@ -175,7 +176,7 @@ var blockingPop = function(queue, maxElems, blockingTime, callback) {
                  //we got one elem -> need to check the rest
                  firstElem = data;
                  if (maxElems > 1) {
-                   popNotification(db, queue, maxElems - 1,
+                   popNotification(db, appPrefix, queue, maxElems - 1,
                                    function onPop(err, clean_data) {
                                      dbCluster.free(db); //add free() when pool
                                      if (err) {

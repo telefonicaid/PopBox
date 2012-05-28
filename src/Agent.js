@@ -20,7 +20,7 @@ if (cluster.isMaster) {
         console.log('worker ' + worker.pid + ' died');
     });
 } else {
-
+    var fs = require('fs');
     var express = require('express');
     var logic = require('./agent_logic');
     var async = require('async');
@@ -29,19 +29,31 @@ if (cluster.isMaster) {
     var cbLsnr = require('./ev_callback_lsnr');
 
     var app = express.createServer();
-    var appSec = express.createServer();
+
+
+    var options = {
+        key: fs.readFileSync('./PopBox/utils/server.key'),
+        cert: fs.readFileSync('./PopBox/utils/server.crt')
+    };
+
+    var appSec = express.createServer(options);
 
     var servers = [app, appSec];
+    app.prefix = "UNSEC:";
+    app.port = config.agent.port;
+
+    appSec.prefix = "SEC:";
+    appSec.port = Number(config.agent.port) + 1;
 
     servers.forEach( function (server) {
         server.use(express.query());
         server.use(express.bodyParser());
         server.use(express.limit("1mb"));
 
-        server.post('/trans', logic.postTrans);
+        server.post('/trans', function(req, res) {logic.postTrans(server.prefix,req,res)});
         server.get('/trans/:id_trans/:state?', logic.transState);
-        server.get('/queue/:id/size', logic.queueSize);
-        server.get('/queue/:id', logic.getQueue);
+        server.get('/queue/:id/size', function(req, res) {logic.queueSize(server.prefix,req,res)});
+        server.get('/queue/:id', function(req, res) {logic.getQueue(server.prefix,req,res)});
 
     })
 
@@ -51,8 +63,7 @@ if (cluster.isMaster) {
     async.parallel([evLsnr.init(emitter), cbLsnr.init(emitter)],
         function onSubscribed() {
             'use strict';
-            app.listen(config.agent.port);
-            appSec.listen(Number(config.agent.port)+1)
+            servers.forEach(function(server){server.listen(server.port)});
         });
 }
 
@@ -60,4 +71,6 @@ process.on('uncaughtException', function (err) {
     'use strict';
     console.log('PROCESS %s', err);
 });
+
+
 

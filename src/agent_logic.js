@@ -4,16 +4,18 @@ var validate = require('./validate');
 var emitter = require('./emitter_module').getEmitter();
 var config = require('./config.js');
 
-function postTrans (req, res) {
+function postTrans (prefix, req, res) {
     'use strict';
 
     var errors = validate.errorsTrans(req.body);
     var ev = {};
 
+
+
     req.connection.setTimeout(config.agent.prov_timeout * 1000);
 
     if (errors.length === 0) {
-        dataSrv.pushTransaction(req.body, function (err, trans_id) {
+        dataSrv.pushTransaction(prefix, req.body, function (err, trans_id) {
             if (err) {
                 ev = {
                     'transaction':trans_id,
@@ -63,11 +65,10 @@ function  transState(req, res) {
     }
 }
 
-function queueSize (req, res) {
+function queueSize (prefix, req, res) {
     'use strict';
-    var queueId = req.param('id');
+    var queueId = prefix + req.param('id');
     console.log('pidiendo size de %s', queueId);
-    check_perm(req, res, queueId, function () {
         dataSrv.queueSize(queueId, function (err, length) {
             console.log('size de %s %j %j', queueId, err, length);
             if (err) {
@@ -75,11 +76,10 @@ function queueSize (req, res) {
             } else {
                 res.send(String(length));
             }
-        });
     });
 }
 
-function getQueue(req, res) {
+function getQueue(appPrefix, req, res) {
     'use strict';
     var queueId = req.param('id');
     var maxMsgs = req.param('max', config.agent.max_messages);
@@ -105,7 +105,7 @@ function getQueue(req, res) {
 
     console.log('Blocking: %s,%s,%s', queueId, maxMsgs, tOut);
 
-    dataSrv.blockingPop({id:queueId}, maxMsgs, tOut, function (err, notifList) {
+    dataSrv.blockingPop(appPrefix, {id:queueId}, maxMsgs, tOut, function (err, notifList) {
         var messageList = [];
         var ev = {};
         //stablish the timeout depending on blocking time
@@ -178,26 +178,6 @@ function insert(req, res, push, validate) {
     }
 }
 
-
-function check_perm(req, res, idResource, cb) {
-    var header = req.headers['authorization'] || '', // get the header
-        token = header.split(/\s+/).pop() || '', // and the encoded auth token
-        auth = new Buffer(token, 'base64').toString(), // convert from base64
-        parts = auth.split(/:/), // split on colon
-        username = parts[0],
-        password = parts[1];
-
-    console.dir(req.headers);
-    console.log("header " + header);
-    console.log("token " + token);
-
-    console.log("username ", username);
-    console.log("password ", password);
-
-    res.send('Unauthorized ' + username + "," + password, {
-        'Content-Type':'text/plain',
-        'WWW-Authenticate':'Basic realm="EL MAL TE PERSIGUE"' }, 401);
-}
 
 
 exports.queueSize = queueSize
