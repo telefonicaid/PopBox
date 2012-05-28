@@ -6,6 +6,31 @@
 //Require Area
 var config = require('./config.js');
 
+var setKey= function(db, id, value, callback) {
+    db.set(id, value, function(err) {
+        if (err) {
+            //error pushing
+            console.dir(err);
+        }
+
+        if (callback) {
+            callback(err);
+        }
+    });
+}
+
+var getKey= function(db, id, callback) {
+    db.get(id, function(err, value) {
+        if (err) {
+            //error pushing
+            console.dir(err);
+        }
+
+        if (callback) {
+            callback(err, value);
+        }
+    });
+}
 var pushParallel = function(db, queue, priority, transaction_id) {
   'use strict';
   return function asyncPushParallel(callback) {
@@ -134,3 +159,13 @@ exports.hsetMetaHashParallel = hsetMetaHashParallel;
  * @param {function(Object)} callback with error param.
  */
 exports.setExpirationDate = setExpirationDate;
+
+
+/**
+ *
+ * @param db
+ * @param id
+ * @param value
+ * @param callback
+ */
+exports.setKey = setKey;

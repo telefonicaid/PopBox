@@ -52,10 +52,13 @@ if (cluster.isMaster) {
 
         server.post('/trans', function(req, res) {logic.postTrans(server.prefix,req,res)});
         server.get('/trans/:id_trans/:state?', logic.transState);
-        server.get('/queue/:id/size', function(req, res) {logic.queueSize(server.prefix,req,res)});
-        server.get('/queue/:id', function(req, res) {logic.getQueue(server.prefix,req,res)});
+        server.get('/queue/:id/size', function(req, res) {logic.queueSize(server.prefix, req, res)});
+        server.post('/queue', function(req, res) {logic.postQueue(server.prefix, req, res)});
+        server.get('/queue/:id', function(req, res) {logic.getQueue(server.prefix, req, res)});
 
     })
+
+    appSec.post('/queue', function(req, res) {logic.postQueue(server.prefix,req,res)});
 
 
 
@@ -71,6 +74,7 @@ process.on('uncaughtException', function (err) {
     'use strict';
     console.log('PROCESS %s', err);
 });
+
 
 
 

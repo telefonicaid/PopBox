@@ -9,6 +9,7 @@ var helper = require('./DataHelper.js');
 var uuid = require('node-uuid');
 var async = require('async');
 var emitter = require('./emitter_module').getEmitter();
+var crypto = require('crypto');
 
 //Private methods Area
 var pushTransaction = function(appPrefix, provision, callback) {
@@ -25,7 +26,6 @@ var pushTransaction = function(appPrefix, provision, callback) {
     helper.hsetMetaHashParallel(dbTr, transactionId, ':meta', provision);
   for (i = 0; i < queues.length; i += 1) {
     queue = queues[i];
-    queue.id  = queue.id;
 
     //launch push/sets/expire in parallel for one ID
     processBatch[i + 1] =
@@ -79,6 +79,22 @@ var pushTransaction = function(appPrefix, provision, callback) {
   }
 };
 
+var setSecHash = function(appPrefix, queueId, user, passwd, callback) {
+
+    var shasum = crypto.createHash('sha1'),
+        digest,
+        db = dbCluster.getDb(queueId);
+
+    //TODO:  Overwrite existing value ???
+    shasum.update(user+passwd);
+    digest = shasum.digest();
+    helper.setKey(db, appPrefix + queueId, digest, callback);
+};
+
+var getSecHash = function(appPrefix, queueId, cb) {
+    var db = dbCluster.getDb(queueId);
+    helper.getKey(db, appPrefix + queueId, cb);
+}
 
 var popNotification = function(db, appPrefix, queue, maxElems, callback, firstElem) {
   'use strict';
@@ -413,6 +429,11 @@ exports.blockingPop = blockingPop;
  * @param {function(Object, number)} callback takes (err, number).
  */
 exports.queueSize = queueSize;
+
+
+exports.setSecHash = setSecHash;
+exports.getSecHash = getSecHash;
+
 
 //aux
 function manageError(err, callback) {
