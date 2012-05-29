@@ -263,12 +263,7 @@ function checkPerm(appPrefix, req, res, cb) {
     }
   });
 
-  console.dir(req.headers);
-  console.log("header " + header);
-  console.log("token " + token);
-  console.log("username ", username);
-  console.log("password ", password);
-}
+  }
 
 exports.queueSize = queueSize;
 exports.getQueue = getQueue;
