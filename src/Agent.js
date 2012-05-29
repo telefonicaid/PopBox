@@ -45,24 +45,27 @@ if (cluster.isMaster) {
     appSec.prefix = "SEC:";
     appSec.port = Number(config.agent.port) + 1;
 
-    servers.forEach( function (server) {
-      'use strict';
-      server.use(express.query());
-        server.use(express.bodyParser());
-        server.use(express.limit("1mb"));
 
-        server.post('/trans', function(req, res) {logic.postTrans(server.prefix,req,res);});
-        server.get('/trans/:id_trans/:state?', logic.transState);
-        server.get('/queue/:id/size', function(req, res) {logic.checkPerm(server.prefix, req, res, logic.queueSize);});
-        server.post('/queue', function(req, res) {logic.postQueue(server.prefix, req, res);});
-        server.get('/queue/:id', function(req, res) {logic.checkPerm(server.prefix, req, res, logic.getQueue);});
+    app.use(express.query());
+    app.use(express.bodyParser());
+    app.use(express.limit("1mb"));
 
-    });
+    appSec.use(express.query());
+    appSec.use(express.bodyParser());
+    appSec.use(express.limit("1mb"));
 
-  //App specific handlers
-  appSec.post('/queue', function(req, res) {
-    'use strict';
-    logic.postQueue(appSec.prefix,req,res);});
+    appSec.post('/trans', function(req, res) {logic.postTrans(appSec.prefix,req,res);});
+    appSec.get('/trans/:id_trans/:state?', logic.transState);
+    appSec.get('/queue/:id/size', function(req, res) {logic.checkPerm(appSec.prefix, req, res, logic.queueSize);});
+    appSec.get('/queue/:id', function(req, res) {logic.checkPerm(appSec.prefix, req, res, logic.getQueue);});
+    appSec.post('/queue', function(req, res) {logic.postQueue(appSec.prefix, req, res);});
+
+    app.post('/trans', function(req, res) {logic.postTrans(app.prefix,req,res);});
+    app.get('/trans/:id_trans/:state?', logic.transState);
+    app.get('/queue/:id/size', function(req, res) { logic.queueSize(app.prefix,req,res)});
+    app.get('/queue/:id', function(req, res) {logic.getQueue(app.prefix, req, res );});
+
+
 
 //Add subscribers
     async.parallel([evLsnr.init(emitter), cbLsnr.init(emitter)],
