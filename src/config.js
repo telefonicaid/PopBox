@@ -139,4 +139,4 @@ exports.cluster= {};
  *
  * @type {Number} number of CPUS to be used in cluster mode (-1 for all)
  */
-exports.cluster.numcpus = 1;
+exports.cluster.numcpus = 0;

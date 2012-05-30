@@ -6,10 +6,12 @@ var config = require('./config.js');
 var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
 
-if (config.cluster.numcpus > 0 && config.cluster.numcpus < numCPUs) {
+if (config.cluster.numcpus >= 0 && config.cluster.numcpus < numCPUs) {
     numCPUs = config.cluster.numcpus;
 }
-if (cluster.isMaster) {
+
+
+if (cluster.isMaster && numCPUs !== 0) {
     // Fork workers.
     for (var i = 0; i < numCPUs; i++) {
         cluster.fork();
