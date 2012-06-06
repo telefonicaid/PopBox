@@ -157,24 +157,22 @@ function payloadTrans(req, res) {
     }
 }
 
-function expireTrans(req, res) {
+function expirationDate(req, res) {
     'use strict';
-    logger.debug('expireTrans(req, res)', [req, res]);
+    logger.debug('expirationDate(req, res)', [req, res]);
     var id = req.param('id_trans', null);
-    logger.debug("expireTrans -id  req.body", id, req.body);
-    res.send('expireAt transaction '+id+ ' con'+req.body);
-    /*    if (id) {
-     dataSrv.getTransaction(id, state, summary, function (e, data) {
-     if (e) {
-     res.send({errors:[e]}, 400);
-     } else {
-     res.send(data);
-     }
-     });
-     } else {
-     res.send({errors:['missing id']}, 400);
-     }
-     */
+    logger.debug("expirationDate - id  req.body", id, req.body);
+    if (id) {
+        dataSrv.expirationDate(id, req.body, function (e, data) {
+            if (e) {
+                res.send({errors:[e]}, 400);
+            } else {
+                res.send(data);
+            }
+        });
+    } else {
+        res.send({errors:['missing id']}, 400);
+    }
 }
 function queueSize (prefix, req, res) {
   'use strict';
@@ -306,7 +304,7 @@ exports.getQueue = getQueue;
 exports.transState = transState;
 exports.postTrans = postTrans;
 exports.deleteTrans = deleteTrans;
-exports.expireTrans = expireTrans;
+exports.expirationDate = expirationDate;
 exports.payloadTrans = payloadTrans;
 exports.postQueue = postQueue;
 exports.checkPerm = checkPerm;

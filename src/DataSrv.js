@@ -451,6 +451,18 @@ function setPayload(transactionId, payload, cb) {
         }
     });
 }
+function expirationDate(transactionId, date, cb) {
+    logger.debug('expirationDate(transactionId, date, cb)', [transactionId, date, cb]);
+    var dbTr = dbCluster.getTransactionDb(transactionId),
+        meta = config.dbKeyTransPrefix + transactionId + ':meta';
+
+    helper.setExpirationDate(dbTr, meta, {expirationDate: date}, function cbExpirationDate(err) {
+        logger.debug('cbExpirationDate(err)', [err]);
+        if (cb) {
+            cb(err);
+        }
+    });
+}
 //Public Interface Area
 
 /**
@@ -488,6 +500,7 @@ exports.setSecHash = setSecHash;
 exports.getSecHash = getSecHash;
 exports.deleteTrans = deleteTrans;
 exports.setPayload = setPayload;
+exports.expirationDate = expirationDate;
 
 //aux
 function manageError(err, callback) {

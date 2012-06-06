@@ -77,7 +77,7 @@ if (cluster.isMaster && numCPUs !== 0) {
     app.delete('/trans/:id_trans', logic.deleteTrans);
     app.get('/trans/:id_trans/:state?', logic.transState);
     app.post('/trans/:id_trans/payload', logic.payloadTrans);
-    app.post('/trans/:id_trans/expireAt', logic.expireTrans);
+    app.post('/trans/:id_trans/expirationDate', logic.expirationDate);
     app.post('/trans', function(req, res) {logic.postTrans(app.prefix,req,res);});
     app.get('/queue/:id/size', function(req, res) { logic.queueSize(app.prefix,req,res)});
     app.get('/queue/:id', function(req, res) {logic.getQueue(app.prefix, req, res );});
