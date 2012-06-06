@@ -439,6 +439,18 @@ function deleteTrans(transactionId, cb) {
         }
     });
 }
+function setPayload(transactionId, payload, cb) {
+    logger.debug('setPayload(transactionId, payload, cb)', [transactionId, payload, cb]);
+    var dbTr = dbCluster.getTransactionDb(transactionId),
+        meta = config.dbKeyTransPrefix + transactionId + ':meta';
+
+    dbTr.hset(meta, 'payload', payload, function cbSetPayload(err) {
+        logger.debug('cbSetPayload(err)', [err]);
+        if (cb) {
+            cb(err);
+        }
+    });
+}
 //Public Interface Area
 
 /**
@@ -475,6 +487,7 @@ exports.queueSize = queueSize;
 exports.setSecHash = setSecHash;
 exports.getSecHash = getSecHash;
 exports.deleteTrans = deleteTrans;
+exports.setPayload = setPayload;
 
 //aux
 function manageError(err, callback) {

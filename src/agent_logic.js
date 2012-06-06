@@ -138,26 +138,30 @@ function payloadTrans(req, res) {
     'use strict';
     logger.debug('payloadTrans(req, res)', [req, res]);
     var id = req.param('id_trans', null);
-    console.log("payload transaction",id, req.body);
-    res.send('payload transaction '+id+ 'con '+req.body);
-    /*    if (id) {
-     dataSrv.getTransaction(id, state, summary, function (e, data) {
-     if (e) {
-     res.send({errors:[e]}, 400);
-     } else {
-     res.send(data);
-     }
-     });
-     } else {
-     res.send({errors:['missing id']}, 400);
-     }
-     */
+    logger.debug('payloadTrans - id req.body', id, req.body);
+
+    if (!id) {
+        res.send({errors:['missing id']}, 400);
+    }
+    else if (!req.body) {
+        res.send({errors:['missing body']}, 400);
+    }
+    else {
+        dataSrv.setPayload(id, req.body, function (e, data) {
+            if (e) {
+                res.send({errors:[e]}, 400);
+            } else {
+                res.send("OK");
+            }
+        });
+    }
 }
+
 function expireTrans(req, res) {
     'use strict';
     logger.debug('expireTrans(req, res)', [req, res]);
     var id = req.param('id_trans', null);
-    console.log("expireAt transaction", id, req.body);
+    logger.debug("expireTrans -id  req.body", id, req.body);
     res.send('expireAt transaction '+id+ ' con'+req.body);
     /*    if (id) {
      dataSrv.getTransaction(id, state, summary, function (e, data) {
