@@ -9,6 +9,12 @@ var config = require('./config').ev_lsnr;
 
 var clients = [];
 
+var path = require('path');
+var log = require('PDITCLogger');
+var logger = log.newLogger();
+logger.prefix = path.basename(module.filename,'.js');
+
+
 function init(emitter) {
     'use strict';
     return function (callback) {
@@ -24,35 +30,29 @@ function init(emitter) {
                         }
                     } else {
                         var collection = c;
-                        console.log("mongo se susbcribe");
-                        emitter.on('NEWSTATE', function new_event(data) {
+                        logger.debug("mongo is susbcribed");
+                        emitter.on('NEWSTATE', function onNewEvent(data) {
                             try {
-                                console.log('xxNEW STATE ARRIVED');
-                                console.dir(data);
+                                logger.debug('onNewEvent(data)',[data]);
                                 collection.insert(data, function (err, docs) {
                                     if (err) {
-                                        console.log(err);
-                                    } else {
-                                        console.log(docs);
+                                        logger.warning('onNewEvent',err);
                                     }
                                 });
                             } catch (e) {
-                                console.log(e);
+                                logger.warning(e);
                             }
                         });
-                        emitter.on('ACTION', function new_error(data) {
+                        emitter.on('ACTION', function onNewError(data) {
                             try {
-                                console.log('lNEW ACTION ARRIVED');
-                                console.dir(data);
+                                logger.debug('onNewError(data)',[data]);
                                 collection.insert(data, function (err, docs) {
                                     if (err) {
-                                        console.log(err);
-                                    } else {
-                                        console.log(docs);
+                                       logger.warning('onNewError',err);
                                     }
                                 });
                             } catch (e) {
-                                console.log(e);
+                                logger.warning(e);
                             }
                         });
                         if (callback) {

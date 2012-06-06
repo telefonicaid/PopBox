@@ -6,11 +6,17 @@
 //Require Area
 var config = require('./config.js');
 
+var path = require('path');
+var log = require('PDITCLogger');
+var logger = log.newLogger();
+logger.prefix = path.basename(module.filename,'.js');
+
 var setKey= function(db, id, value, callback) {
-    db.set(id, value, function(err) {
+    logger.debug('setKey(db, id, value, callback)', [db, id, value, callback]);
+    db.set(id, value, function onSet(err) {
         if (err) {
             //error pushing
-            console.dir(err);
+            logger.warning(err);
         }
 
         if (callback) {
@@ -20,10 +26,11 @@ var setKey= function(db, id, value, callback) {
 }
 
 var getKey= function(db, id, callback) {
+    logger.warning('getKey(db, id, callback)', [db, id, callback]);
     db.get(id, function(err, value) {
         if (err) {
             //error pushing
-            console.dir(err);
+            logger.warning(err);
         }
 
         if (callback) {
@@ -33,14 +40,15 @@ var getKey= function(db, id, callback) {
 }
 var pushParallel = function(db, queue, priority, transaction_id) {
   'use strict';
+  logger.debug('pushParallel(db, queue, priority, transaction_id)',[db, queue, priority, transaction_id]);
   return function asyncPushParallel(callback) {
+    logger.debug('asyncPushParallel(callback)',[callback]);
     var fullQueueId = config.db_key_queue_prefix + priority + queue.id;
-    db.lpush(fullQueueId, transaction_id, function(err) {
+    db.lpush(fullQueueId, transaction_id, function onLpushed(err) {
       if (err) {
         //error pushing
-        console.dir(err);
+        logger.warning(err);
       }
-
       if (callback) {
         callback(err);
       }
@@ -50,12 +58,13 @@ var pushParallel = function(db, queue, priority, transaction_id) {
 
 var hsetHashParallel = function(dbTr, queue, transactionId, sufix, datastr) {
   'use strict';
+  logger.debug('hsetHashParallel(dbTr, queue, transactionId, sufix, datastr)',[dbTr, queue, transactionId, sufix, datastr]);
   return function asyncHsetHashParallel(callback) {
-
+      logger.debug('asyncHsetHashParallel(callback)',[callback]);
     dbTr.hmset(transactionId + sufix, queue.id, datastr, function(err) {
       if (err) {
         //error pushing
-        console.dir(err);
+        logger.warning(err);
       }
 
       if (callback) {
@@ -67,21 +76,24 @@ var hsetHashParallel = function(dbTr, queue, transactionId, sufix, datastr) {
 
 var hsetMetaHashParallel = function(dbTr, transaction_id, sufix, provision) {
   'use strict';
+    logger.debug('hsetMetaHashParallel(dbTr, transaction_id, sufix, provision)',[dbTr, transaction_id, sufix, provision]);
   return function asyncHsetMetaHash(callback) {
+      logger.debug('asyncHsetMetaHash(callback)',[callback]);
     var meta = {
       'payload': provision.payload,
       'priority': provision.priority,
       'callback': provision.callback,
       'expirationDate': provision.expirationDate
     };
-    dbTr.hmset(transaction_id + sufix, meta, function(err) {
+    dbTr.hmset(transaction_id + sufix, meta, function onHmset(err) {
       if (err) {
         //error pushing
-        console.dir(err);
+        logger.warning('onHmset',err);
       } else {
         //pushing ok
         setExpirationDate(dbTr, transaction_id + sufix, provision,
-                          function(err) {
+                          function onSetExpirationDate(err) {
+                            logger.warning('onSetExpirationDate',err) ;
                             if (callback) {
                               callback(err);
                             }
@@ -95,10 +107,10 @@ var hsetMetaHashParallel = function(dbTr, transaction_id, sufix, provision) {
 var setExpirationDate = function(dbTr, key, provision, callback) {
   'use strict';
   if (provision.expirationDate) {
-    dbTr.expireat(key, provision.expirationDate, function(err) {
+    dbTr.expireat(key, provision.expirationDate, function onExpireat(err) {
       if (err) {
         //error setting expiration date
-        console.dir(err);
+        logger.warning('onExpireat',err);
       }
       if (callback) {
         callback(err);

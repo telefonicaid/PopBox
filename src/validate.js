@@ -4,8 +4,14 @@
 //
 var config = require('./config.js');
 
+var path = require('path');
+var log = require('PDITCLogger');
+var logger = log.newLogger();
+logger.prefix = path.basename(module.filename,'.js');
+
 function errorsTrans(trans) {
   'use strict';
+  logger.debug('errorsTrans(trans)', [trans]);
   var errors = [],
       maxNumQueues = config.agent.max_num_queues,
       maxPayloadSize = config.agent.max_payload_size;
@@ -47,6 +53,7 @@ function errorsTrans(trans) {
 
 function validTransId(transId) {
   'use strict';
+    logger.debug('validTransId(transId)', [transId]);
   return (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
     .test(transId);
 }

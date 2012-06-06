@@ -8,6 +8,11 @@
 var redisModule = require('redis');
 var config = require('./config.js');
 
+var path = require('path');
+var log = require('PDITCLogger');
+var logger = log.newLogger();
+logger.prefix = path.basename(module.filename,'.js');
+
 var rc = redisModule.createClient(redisModule.DEFAULT_PORT,
     config.tranRedisServer);
 rc.select(config.selected_db); //false pool for pushing
@@ -22,6 +27,7 @@ for (var i = 0; i < config.redisServers.length; i++) {
 
 var getDb = function(queueId) {
   'use strict';
+    logger.debug('getDb(queueId)', [queueId]);
   var hash = hashMe(queueId, config.redisServers.length);
   var rc = dbArray[hash];
   return rc;
@@ -29,6 +35,7 @@ var getDb = function(queueId) {
 
 var getOwnDb = function(queueId) {
   'use strict';
+    logger.debug('getOwnDb(queueId)', [queueId]);
   var hash = hashMe(queueId, config.redisServers.length);
   var port = config.redisServers[hash].port || redisModule.DEFAULT_PORT;
   var rc = redisModule.createClient(port,
@@ -41,7 +48,8 @@ var getOwnDb = function(queueId) {
 
 var getTransactionDb = function(transactionId) {
   'use strict';
-  if (!rc || !rc.connected) {
+    logger.debug('getTransactionDb(transactionId)', [transactionId]);
+    if (!rc || !rc.connected) {
     rc =
         redisModule.createClient(redisModule.DEFAULT_PORT,
             config.tranRedisServer);
@@ -53,6 +61,7 @@ var getTransactionDb = function(transactionId) {
 
 var hashMe = function(id, mod) {
   "use strict";
+  logger.debug('hashMe(id, mod)', [id, mod]);
   var i,
       len,
       sum = 0;
@@ -68,9 +77,10 @@ var hashMe = function(id, mod) {
 };
 
 var free = function(db) {
-  //return to the pool TechDebt
   'use strict';
-  if (db.isOwn) {
+    //return to the pool TechDebt
+  logger.debug('free(db)',[db]);
+    if (db.isOwn) {
     db.end();
   }
 };

@@ -11,9 +11,15 @@ var async = require('async');
 var emitter = require('./emitter_module').getEmitter();
 var crypto = require('crypto');
 
+var path = require('path');
+var log = require('PDITCLogger');
+var logger = log.newLogger();
+logger.prefix = path.basename(module.filename,'.js');
+
 //Private methods Area
 var pushTransaction = function(appPrefix, provision, callback) {
   'use strict';
+   logger.debug('pushTransaction(appPrefix, provision, callback)',[appPrefix, provision, callback]);
   //handles a new transaction  (N ids involved)
   var priority = provision.priority + ':', //contains "H" || "L"
     queues = provision.queue, //[{},{}]   //list of ids
@@ -45,7 +51,9 @@ var pushTransaction = function(appPrefix, provision, callback) {
                });
 
   function processOneId(dbTr, transactionId, queue, priority) {
+    logger.debug('processOneId(dbTr, transactionId, queue, priority)', [dbTr, transactionId, queue, priority]);
     return function processOneIdAsync(callback) {
+      logger.debug('processOneIdAsync(callback)',[callback]);
       var db = dbCluster.getDb(queue.id); //different DB for different Ids
       async.parallel([
                        helper.pushParallel(db, {id: appPrefix + queue.id} , priority, transactionId),
@@ -68,6 +76,9 @@ var pushTransaction = function(appPrefix, provision, callback) {
           //set expiration time for state collections (not the queue)
           helper.setExpirationDate(dbTr, transactionId + ':state', provision,
                                    function expiration_date_end(err) {
+                                       if (err) {
+                                           logger.warning('expiration_date_end', err);
+                                       }
                                      //Everything kept or error
                                      if (callback) {
                                        callback(err);
@@ -80,7 +91,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
 };
 
 var setSecHash = function(appPrefix, queueId, user, passwd, callback) {
-
+    logger.debug('setSecHash(appPrefix, queueId, user, passwd, callback)', [appPrefix, queueId, user, passwd, callback]);
     var shasum = crypto.createHash('sha1'),
         digest,
         db = dbCluster.getDb(queueId);
@@ -92,12 +103,14 @@ var setSecHash = function(appPrefix, queueId, user, passwd, callback) {
 };
 
 var getSecHash = function(appPrefix, queueId, cb) {
+    logger.debug('getSecHash(appPrefix, queueId, cb)', [appPrefix, queueId, cb]);
     var db = dbCluster.getDb(queueId);
     helper.getKey(db, appPrefix + queueId, cb);
 }
 
 var popNotification = function(db, appPrefix, queue, maxElems, callback, firstElem) {
   'use strict';
+    logger.debug('popNotification(db, appPrefix, queue, maxElems, callback, firstElem)', [db, appPrefix, queue, maxElems, callback, firstElem]);
   //pop the queu  (LRANGE)
   //hight priority first
   var fullQueueIdH = config.db_key_queue_prefix + 'H:' +  appPrefix  +
@@ -105,9 +118,9 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback, firstEl
     queue.id, restElems = 0;
 
   db.lrange(fullQueueIdH, -maxElems, -1, function onRangeH(errH, dataH) {
+      logger.debug('onRangeH(errH, dataH)', [ errH, dataH ]);
     if (errH && !firstElem) {//errH
       manageError(errH, callback);
-
     } else {
       if (!errH || firstElem[0] === fullQueueIdH) {  //buggy indexes beware
         var k = -1;
@@ -119,6 +132,8 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback, firstEl
         }
         //forget about first elem priority (-2)
         db.ltrim(fullQueueIdH, 0, -dataH.length - k, function on_trimH(err) {
+            if(err) {
+            }
           //the trim fails!! duplicates warning!!
         });
         if (dataH.length < maxElems) {
@@ -166,6 +181,7 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback, firstEl
 
 var blockingPop = function(appPrefix, queue, maxElems, blockingTime, callback) {
   'use strict';
+   logger.debug('blockingPop(appPrefix, queue, maxElems, blockingTime, callback)', [appPrefix, queue, maxElems, blockingTime, callback]);
   var queueId = queue.id, //
     db = dbCluster.getOwnDb(queueId), //
     fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id, //
@@ -220,10 +236,12 @@ var blockingPop = function(appPrefix, queue, maxElems, blockingTime, callback) {
 
 function getPopData(dataH, callback, queue) {
   'use strict';
+  logger.debug('getPopData(dataH, callback, queue)',[dataH, callback, queue]);
   var newStateBatch = [
   ], transactionId = null, dbTr = null, cleanData = null;
   retrieveData(queue, dataH, function onData(err, payloadWithNulls) {
-    if (err) {
+      logger.debug('onData(err, payloadWithNulls)',[err, payloadWithNulls]);
+      if (err) {
       manageError(err, callback);
     } else {
       //Handle post-pop behaviour (callback)
@@ -232,6 +250,7 @@ function getPopData(dataH, callback, queue) {
       });
       //SET NEW STATE for Every popped transaction
       newStateBatch = cleanData.map(function prepareStateBatch(elem) {
+        logger.debug('prepareStateBatch(elem)',[elem]);
         transactionId = elem.transactionId;
         dbTr = dbCluster.getTransactionDb(transactionId);
         return helper.hsetHashParallel(dbTr, queue, transactionId, ':state',
@@ -249,15 +268,18 @@ function getPopData(dataH, callback, queue) {
 
 function retrieveData(queue, transactionList, callback) {
   'use strict';
+  logger.debug('retrieveData(queue, transactionList, callback)', [queue, transactionList, callback]);
   var ghostBusterBatch = [
   ];
   ghostBusterBatch =
     transactionList.map(function prepareDataBatch(transaction) {
+      logger.debug('prepareDataBatch(transaction)',[transaction]);
       var dbTr = dbCluster.getTransactionDb(transaction);
       return checkData(queue, dbTr, transaction);
     });
   async.parallel(ghostBusterBatch,
                  function retrieveDataAsyncEnd(err, foundMetadata) {
+                   logger.debug('retrieveDataAsyncEnd(err, foundMetadata)', [err, foundMetadata]);
                    if (callback) {
                      callback(err, foundMetadata);
                    }
@@ -266,6 +288,7 @@ function retrieveData(queue, transactionList, callback) {
 
 function checkData(queue, dbTr, transactionId) {
   'use strict';
+  logger.debug('checkData(queue, dbTr, transactionId)', [queue, dbTr, transactionId]);
   return function(callback) {
     var ev = null, extTransactionId = transactionId.split('|')[1];
     dbTr.hgetall(transactionId + ':meta', function on_data(err, data) {
@@ -305,6 +328,7 @@ function checkData(queue, dbTr, transactionId) {
 //callback return transaction info
 
 var getTransaction = function(extTransactionId, state, summary, callback) {
+    logger.debug('getTransaction(extTransactionId, state, summary, callback)', [extTransactionId, state, summary, callback]);
   'use strict';
   var err = null, //
     dbTr = null, //
@@ -322,6 +346,7 @@ var getTransaction = function(extTransactionId, state, summary, callback) {
     dbTr = dbCluster.getTransactionDb(extTransactionId);
     transactionId = config.dbKeyTransPrefix + extTransactionId;
     dbTr.hgetall(transactionId + ':state', function on_data(err, data) {
+      logger.debug('on_data(err, data)', [err,data]);
       if (err) {
         manageError(err, callback);
       } else {
@@ -341,6 +366,7 @@ var getTransaction = function(extTransactionId, state, summary, callback) {
   }
 
   function getData(state, data) {
+    logger.debug('getData(state, data)',[state, data]);
     var filteredData = {}, pname = null;
     if (state === 'All') {
       return data;
@@ -358,6 +384,7 @@ var getTransaction = function(extTransactionId, state, summary, callback) {
   }
 
   function getSummary(state, data) {
+      logger.debug('getSummary(state, data)',[state, data]);
     var summaryObj = {}, dataArray = [
     ], pname, dataAux;
     for (pname in data) {
@@ -388,8 +415,9 @@ var getTransaction = function(extTransactionId, state, summary, callback) {
  */
 var queueSize = function(queue, callback) {
   'use strict';
+  logger.debug('queueSize(queue, callback)', [queue, callback]);
   queue.nohay = 0;
-  var queueId = queue.id, db = dbCluster.getDb(queueId);
+  var queueId = queue, db = dbCluster.getDb(queueId);
   db.llen(queueId, function onLength(err, length) {
     dbCluster.free(db);
     if (callback) {
@@ -438,7 +466,7 @@ exports.getSecHash = getSecHash;
 //aux
 function manageError(err, callback) {
   'use strict';
-  console.log(err);
+  logger.debug('manageError(err, callback)', [err, callback]);
   if (callback) {
     callback(err);
   }

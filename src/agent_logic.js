@@ -4,11 +4,16 @@ var emitter = require('./emitter_module').getEmitter();
 var config = require('./config.js');
 var crypto = require('crypto');
 
+var path = require('path');
+var log = require('PDITCLogger');
+var logger = log.newLogger();
+logger.prefix = path.basename(module.filename,'.js');
 
 function postTrans (prefix, req, res) {
   'use strict';
-
+  logger.debug('postTrans (prefix, req, res)', [prefix, req, res]);
   var errors = validate.errorsTrans(req.body);
+  logger.debug('postTrans - errors', errors);
   var ev = {};
 
 
@@ -16,7 +21,8 @@ function postTrans (prefix, req, res) {
   req.connection.setTimeout(config.agent.prov_timeout * 1000);
 
   if (errors.length === 0) {
-    dataSrv.pushTransaction(prefix, req.body, function (err, trans_id) {
+    dataSrv.pushTransaction(prefix, req.body, function onPushedTrans(err, trans_id) {
+      logger.debug('onPushedTrans(err, trans_id)',[err, trans_id]);
       if (err) {
         ev = {
           'transaction':trans_id,
@@ -26,8 +32,9 @@ function postTrans (prefix, req, res) {
           'error':err
         };
         emitter.emit('ACTION', ev);
-
         res.send({error:[err]}, 500);
+        logger.warning('onPushedTrans', err);
+        logger.info('postTrans', [{error:[err]}, 500]);
       } else {
         ev = {
           'transaction':trans_id,
@@ -37,16 +44,19 @@ function postTrans (prefix, req, res) {
         };
         emitter.emit('ACTION', ev);
         res.send({id:trans_id});
+        logger.info('postTrans', [{id:trans_id}]);
       }
     });
   } else {
     res.send({error:errors}, 400);
+    logger.info('postTrans', [{error:errors}, 400]);
   }
 }
 
 function postQueue (appPrefix, req, res) {
   'use strict';
 
+    logger.debug('postQueue (appPrefix, req, res)', [appPrefix, req, res]);
   var errors = [] ;//validate.errorsTrans(req.body);
   var ev = {};
   var queue = req.body.queue,
@@ -85,6 +95,7 @@ function postQueue (appPrefix, req, res) {
 
 function  transState(req, res) {
   'use strict';
+  logger.debug('transState(req, res)', [req, res]);
   var id = req.param('id_trans', null);
   var state = req.param('state', 'All');
   var summary;
@@ -105,15 +116,74 @@ function  transState(req, res) {
   }
 }
 
+function deleteTrans(req, res) {
+    'use strict';
+    logger.debug('deleteTrans(req, res)', [req, res]);
+    var id = req.param('id_trans', null);
+    console.log("deleting transaction",id);
+    res.send('deleting transaction '+id);
+    /*    if (id) {
+     dataSrv.getTransaction(id, state, summary, function (e, data) {
+     if (e) {
+     res.send({errors:[e]}, 400);
+     } else {
+     res.send(data);
+     }
+     });
+     } else {
+     res.send({errors:['missing id']}, 400);
+     }
+     */
+}
+function payloadTrans(req, res) {
+    'use strict';
+    logger.debug('payloadTrans(req, res)', [req, res]);
+    var id = req.param('id_trans', null);
+    console.log("payload transaction",id, req.body);
+    res.send('payload transaction '+id+ 'con '+req.body);
+    /*    if (id) {
+     dataSrv.getTransaction(id, state, summary, function (e, data) {
+     if (e) {
+     res.send({errors:[e]}, 400);
+     } else {
+     res.send(data);
+     }
+     });
+     } else {
+     res.send({errors:['missing id']}, 400);
+     }
+     */
+}
+function expireTrans(req, res) {
+    'use strict';
+    logger.debug('expireTrans(req, res)', [req, res]);
+    var id = req.param('id_trans', null);
+    console.log("expireAt transaction", id, req.body);
+    res.send('expireAt transaction '+id+ ' con'+req.body);
+    /*    if (id) {
+     dataSrv.getTransaction(id, state, summary, function (e, data) {
+     if (e) {
+     res.send({errors:[e]}, 400);
+     } else {
+     res.send(data);
+     }
+     });
+     } else {
+     res.send({errors:['missing id']}, 400);
+     }
+     */
+}
 function queueSize (prefix, req, res) {
   'use strict';
+  logger.debug('queueSize (prefix, req, res)', [prefix, req, res]);
   var queueId = prefix + req.param('id');
-  console.log('pidiendo size de %s', queueId);
-  dataSrv.queueSize(queueId, function (err, length) {
-    console.log('size de %s %j %j', queueId, err, length);
+  dataSrv.queueSize(queueId, function onQueueSize(err, length) {
+    logger.debug('onQueueSize(err, length)', [err, length]);
     if (err) {
+      logger.info('onQueueSize',[String(err), 500]);
       res.send(String(err), 500);
     } else {
+      logger.info('onQueueSize',[String(length)]);
       res.send(String(length));
     }
   });
@@ -121,6 +191,7 @@ function queueSize (prefix, req, res) {
 
 function getQueue(appPrefix, req, res) {
   'use strict';
+    logger.debug('getQueue(appPrefix, req, res)', [appPrefix, req, res]);
   var queueId = req.param('id');
   var maxMsgs = req.param('max', config.agent.max_messages);
   var tOut = req.param('timeout', config.agent.pop_timeout);
@@ -143,9 +214,10 @@ function getQueue(appPrefix, req, res) {
 
   req.connection.setTimeout((tOut + config.agent.grace_timeout) * 1000);
 
-  console.log('Blocking: %s,%s,%s', queueId, maxMsgs, tOut);
+  logger.debug('Blocking: queueId, maxMsgs, tOut', [queueId, maxMsgs, tOut]);
 
-  dataSrv.blockingPop(appPrefix, {id:queueId}, maxMsgs, tOut, function (err, notifList) {
+  dataSrv.blockingPop(appPrefix, {id:queueId}, maxMsgs, tOut, function onBlockingPop(err, notifList) {
+    logger.debug('onBlockingPop(err, notifList)', [err, notifList]);
     var messageList = [];
     var ev = {};
     //stablish the timeout depending on blocking time
@@ -161,7 +233,6 @@ function getQueue(appPrefix, req, res) {
       emitter.emit('ACTION', ev);
       res.send(String(err), 500);
     } else {
-      console.log(notifList);
       if (notifList) {
         messageList = notifList.map(function (notif) {
           return notif.payload;
@@ -183,7 +254,7 @@ function getQueue(appPrefix, req, res) {
 
 function insert(req, res, push, validate) {
   'use strict';
-//  console.log(req.body);
+  debug.logger('insert(req, res, push, validate)', [req, res, push, validate]);
 
   var errors = validate(req.body);
   var ev = {};
@@ -221,6 +292,7 @@ function insert(req, res, push, validate) {
 
 function checkPerm(appPrefix, req, res, cb) {
   'use strict';
+  debug.logger('checkPerm(appPrefix, req, res, cb)', [appPrefix, req, res, cb]);
   var header = req.headers['authorization'] || '', // get the header
     token = header.split(/\s+/).pop() || '', // and the encoded auth token
     auth = new Buffer(token, 'base64').toString(), // convert from base64
@@ -269,5 +341,8 @@ exports.queueSize = queueSize;
 exports.getQueue = getQueue;
 exports.transState = transState;
 exports.postTrans = postTrans;
+exports.deleteTrans = deleteTrans;
+exports.expireTrans = expireTrans;
+exports.payloadTrans = payloadTrans;
 exports.postQueue = postQueue;
 exports.checkPerm = checkPerm;
