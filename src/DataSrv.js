@@ -426,6 +426,19 @@ var queueSize = function(queue, callback) {
   });
 };
 
+function deleteTrans(transactionId, cb) {
+    logger.debug('deleteTrans(transactionId)', [transactionId]);
+    var dbTr = dbCluster.getTransactionDb(transactionId),
+        meta = config.dbKeyTransPrefix + transactionId + ':meta',
+        state =  config.dbKeyTransPrefix + transactionId + ':state';
+
+    dbTr.del(meta, state, function onDeleted(err) {
+        logger.debug('onDeleted(err)', [err]);
+        if (cb) {
+            cb(err);
+        }
+    });
+}
 //Public Interface Area
 
 /**
@@ -461,7 +474,7 @@ exports.queueSize = queueSize;
 
 exports.setSecHash = setSecHash;
 exports.getSecHash = getSecHash;
-
+exports.deleteTrans = deleteTrans;
 
 //aux
 function manageError(err, callback) {

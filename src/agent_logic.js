@@ -120,21 +120,20 @@ function deleteTrans(req, res) {
     'use strict';
     logger.debug('deleteTrans(req, res)', [req, res]);
     var id = req.param('id_trans', null);
-    console.log("deleting transaction",id);
-    res.send('deleting transaction '+id);
-    /*    if (id) {
-     dataSrv.getTransaction(id, state, summary, function (e, data) {
-     if (e) {
-     res.send({errors:[e]}, 400);
-     } else {
-     res.send(data);
-     }
-     });
-     } else {
-     res.send({errors:['missing id']}, 400);
-     }
-     */
+    console.log("deleting transaction", id);
+    if (id) {
+        dataSrv.deleteTrans(id, function (e, data) {
+            if (e) {
+                res.send({errors:[e]}, 400);
+            } else {
+                res.send("OK");
+            }
+        });
+    } else {
+        res.send({errors:['missing id']}, 400);
+    }
 }
+
 function payloadTrans(req, res) {
     'use strict';
     logger.debug('payloadTrans(req, res)', [req, res]);
@@ -250,45 +249,6 @@ function getQueue(appPrefix, req, res) {
     }
   });
 }
-
-
-function insert(req, res, push, validate) {
-  'use strict';
-  debug.logger('insert(req, res, push, validate)', [req, res, push, validate]);
-
-  var errors = validate(req.body);
-  var ev = {};
-
-
-  if (errors.length === 0) {
-    push(req.body, function (err, trans_id) {
-      if (err) {
-        ev = {
-          'transaction':trans_id,
-          'postdata':req.body,
-          'action':'USERPUSH',
-          'timestamp':new Date(),
-          'error':err
-        };
-        emitter.emit('ACTION', ev);
-
-        res.send({error:[err]}, 500);
-      } else {
-        ev = {
-          'transaction':trans_id,
-          'postdata':req.body,
-          'action':'USERPUSH',
-          'timestamp':new Date()
-        };
-        emitter.emit('ACTION', ev);
-        res.send({id:trans_id});
-      }
-    });
-  } else {
-    res.send({error:errors}, 400);
-  }
-}
-
 
 function checkPerm(appPrefix, req, res, cb) {
   'use strict';
