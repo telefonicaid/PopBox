@@ -9,40 +9,44 @@ var config = require('./config.js');
 var path = require('path');
 var log = require('PDITCLogger');
 var logger = log.newLogger();
-logger.prefix = path.basename(module.filename,'.js');
+logger.prefix = path.basename(module.filename, '.js');
 
-var setKey= function(db, id, value, callback) {
-    logger.debug('setKey(db, id, value, callback)', [db, id, value, callback]);
-    db.set(id, value, function onSet(err) {
-        if (err) {
-            //error pushing
-            logger.warning(err);
-        }
+var setKey = function(db, id, value, callback) {
+  "use strict";
+  logger.debug('setKey(db, id, value, callback)', [db, id, value, callback]);
+  db.set(id, value, function onSet(err) {
+    if (err) {
+      //error pushing
+      logger.warning(err);
+    }
 
-        if (callback) {
-            callback(err);
-        }
-    });
-}
+    if (callback) {
+      callback(err);
+    }
+  });
+};
 
-var getKey= function(db, id, callback) {
-    logger.warning('getKey(db, id, callback)', [db, id, callback]);
-    db.get(id, function(err, value) {
-        if (err) {
-            //error pushing
-            logger.warning(err);
-        }
+var getKey = function(db, id, callback) {
+  "use strict";
+  logger.warning('getKey(db, id, callback)', [db, id, callback]);
+  db.get(id, function(err, value) {
+    if (err) {
+      //error pushing
+      logger.warning(err);
+    }
 
-        if (callback) {
-            callback(err, value);
-        }
-    });
-}
+    if (callback) {
+      callback(err, value);
+    }
+  });
+};
+
 var pushParallel = function(db, queue, priority, transaction_id) {
   'use strict';
-  logger.debug('pushParallel(db, queue, priority, transaction_id)',[db, queue, priority, transaction_id]);
+  logger.debug('pushParallel(db, queue, priority, transaction_id)',
+    [db, queue, priority, transaction_id]);
   return function asyncPushParallel(callback) {
-    logger.debug('asyncPushParallel(callback)',[callback]);
+    logger.debug('asyncPushParallel(callback)', [callback]);
     var fullQueueId = config.db_key_queue_prefix + priority + queue.id;
     db.lpush(fullQueueId, transaction_id, function onLpushed(err) {
       if (err) {
@@ -58,9 +62,10 @@ var pushParallel = function(db, queue, priority, transaction_id) {
 
 var hsetHashParallel = function(dbTr, queue, transactionId, sufix, datastr) {
   'use strict';
-  logger.debug('hsetHashParallel(dbTr, queue, transactionId, sufix, datastr)',[dbTr, queue, transactionId, sufix, datastr]);
+  logger.debug('hsetHashParallel(dbTr, queue, transactionId, sufix, datastr)',
+    [dbTr, queue, transactionId, sufix, datastr]);
   return function asyncHsetHashParallel(callback) {
-      logger.debug('asyncHsetHashParallel(callback)',[callback]);
+    logger.debug('asyncHsetHashParallel(callback)', [callback]);
     dbTr.hmset(transactionId + sufix, queue.id, datastr, function(err) {
       if (err) {
         //error pushing
@@ -76,9 +81,10 @@ var hsetHashParallel = function(dbTr, queue, transactionId, sufix, datastr) {
 
 var hsetMetaHashParallel = function(dbTr, transaction_id, sufix, provision) {
   'use strict';
-    logger.debug('hsetMetaHashParallel(dbTr, transaction_id, sufix, provision)',[dbTr, transaction_id, sufix, provision]);
+  logger.debug('hsetMetaHashParallel(dbTr, transaction_id, sufix, provision)',
+    [dbTr, transaction_id, sufix, provision]);
   return function asyncHsetMetaHash(callback) {
-      logger.debug('asyncHsetMetaHash(callback)',[callback]);
+    logger.debug('asyncHsetMetaHash(callback)', [callback]);
     var meta = {
       'payload': provision.payload,
       'priority': provision.priority,
@@ -88,18 +94,9 @@ var hsetMetaHashParallel = function(dbTr, transaction_id, sufix, provision) {
     dbTr.hmset(transaction_id + sufix, meta, function onHmset(err) {
       if (err) {
         //error pushing
-        logger.warning('onHmset',err);
-      } else {
-        //pushing ok
-        setExpirationDate(dbTr, transaction_id + sufix, provision,
-                          function onSetExpirationDate(err) {
-                            logger.warning('onSetExpirationDate',err) ;
-                            if (callback) {
-                              callback(err);
-                            }
-                          });
-
+        logger.warning('onHmset', err);
       }
+      callback(err);
     });
   };
 };
@@ -110,7 +107,7 @@ var setExpirationDate = function(dbTr, key, provision, callback) {
     dbTr.expireat(key, provision.expirationDate, function onExpireat(err) {
       if (err) {
         //error setting expiration date
-        logger.warning('onExpireat',err);
+        logger.warning('onExpireat', err);
       }
       if (callback) {
         callback(err);
