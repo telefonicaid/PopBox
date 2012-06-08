@@ -37,9 +37,10 @@ var pushTransaction = function(appPrefix, provision, callback) {
     //launch push/sets/expire in parallel for one ID
     processBatch.push(processOneId(dbTr, transactionId, queue, priority));
   }
-
+  logger.debug('pushTransaction- processBatch',processBatch );
   async.parallel(processBatch,
     function pushEnd(err) {   //parallel execution may apply also
+      console.log('pushEnd',err)
       //MAIN Exit point
       if (err) {
         manageError(err, callback);
@@ -62,7 +63,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
         }
       }
     });
-
+   console.log("despues de lanzar parallel")
   function processOneId(dbTr, transactionId, queue, priority) {
     logger.debug('processOneId(dbTr, transactionId, queue, priority)',
       [dbTr, transactionId, queue, priority]);
@@ -87,6 +88,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
             'timestamp': new Date()
           };
           emitter.emit('NEWSTATE', ev);
+          callback(null);
         }
       });
     };
@@ -420,6 +422,29 @@ var getTransaction = function(extTransactionId, state, summary, callback) {
   }
 };
 
+
+//callback return transaction info
+var getTransactionMeta = function(extTransactionId, callback) {
+    'use strict';
+    logger.debug('getTransactionMeta(extTransactionId, callback)', [extTransactionId, callback]);
+
+    var err, dbTr, transactionId;
+
+    //obtain transaction info
+    dbTr = dbCluster.getTransactionDb(extTransactionId);
+    transactionId = config.dbKeyTransPrefix + extTransactionId;
+    dbTr.hgetall(transactionId + ':meta', function onDataMeta(err, data) {
+        logger.debug('onDataMeta(err, data)', [err, data]);
+        if (err) {
+            manageError(err, callback);
+        } else {
+            if (callback) {
+                callback(null, data);
+            }
+        }
+    });
+}
+
 /**
  *
  * @param {PopBox.Provision} queue must contain an id.
@@ -467,19 +492,24 @@ function setPayload(transactionId, payload, cb) {
   });
 }
 function expirationDate(transactionId, date, cb) {
-  "use strict";
-  logger.debug('expirationDate(transactionId, date, cb)',
-    [transactionId, date, cb]);
-  var dbTr = dbCluster.getTransactionDb(transactionId), meta = config.dbKeyTransPrefix +
-      transactionId + ':meta';
+    "use strict";
+    logger.debug('expirationDate(transactionId, date, cb)',
+        [transactionId, date, cb]);
+    var dbTr = dbCluster.getTransactionDb(transactionId),
+        meta = config.dbKeyTransPrefix + transactionId + ':meta',
+        state = config.dbKeyTransPrefix + transactionId + ':state';
 
-  helper.setExpirationDate(dbTr, meta, {expirationDate: date},
-    function cbExpirationDate(err) {
-      logger.debug('cbExpirationDate(err)', [err]);
-      if (cb) {
-        cb(err);
-      }
-    });
+    helper.setExpirationDate(dbTr, meta, {expirationDate:date},
+        function cbExpirationDateMeta(errM) {
+            logger.debug('cbExpirationDateMeta(errM)', [errM]);
+            helper.setExpirationDate(dbTr, state, {expirationDate:date},
+                function cbExpirationDateState(errS) {
+                    logger.debug('cbExpirationDateState(errS)', [errS]);
+                    if (cb) {
+                        cb(errM || errS);
+                    }
+                });
+        });
 }
 //Public Interface Area
 
@@ -497,6 +527,15 @@ exports.pushTransaction = pushTransaction;
  * @param {function(Object, Object)} callback takes (err, transactionInfo).
  */
 exports.getTransaction = getTransaction;
+
+/**
+ *
+ * @param {string} extTransactionId valid uuid.v1.
+ * @param {string} state enum takes one of 'All', 'Pending', 'Delivered'.
+ * @param {boolean} summary true for summary, optional.
+ * @param {function(Object, Object)} callback takes (err, transactionInfo).
+ */
+exports.getTransactionMeta = getTransactionMeta;
 
 /**
  * @param {PopBox.Queue} queue Object representing a queue.

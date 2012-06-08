@@ -103,6 +103,7 @@ var hsetMetaHashParallel = function(dbTr, transaction_id, sufix, provision) {
 
 var setExpirationDate = function(dbTr, key, provision, callback) {
   'use strict';
+  logger.debug('setExpirationDate(dbTr, key, provision, callback)', [dbTr, key, provision, callback]);
   if (provision.expirationDate) {
     dbTr.expireat(key, provision.expirationDate, function onExpireat(err) {
       if (err) {
@@ -117,10 +118,10 @@ var setExpirationDate = function(dbTr, key, provision, callback) {
   } else {
     var expirationDelay = provision.expirationDelay || 3600; //1 hour default
 
-    dbTr.expire(key, expirationDelay, function(err) {
+    dbTr.expire(key, expirationDelay, function cbExpire(err) {
       if (err) {
         //error setting expiration date
-        console.dir(err);
+        logger.debug('cbExpire',err);
       }
       if (callback) {
         callback(err);

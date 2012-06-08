@@ -32,7 +32,7 @@ function postTrans (prefix, req, res) {
           'error':err
         };
         emitter.emit('ACTION', ev);
-        res.send({error:[err]}, 500);
+        res.send({errors:[err]}, 500);
         logger.warning('onPushedTrans', err);
         logger.info('postTrans', [{error:[err]}, 500]);
       } else {
@@ -43,13 +43,13 @@ function postTrans (prefix, req, res) {
           'timestamp':new Date()
         };
         emitter.emit('ACTION', ev);
-        res.send({id:trans_id});
+        res.send({ok: true, data:trans_id});
         logger.info('postTrans', [{id:trans_id}]);
       }
     });
   } else {
-    res.send({error:errors}, 400);
-    logger.info('postTrans', [{error:errors}, 400]);
+    res.send({errors:errors}, 400);
+    logger.info('postTrans', [{errors:errors}, 400]);
   }
 }
 
@@ -75,7 +75,7 @@ function postQueue (appPrefix, req, res) {
         };
         emitter.emit('ACTION', ev);
 
-        res.send({error:[err]}, 500);
+        res.send({errors:[err]}, 500);
       } else {
         ev = {
           'queue':queue,
@@ -84,11 +84,11 @@ function postQueue (appPrefix, req, res) {
           'timestamp':new Date()
         };
         emitter.emit('ACTION', ev);
-        res.send("OK");
+        res.send({ok: true});
       }
     });
   } else {
-    res.send({error:errors}, 400);
+    res.send({errors:errors}, 400);
   }
 }
 
@@ -108,7 +108,7 @@ function  transState(req, res) {
       if (e) {
         res.send({errors:[e]}, 400);
       } else {
-        res.send(data);
+        res.send({ok:true, data:data});
       }
     });
   } else {
@@ -126,7 +126,7 @@ function deleteTrans(req, res) {
             if (e) {
                 res.send({errors:[e]}, 400);
             } else {
-                res.send("OK");
+                res.send({ok: true});
             }
         });
     } else {
@@ -149,9 +149,9 @@ function payloadTrans(req, res) {
     else {
         dataSrv.setPayload(id, req.body, function (e, data) {
             if (e) {
-                res.send({errors:[e]}, 400);
+                res.send({errors:[String(e)]}, 400);
             } else {
-                res.send("OK");
+                res.send({ok: true});
             }
         });
     }
@@ -163,11 +163,11 @@ function expirationDate(req, res) {
     var id = req.param('id_trans', null);
     logger.debug("expirationDate - id  req.body", id, req.body);
     if (id) {
-        dataSrv.expirationDate(id, req.body, function (e, data) {
+        dataSrv.expirationDate(id, req.body, function (e) {
             if (e) {
-                res.send({errors:[e]}, 400);
+                res.send({errors:[String(e)]}, 400);
             } else {
-                res.send(data);
+                res.send({ok: true});
             }
         });
     } else {
@@ -182,10 +182,10 @@ function queueSize (prefix, req, res) {
     logger.debug('onQueueSize(err, length)', [err, length]);
     if (err) {
       logger.info('onQueueSize',[String(err), 500]);
-      res.send(String(err), 500);
+      res.send({errors:[String(err)]}, 500);
     } else {
       logger.info('onQueueSize',[String(length)]);
-      res.send(String(length));
+      res.send({ok: true, data: String(length)});
     }
   });
 }
@@ -232,7 +232,7 @@ function getQueue(appPrefix, req, res) {
         'error':err
       };
       emitter.emit('ACTION', ev);
-      res.send(String(err), 500);
+      res.send({errors:[String(err)]}, 500);
     } else {
       if (notifList) {
         messageList = notifList.map(function (notif) {
@@ -247,7 +247,7 @@ function getQueue(appPrefix, req, res) {
         'timestamp':new Date()
       };
       emitter.emit('ACTION', ev);
-      res.send(messageList);
+      res.send({ok: true, data: messageList});
     }
   });
 }
@@ -308,3 +308,22 @@ exports.expirationDate = expirationDate;
 exports.payloadTrans = payloadTrans;
 exports.postQueue = postQueue;
 exports.checkPerm = checkPerm;
+exports.transMeta = transMeta;
+
+function  transMeta(req, res) {
+    'use strict';
+    logger.debug('transMeta(req, res)', [req, res]);
+    var id = req.param('id_trans', null);
+
+    if (id) {
+        dataSrv.getTransactionMeta(id, function (e, data) {
+            if (e) {
+                res.send({errors:[e]}, 400);
+            } else {
+                res.send({ok: true, data:data});
+            }
+        });
+    } else {
+        res.send({errors:['missing id']}, 400);
+    }
+}

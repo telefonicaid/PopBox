@@ -75,7 +75,8 @@ if (cluster.isMaster && numCPUs !== 0) {
 
 
     app.delete('/trans/:id_trans', logic.deleteTrans);
-    app.get('/trans/:id_trans/:state?', logic.transState);
+    app.get('/trans/:id_trans/state/:state?', logic.transState);
+    app.get('/trans/:id_trans', logic.transMeta);
     app.post('/trans/:id_trans/payload', logic.payloadTrans);
     app.post('/trans/:id_trans/expirationDate', logic.expirationDate);
     app.post('/trans', function(req, res) {logic.postTrans(app.prefix,req,res);});
