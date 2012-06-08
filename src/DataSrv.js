@@ -450,17 +450,23 @@ var getTransactionMeta = function(extTransactionId, callback) {
  * @param {PopBox.Provision} queue must contain an id.
  * @param {function(Object, number)} callback takes (err, number).
  */
-var queueSize = function(queue, callback) {
-  'use strict';
-  logger.debug('queueSize(queue, callback)', [queue, callback]);
-  queue.nohay = 0;
-  var queueId = queue, db = dbCluster.getDb(queueId);
-  db.llen(queueId, function onLength(err, length) {
-    dbCluster.free(db);
-    if (callback) {
-      callback(err, length);
-    }
-  });
+var queueSize = function (appPrefix, queueId, callback) {
+    'use strict';
+    logger.debug('queueSize(appPrefix, queueId, callback)', [appPrefix, queueId, callback]);
+    var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
+        queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
+        queueId, db = dbCluster.getDb(queueId);
+
+    db.llen(fullQueueIdH, function onHLength(err, hLength) {
+        logger.debug('onHLength(err, hLength)', [err, hLength]);
+        db.llen(fullQueueIdL, function onLLength(err, lLength) {
+            logger.debug('onLLength(err, lLength)', [err, lLength]);
+            dbCluster.free(db);
+            if (callback) {
+                callback(err, hLength+lLength);
+            }
+        });
+    });
 };
 
 function deleteTrans(transactionId, cb) {

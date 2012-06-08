@@ -177,8 +177,8 @@ function expirationDate(req, res) {
 function queueSize (prefix, req, res) {
   'use strict';
   logger.debug('queueSize (prefix, req, res)', [prefix, req, res]);
-  var queueId = prefix + req.param('id');
-  dataSrv.queueSize(queueId, function onQueueSize(err, length) {
+  var queueId = req.param('id');
+  dataSrv.queueSize(prefix, queueId, function onQueueSize(err, length) {
     logger.debug('onQueueSize(err, length)', [err, length]);
     if (err) {
       logger.info('onQueueSize',[String(err), 500]);
