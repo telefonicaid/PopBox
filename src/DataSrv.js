@@ -40,7 +40,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
   logger.debug('pushTransaction- processBatch',processBatch );
   async.parallel(processBatch,
     function pushEnd(err) {   //parallel execution may apply also
-      console.log('pushEnd',err)
+      logger.debug('pushEnd(err)', [err]);
       //MAIN Exit point
       if (err) {
         manageError(err, callback);
@@ -63,7 +63,6 @@ var pushTransaction = function(appPrefix, provision, callback) {
         }
       }
     });
-   console.log("despues de lanzar parallel")
   function processOneId(dbTr, transactionId, queue, priority) {
     logger.debug('processOneId(dbTr, transactionId, queue, priority)',
       [dbTr, transactionId, queue, priority]);
@@ -443,13 +442,8 @@ var getTransactionMeta = function(extTransactionId, callback) {
             }
         }
     });
-}
+};
 
-/**
- *
- * @param {PopBox.Provision} queue must contain an id.
- * @param {function(Object, number)} callback takes (err, number).
- */
 var queueSize = function (appPrefix, queueId, callback) {
     'use strict';
     logger.debug('queueSize(appPrefix, queueId, callback)', [appPrefix, queueId, callback]);
@@ -469,11 +463,11 @@ var queueSize = function (appPrefix, queueId, callback) {
     });
 };
 
-function deleteTrans(transactionId, cb) {
+var deleteTrans = function (extTransactionId, cb) {
   "use strict";
-  logger.debug('deleteTrans(transactionId)', [transactionId]);
-  var dbTr = dbCluster.getTransactionDb(transactionId), meta = config.dbKeyTransPrefix +
-      transactionId + ':meta', state = config.dbKeyTransPrefix + transactionId +
+  logger.debug('deleteTrans(transactionId)', [extTransactionId]);
+  var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
+      extTransactionId + ':meta', state = config.dbKeyTransPrefix + extTransactionId +
       ':state';
 
   dbTr.del(meta, state, function onDeleted(err) {
@@ -482,13 +476,14 @@ function deleteTrans(transactionId, cb) {
       cb(err);
     }
   });
-}
-function setPayload(transactionId, payload, cb) {
+};
+
+var setPayload = function (extTransactionId, payload, cb) {
   "use strict";
   logger.debug('setPayload(transactionId, payload, cb)',
-    [transactionId, payload, cb]);
-  var dbTr = dbCluster.getTransactionDb(transactionId), meta = config.dbKeyTransPrefix +
-      transactionId + ':meta';
+    [extTransactionId, payload, cb]);
+  var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
+      extTransactionId + ':meta';
 
   dbTr.hset(meta, 'payload', payload, function cbSetPayload(err) {
     logger.debug('cbSetPayload(err)', [err]);
@@ -496,14 +491,15 @@ function setPayload(transactionId, payload, cb) {
       cb(err);
     }
   });
-}
-function expirationDate(transactionId, date, cb) {
+};
+
+var setExpirationDate = function (extTransactionId, date, cb) {
     "use strict";
     logger.debug('expirationDate(transactionId, date, cb)',
-        [transactionId, date, cb]);
-    var dbTr = dbCluster.getTransactionDb(transactionId),
-        meta = config.dbKeyTransPrefix + transactionId + ':meta',
-        state = config.dbKeyTransPrefix + transactionId + ':state';
+        [extTransactionId, date, cb]);
+    var dbTr = dbCluster.getTransactionDb(extTransactionId),
+        meta = config.dbKeyTransPrefix + extTransactionId + ':meta',
+        state = config.dbKeyTransPrefix + extTransactionId + ':state';
 
     helper.setExpirationDate(dbTr, meta, {expirationDate:date},
         function cbExpirationDateMeta(errM) {
@@ -516,10 +512,12 @@ function expirationDate(transactionId, date, cb) {
                     }
                 });
         });
-}
+};
+
 //Public Interface Area
 
 /**
+ * @param {string} appPrefix For secure/non secure behaviour
  * @param {PopBox.Provision} provision MUST be a Valid JSON see Provision.json.
  * @param {function(Object, string)} callback takes (err, transactionId).
  */
@@ -544,6 +542,7 @@ exports.getTransaction = getTransaction;
 exports.getTransactionMeta = getTransactionMeta;
 
 /**
+ * @param {string} appPrefix For secure/non secure behaviour
  * @param {PopBox.Queue} queue Object representing a queue.
  * @param {number} maxElems maximun number of elements to be extracted.
  * @param {number} blockingTime max time to be blocked, 0-forever.
@@ -553,17 +552,53 @@ exports.blockingPop = blockingPop;
 
 /**
  *
- * @param {PopBox.Queue} queue must contain an id.
- * @param {function(Object, number)} callback takes (err, number).
+ * @param {string} appPrefix For secure/non secure behaviour
+ * @param {string} queueId
+ * @param {function(Object, number)} callback takes (err, length).
+
  */
 exports.queueSize = queueSize;
 
-
+/**
+ *
+ * @param {string} appPrefix For secure/non secure behaviour
+ * @param {string} queueId
+ * @param {string} user
+ * @param {string} passwd
+ * @param callback
+ */
 exports.setSecHash = setSecHash;
+
+/**
+ *
+ * @param {string} appPrefix For secure/non secure behaviour
+ * @param {string} queueId
+ * @param cb
+ */
 exports.getSecHash = getSecHash;
+
+/**
+ *
+ * @param {string} extTransactionId valid uuid.v1.
+ * @param cb
+ */
 exports.deleteTrans = deleteTrans;
+
+/**
+ *
+ * @param {string} extTransactionId valid uuid.v1.
+ * @param {string} payload
+ * @param cb
+ */
 exports.setPayload = setPayload;
-exports.expirationDate = expirationDate;
+
+/**
+ *
+ * @param {string} extTransactionId valid uuid.v1.
+ * @param date
+ * @param cb
+ */
+exports.setExpirationDate = setExpirationDate;
 
 //aux
 function manageError(err, callback) {
