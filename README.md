@@ -19,3 +19,5 @@ Scalability has been taken into account from the very beginning (not dynamic yet
     Optional MongoDB (historic data support)
 #####Edit srv/config.js for configuration Options
 ### You can find some usage examples at examples folder
+
+[API DOC](PopBox/wiki/User-Manual)
