@@ -122,7 +122,7 @@ function deleteTrans(req, res) {
     var id = req.param('id_trans', null);
     console.log("deleting transaction", id);
     if (id) {
-        dataSrv.deleteTrans(id, function (e, data) {
+        dataSrv.deleteTrans(id, function (e) {
             if (e) {
                 res.send({errors:[e]}, 400);
             } else {
@@ -147,7 +147,7 @@ function payloadTrans(req, res) {
         res.send({errors:['missing body']}, 400);
     }
     else {
-        dataSrv.setPayload(id, req.body, function (e, data) {
+        dataSrv.setPayload(id, req.body, function (e) {
             if (e) {
                 res.send({errors:[String(e)]}, 400);
             } else {
@@ -163,7 +163,7 @@ function expirationDate(req, res) {
     var id = req.param('id_trans', null);
     logger.debug("expirationDate - id  req.body", id, req.body);
     if (id) {
-        dataSrv.expirationDate(id, req.body, function (e) {
+        dataSrv.setExpirationDate(id, req.body, function (e) {
             if (e) {
                 res.send({errors:[String(e)]}, 400);
             } else {
