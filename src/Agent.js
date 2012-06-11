@@ -68,7 +68,7 @@ if (cluster.isMaster && numCPUs !== 0) {
     appSec.use(express.limit("1mb"));
 
     appSec.post('/trans', function(req, res) {logic.postTrans(appSec.prefix,req,res);});
-    appSec.get('/trans/:id_trans/:state?', logic.transState);
+    appSec.get('/trans/:id_trans/state/:state?', logic.transState);
     appSec.get('/queue/:id/size', function(req, res) {logic.checkPerm(appSec.prefix, req, res, logic.queueSize);});
     appSec.get('/queue/:id', function(req, res) {logic.checkPerm(appSec.prefix, req, res, logic.getQueue);});
     appSec.post('/queue', function(req, res) {logic.postQueue(appSec.prefix, req, res);});
