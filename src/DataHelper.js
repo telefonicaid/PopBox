@@ -85,12 +85,22 @@ var hsetMetaHashParallel = function(dbTr, transaction_id, sufix, provision) {
     [dbTr, transaction_id, sufix, provision]);
   return function asyncHsetMetaHash(callback) {
     logger.debug('asyncHsetMetaHash(callback)', [callback]);
-    var meta = {
+    /*var meta =
+    {
       'payload': provision.payload,
       'priority': provision.priority,
       'callback': provision.callback,
       'expirationDate': provision.expirationDate
     };
+    */
+    var meta = {};
+     for (var p in provision) {
+         if(provision.hasOwnProperty(p) && provision[p] !== null &&  provision[p] !== undefined && p !== 'queue') {
+             console.log(p);console.log(typeof p);
+             meta[p] = provision[p];
+         }
+     }
+
     dbTr.hmset(transaction_id + sufix, meta, function onHmset(err) {
       if (err) {
         //error pushing
@@ -115,20 +125,12 @@ var setExpirationDate = function(dbTr, key, provision, callback) {
       }
 
     });
-  } else {
-    var expirationDelay = provision.expirationDelay || 3600; //1 hour default
-
-    dbTr.expire(key, expirationDelay, function cbExpire(err) {
-      if (err) {
-        //error setting expiration date
-        logger.debug('cbExpire',err);
-      }
-      if (callback) {
-        callback(err);
-      }
-
-    });
   }
+  else {
+      if(callback) {
+          callback(null);
+      }
+    }
 };
 
 //Public area

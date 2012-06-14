@@ -52,6 +52,35 @@ function postTrans (prefix, req, res) {
     logger.info('postTrans', [{errors:errors}, 400]);
   }
 }
+function putTransMeta(req, res) {
+    logger.debug('putTransMeta(req, res)', [req, res]);
+    var id = req.param('id_trans', null);
+
+    var empty = true;
+    for (var p in req.body) {
+        if (req.body.hasOwnProperty(p)) {
+            empty = false;
+            break;
+        }
+    }
+    if (empty) {
+        res.send({ok:true, data:"empty data"});
+    }
+    else {
+        if (id) {
+            dataSrv.updateTransMeta(id, req.body, function (e, data) {
+                if (e) {
+                    res.send({errors:[String(e)]}, 400);
+                } else {
+                    res.send({ok:true, data:data});
+                }
+            });
+        } else {
+            res.send({errors:['missing id']}, 400);
+        }
+    }
+
+}
 
 function postQueue (appPrefix, req, res) {
   'use strict';
@@ -309,6 +338,8 @@ exports.payloadTrans = payloadTrans;
 exports.postQueue = postQueue;
 exports.checkPerm = checkPerm;
 exports.transMeta = transMeta;
+exports.putTransMeta = putTransMeta;
+
 
 function  transMeta(req, res) {
     'use strict';

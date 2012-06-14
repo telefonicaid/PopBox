@@ -29,6 +29,10 @@ var pushTransaction = function(appPrefix, provision, callback) {
     processBatch = [], //feeding the process batch
     dbTr = dbCluster.getTransactionDb(transactionId), i = 0, queue, db;
 
+  if(!provision.expirationDate){
+        provision.expirationDate = Math.round(Date.now()/1000) + config.defaultExpireDelay;
+  }
+
   processBatch.push(helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',
     provision));
   for (i = 0; i < queues.length; i += 1) {
@@ -45,6 +49,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
       if (err) {
         manageError(err, callback);
       } else {
+
         //Set expires for :meta and :state collections
         helper.setExpirationDate(dbTr, transactionId + ':state', provision,
           function expirationDateStateEnd(err) {
@@ -93,7 +98,34 @@ var pushTransaction = function(appPrefix, provision, callback) {
     };
   }
 };
+/**
+ *
+ * @param extTransactionId
+ * @param provision
+ * @param callback
+ */
 
+var updateTransMeta = function (extTransactionId, provision, callback) {
+    'use strict';
+    logger.debug('updateTransMeta(transId, provision, callback)', [extTransactionId, provision, callback]);
+    var transactionId = config.dbKeyTransPrefix + extTransactionId,
+        dbTr = dbCluster.getTransactionDb(transactionId);
+
+    // curry for async (may be refactored)
+
+    helper.hsetMetaHashParallel(dbTr, transactionId, ':meta', provision)(function (err) {
+        if (err) {
+            callback(err);
+        }
+        else {
+            helper.setExpirationDate(dbTr, transactionId + ':meta', provision, function (err2) {
+                helper.setExpirationDate(dbTr, transactionId + ':state', provision, function (err3) {
+                    callback(err2 || err3);
+                });
+            });
+        }
+    });
+}
 var setSecHash = function(appPrefix, queueId, user, passwd, callback) {
   "use strict";
   logger.debug('setSecHash(appPrefix, queueId, user, passwd, callback)',
@@ -493,25 +525,29 @@ var setPayload = function (extTransactionId, payload, cb) {
   });
 };
 
+//deprecated
 var setExpirationDate = function (extTransactionId, date, cb) {
-    "use strict";
+    'use strict';
     logger.debug('expirationDate(transactionId, date, cb)',
         [extTransactionId, date, cb]);
     var dbTr = dbCluster.getTransactionDb(extTransactionId),
         meta = config.dbKeyTransPrefix + extTransactionId + ':meta',
         state = config.dbKeyTransPrefix + extTransactionId + ':state';
 
-    helper.setExpirationDate(dbTr, meta, {expirationDate:date},
-        function cbExpirationDateMeta(errM) {
-            logger.debug('cbExpirationDateMeta(errM)', [errM]);
-            helper.setExpirationDate(dbTr, state, {expirationDate:date},
-                function cbExpirationDateState(errS) {
-                    logger.debug('cbExpirationDateState(errS)', [errS]);
-                    if (cb) {
-                        cb(errM || errS);
-                    }
-                });
-        });
+    dbTr.hset(meta, 'expirationDate', date, function cbHsetExpirationDate(errE) {
+        logger.debug('cbSetPayload(errE)', [errE]);
+        helper.setExpirationDate(dbTr, meta, {expirationDate:date},
+            function cbExpirationDateMeta(errM) {
+                logger.debug('cbExpirationDateMeta(errM)', [errM]);
+                helper.setExpirationDate(dbTr, state, {expirationDate:date},
+                    function cbExpirationDateState(errS) {
+                        logger.debug('cbExpirationDateState(errS)', [errS]);
+                        if (cb) {
+                            cb(errE || errM || errS);
+                        }
+                    });
+            });
+    });
 };
 
 //Public Interface Area
@@ -599,6 +635,14 @@ exports.setPayload = setPayload;
  * @param cb
  */
 exports.setExpirationDate = setExpirationDate;
+
+/**
+ *
+ * @param transactionId
+ * @param provision
+ * @param callback
+ */
+exports.updateTransMeta = updateTransMeta
 
 //aux
 function manageError(err, callback) {
