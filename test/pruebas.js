@@ -3,16 +3,16 @@ var http = require('http');
 var enProceso = 0,
     hechas = 0,
     errores = 0,
-    HOST_PROV = 'relayA',
-    HOST_SRV = 'relayA',
+    HOST_PROV = 'localhost',
+    HOST_SRV = 'localhost',
     PORT = 3001,
     EXPIRATION_DELAY = 86400,
     PAYLOAD = new Array(1024).join('*');
 
 http.globalAgent.maxSockets = 20000;
 
-//pesadito(20000);
-superProvision(60000);
+//pesadito(2);
+superProvision(6);
 //forever();
 
 function forever() {

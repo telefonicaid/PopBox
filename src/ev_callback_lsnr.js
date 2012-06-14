@@ -2,10 +2,16 @@
 var http = require('http');
 var url = require('url');
 
+var path = require('path');
+var log = require('PDITCLogger');
+var logger = log.newLogger();
+logger.prefix = path.basename(module.filename,'.js');
+
 var init = function(emitter) {
   'use strict';
   return function asyncInit(callback) {
-    emitter.on('NEWSTATE', function(data) {
+    emitter.on('NEWSTATE', function onNewState(data) {
+      logger.debug('onNewState(data)', [data]);
       //Just act on delivered
       if (data.state === 'Delivered') {
         doCallback(data);
@@ -19,6 +25,7 @@ var init = function(emitter) {
 
 function doCallback(data) {
   'use strict';
+    logger.debug('doCallback(data)', [data]);
   if (data.callback) {
     var options = url.parse(data.callback);
     options.headers = {'content-type': 'application/json'};
@@ -26,7 +33,7 @@ function doCallback(data) {
     var cbReq = http.request(options);  //FIRE AND FORGET
     var strData = JSON.stringify(data);
     cbReq.on('error', function foo(err) {
-      console.log('callback err::' + err);
+      logger.debug('function foo(err)', err);
     });
     cbReq.write(strData);
     cbReq.end();

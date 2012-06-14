@@ -88,6 +88,12 @@ exports.agent.max_req_size = '1mb';
 exports.agent.max_num_queues = 10000;
 
 /**
+ * Expiration date delay now+defaultExpireDelay seconds
+ * @type {Number}
+ */
+exports.defaultExpireDelay = 3600;
+
+/**
  * Maximum payload size
  * @type {Number}
  */
@@ -139,4 +145,4 @@ exports.cluster= {};
  *
  * @type {Number} number of CPUS to be used in cluster mode (-1 for all)
  */
-exports.cluster.numcpus = 1;
+exports.cluster.numcpus = 0;
