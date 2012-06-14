@@ -88,6 +88,12 @@ exports.agent.max_req_size = '1mb';
 exports.agent.max_num_queues = 10000;
 
 /**
+ * Expiration date delay now+defaultExpireDelay seconds
+ * @type {Number}
+ */
+exports.defaultExpireDelay = 3600;
+
+/**
  * Maximum payload size
  * @type {Number}
  */
