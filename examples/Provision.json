@@ -1,6 +1,6 @@
 {
-    "payload":"{\"spanish\": \"hola\", \"english\": \"hello\", \"to\":\"Mr Lopez\"}",
-    "priority":"H",
+    "payload":"This is a High prioriry message for Ax and Bx. Live for 1 Hour (default)",
+    "priority":"H", // "H"|"L"
     "callback":"http://foo.bar",
     "queue":[
         {
@@ -10,5 +10,5 @@
             "id":"Bx"
         }
     ],
-    "expirationDelay":360
+    "expirationData": undefined //UNIXTIMESTAMP
 }
