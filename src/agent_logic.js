@@ -283,7 +283,7 @@ function getQueue(appPrefix, req, res) {
 
 function checkPerm(appPrefix, req, res, cb) {
   'use strict';
-  debug.logger('checkPerm(appPrefix, req, res, cb)', [appPrefix, req, res, cb]);
+ logger.debug('checkPerm(appPrefix, req, res, cb)', [appPrefix, req, res, cb]);
   var header = req.headers['authorization'] || '', // get the header
     token = header.split(/\s+/).pop() || '', // and the encoded auth token
     auth = new Buffer(token, 'base64').toString(), // convert from base64
