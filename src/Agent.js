@@ -71,19 +71,19 @@ if (cluster.isMaster && numCPUs !== 0) {
     app.put('/trans/:id_trans', logic.putTransMeta);
     appSec.get('/trans/:id_trans/state/:state?', logic.transState);
     appSec.get('/queue/:id/size', function(req, res) {logic.checkPerm(appSec.prefix, req, res, logic.queueSize);});
-    appSec.get('/queue/:id', function(req, res) {logic.checkPerm(appSec.prefix, req, res, logic.getQueue);});
+    appSec.post('/queue/:id/pop', function(req, res) {logic.checkPerm(appSec.prefix, req, res, logic.popQueue);});
     appSec.post('/queue', function(req, res) {logic.postQueue(appSec.prefix, req, res);});
 
 
-    app.delete('/trans/:id_trans', logic.deleteTrans);
-    app.get('/trans/:id_trans/state/:state?', logic.transState);
+    app.del('/trans/:id_trans', logic.deleteTrans);
+    //app.get('/trans/:id_trans/state/:state?', logic.transState);
     app.get('/trans/:id_trans', logic.transMeta);
     app.put('/trans/:id_trans', logic.putTransMeta);
     app.post('/trans/:id_trans/payload', logic.payloadTrans);
     app.post('/trans/:id_trans/expirationDate', logic.expirationDate);
     app.post('/trans', function(req, res) {logic.postTrans(app.prefix,req,res);});
-    app.get('/queue/:id/size', function(req, res) { logic.queueSize(app.prefix,req,res)});
-    app.get('/queue/:id', function(req, res) {logic.getQueue(app.prefix, req, res );});
+    app.get('/queue/:id', function(req, res) { logic.getQueue(app.prefix,req,res)});
+    app.post('/queue/:id/pop', function(req, res) {logic.popQueue(app.prefix, req, res );});
 
 
 

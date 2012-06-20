@@ -494,6 +494,28 @@ var queueSize = function (appPrefix, queueId, callback) {
         });
     });
 };
+var getQueue = function (appPrefix, queueId, callback) {
+    'use strict';
+    logger.debug('popQueue(appPrefix, queueId, callback)', [appPrefix, queueId, callback]);
+    var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
+        queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
+        queueId, db = dbCluster.getDb(queueId);
+
+    db.lrange(fullQueueIdH, 0, -1, function onHRange(err, hQueue) {
+        logger.debug('onHRange(err, hQueue)', [err, hQueue]);
+        db.lrange(fullQueueIdL ,0, -1, function onLRange(err, lQueue) {
+            logger.debug('onLRange(err, lQueue)', [err, lQueue]);
+            dbCluster.free(db);
+            if (callback) {
+                callback(err, hQueue,lQueue);
+            }
+        });
+    });
+};
+
+
+
+
 
 var deleteTrans = function (extTransactionId, cb) {
   "use strict";
@@ -594,6 +616,15 @@ exports.blockingPop = blockingPop;
 
  */
 exports.queueSize = queueSize;
+
+/**
+ *
+ * @param {string} appPrefix For secure/non secure behaviour
+ * @param {string} queueId
+ * @param {function(Object, number)} callback takes (err, highQueue, lowQueue).
+
+ */
+exports.getQueue = getQueue;
 
 /**
  *

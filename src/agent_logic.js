@@ -219,9 +219,33 @@ function queueSize (prefix, req, res) {
   });
 }
 
-function getQueue(appPrefix, req, res) {
+function getQueue(prefix, req, res) {
+    'use strict';
+    logger.debug('getQueue (prefix, req, res)', [prefix, req, res]);
+    var queueId = req.param('id');
+    dataSrv.getQueue(prefix, queueId, function onGetQueue(err, hQ, lQ) {
+        logger.debug('onGetQueue(err, length)', [err, hQ, lQ]);
+        if (err) {
+            logger.info('onGetQueue',[String(err), 500]);
+            res.send({errors:[String(err)]}, 500);
+        } else {
+            var mapTrans = function (v){
+                var id = v.split("|")[1];
+                return {
+                    id: id,
+                    href:'http://'+req.headers.host+ '/trans/'+ id+"?queues=All"
+                };
+            }
+            hQ = hQ.map(mapTrans);
+            lQ = lQ.map(mapTrans);
+            res.send({ok: true, size: hQ.length + lQ.length, high: hQ, low: lQ });
+        }
+    });
+}
+
+function popQueue(appPrefix, req, res) {
   'use strict';
-    logger.debug('getQueue(appPrefix, req, res)', [appPrefix, req, res]);
+    logger.debug('popQueue(appPrefix, req, res)', [appPrefix, req, res]);
   var queueId = req.param('id');
   var maxMsgs = req.param('max', config.agent.max_messages);
   var tOut = req.param('timeout', config.agent.pop_timeout);
@@ -328,8 +352,54 @@ function checkPerm(appPrefix, req, res, cb) {
 
   }
 
-exports.queueSize = queueSize;
+
+function transMeta(req, res) {
+    'use strict';
+    logger.debug('transMeta(req, res)', [req, res]);
+    var id = req.param('id_trans', null);
+    var queues = req.param('queues', null);
+    var summary = false;
+
+
+    if (queues === 'summary') {
+        summary = true;
+        queues = 'All';
+    }
+    if (id === null) {
+        errors.push('missing id');
+    } else {
+        dataSrv.getTransactionMeta(id, function (errM, dataM) {
+            if (errM) {
+                res.send({errors:[errM]}, 400);
+            } else {
+                if (queues !== null) {
+                    dataSrv.getTransaction(id, queues, summary, function (errQ, dataQ) {
+                        if (errQ) {
+                            res.send({errors:[errQ]}, 400);
+                        } else {
+                            dataM.queues = dataQ;
+                            if(!summary) {
+                                for(var p in dataQ) {
+                                    if(dataQ.hasOwnProperty(p)) {
+                                        dataQ[p] = {state: dataQ[p], href: 'http://'+req.headers.host+ '/queue/'+p};
+                                    }
+                                }
+                            }
+                            res.send({ok:true, data:dataM});
+                        }
+                    });
+                }
+                else {
+                    res.send({ok:true, data:dataM});
+                }
+            }
+        });
+    }
+}
+
+
 exports.getQueue = getQueue;
+exports.popQueue = popQueue;
 exports.transState = transState;
 exports.postTrans = postTrans;
 exports.deleteTrans = deleteTrans;
@@ -340,21 +410,3 @@ exports.checkPerm = checkPerm;
 exports.transMeta = transMeta;
 exports.putTransMeta = putTransMeta;
 
-
-function  transMeta(req, res) {
-    'use strict';
-    logger.debug('transMeta(req, res)', [req, res]);
-    var id = req.param('id_trans', null);
-
-    if (id) {
-        dataSrv.getTransactionMeta(id, function (e, data) {
-            if (e) {
-                res.send({errors:[e]}, 400);
-            } else {
-                res.send({ok: true, data:data});
-            }
-        });
-    } else {
-        res.send({errors:['missing id']}, 400);
-    }
-}
