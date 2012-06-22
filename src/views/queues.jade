@@ -8,10 +8,13 @@ p HIGH PRIORITY QUEUES
   each qobj in high
     - var ref = baseurl+qobj.id
       div(id='#{qobj.id}')
-        #{qobj.id}
+        #{qobj.id} &nbsp;
         a(href='#{ref}?queues=All') All
+        &nbsp;
         a(href='#{ref}?queues=Pending') Pending
+        &nbsp;
         a(href='#{ref}?queues=Delivered') Delivered
+        &nbsp;
         a(href='#{ref}?queues=summary') Summary
 p LOW PRIORITY QUEUES
 #low
@@ -19,7 +22,11 @@ p LOW PRIORITY QUEUES
     - var ref = baseurl+qobj.id
       div(id='#{qobj.id}')
         #{qobj.id}
+        &nbsp;
         a(href='#{ref}?queues=All') All
+        &nbsp;
         a(href='#{ref}?queues=Pending') Pending
+        &nbsp;
         a(href='#{ref}?queues=Delivered') Delivered
+        &nbsp;
         a(href='#{ref}?queues=summary') Summary
