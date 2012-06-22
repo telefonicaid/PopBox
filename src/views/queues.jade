@@ -1,0 +1,25 @@
+p OK
+#ok #{ok}
+p SIZE
+#size #{size}
+p HIGH PRIORITY QUEUES
+- var baseurl ='http://'+host+'/trans/'
+#high
+  each qobj in high
+    - var ref = baseurl+qobj.id
+      div(id='#{qobj.id}')
+        #{qobj.id}
+        a(href='#{ref}?queues=All') All
+        a(href='#{ref}?queues=Pending') Pending
+        a(href='#{ref}?queues=Delivered') Delivered
+        a(href='#{ref}?queues=summary') Summary
+p LOW PRIORITY QUEUES
+#low
+  each qobj in low
+    - var ref = baseurl+qobj.id
+      div(id='#{qobj.id}')
+        #{qobj.id}
+        a(href='#{ref}?queues=All') All
+        a(href='#{ref}?queues=Pending') Pending
+        a(href='#{ref}?queues=Delivered') Delivered
+        a(href='#{ref}?queues=summary') Summary

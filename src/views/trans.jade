@@ -1,0 +1,21 @@
+p expirationDate
+#expirationDate #{expirationDate}
+p callback
+#callback #{callback}
+p priority
+#priority #{priority}
+p payload
+#payload #{payload}
+- if(queues.totalNotifications!==undefined)
+  ul#summary
+    li totalNotifications: #{queues.totalNotifications}
+    li Pending: #{queues.Pending}
+    li Delivered: #{queues.Delivered}
+- else
+  ul#queues
+    - if(Object.keys(queues).length!=0)
+      each val, key in queues
+        li
+          a(href="#{val.href}") #{key}
+    - else
+      li NO QUEUES FOR GIVEN STATE
