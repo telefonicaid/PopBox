@@ -234,8 +234,8 @@ function getQueue(req, res) {
 
     req.template='queues.jade';
 
-    dataSrv.getQueue(prefix, queueId, function onGetQueue(err, hQ, lQ) {
-        logger.debug('onGetQueue(err, length)', [err, hQ, lQ]);
+    dataSrv.getQueue(prefix, queueId, function onGetQueue(err, hQ, lQ, lastPop) {
+        logger.debug('onGetQueue(err, hQ, lQ, lastPop)', [err, hQ, lQ, lastPop]);
         if (err) {
             logger.info('onGetQueue',[String(err), 500]);
             res.sendCond({errors:[String(err)]}, 500);
@@ -249,7 +249,8 @@ function getQueue(req, res) {
             }
             hQ = hQ.map(mapTrans);
             lQ = lQ.map(mapTrans);
-            res.send({ok: true, host: req.headers.host, size: hQ.length + lQ.length, high: hQ, low: lQ });
+            res.send({ok: true, host: req.headers.host, lastPop: lastPop,
+                size: hQ.length + lQ.length, high: hQ, low: lQ  });
         }
     });
 }

@@ -17,6 +17,8 @@ p payload
     - if(Object.keys(queues).length!=0)
       each val, key in queues
         li
-          a(href="#{val.href}") #{key}  #{val.state}
+          a(href="#{val.href}") #{key}
+          &nbsp;
+          #{val.state}
     - else
       li NO QUEUES FOR GIVEN STATE
