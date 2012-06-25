@@ -199,7 +199,7 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback,
                 dataL = [
                   firstElem[1]
                 ].concat(dataL);
-
+              }
                 db.ltrim(fullQueueIdL,dataL.length, -1, function on_trimL(err) {
                     //the trim fails!! duplicates warning!!
                   });
@@ -208,7 +208,6 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback,
                 }
                 getPopData(dataH, callback, queue);
               }
-            }
           });
       } else {
         //just one queue used
