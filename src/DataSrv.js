@@ -161,7 +161,7 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback,
     queue.id, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
     queue.id, restElems = 0;
 
-  db.lrange(fullQueueIdH, 0, maxElems, function onRangeH(errH, dataH) {
+  db.lrange(fullQueueIdH, 0, maxElems-1, function onRangeH(errH, dataH) {
     var dataHlength = dataH.length;
     logger.debug('onRangeH(errH, dataH)', [ errH, dataH ]);
     if (errH && !firstElem) {//errH
@@ -184,7 +184,7 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback,
       if (dataHlength < maxElems) {
         restElems = maxElems - dataHlength;
         //Extract from both queues
-        db.lrange(fullQueueIdL, 0, restElems, function on_rangeL(errL, dataL) {
+        db.lrange(fullQueueIdL, 0, restElems-1, function on_rangeL(errL, dataL) {
             var dataLLength = dataL.length;
             if (errL && firstElem[0] !== fullQueueIdL) {
               //fail but we may have data of previous range
@@ -200,7 +200,7 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback,
                   firstElem[1]
                 ].concat(dataL);
 
-                db.ltrim(fullQueueIdL, 0, dataL.length, function on_trimL(err) {
+                db.ltrim(fullQueueIdL,dataL.length, -1, function on_trimL(err) {
                     //the trim fails!! duplicates warning!!
                   });
                 if (dataL) {
