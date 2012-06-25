@@ -48,7 +48,7 @@ var pushParallel = function(db, queue, priority, transaction_id) {
   return function asyncPushParallel(callback) {
     logger.debug('asyncPushParallel(callback)', [callback]);
     var fullQueueId = config.db_key_queue_prefix + priority + queue.id;
-    db.lpush(fullQueueId, transaction_id, function onLpushed(err) {
+    db.rpush(fullQueueId, transaction_id, function onLpushed(err) {
       if (err) {
         //error pushing
         logger.warning(err);

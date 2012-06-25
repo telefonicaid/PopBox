@@ -111,7 +111,7 @@ var updateTransMeta = function(extTransactionId, provision, callback) {
   logger.debug('updateTransMeta(transId, provision, callback)',
     [extTransactionId, provision, callback]);
   var transactionId = config.dbKeyTransPrefix +
-      extTransactionId, dbTr = dbCluster.getTransactionDb(transactionId);
+    extTransactionId, dbTr = dbCluster.getTransactionDb(transactionId);
 
   // curry for async (may be refactored)
 
@@ -161,63 +161,58 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback,
     queue.id, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
     queue.id, restElems = 0;
 
-  db.lrange(fullQueueIdH, -maxElems, -1, function onRangeH(errH, dataH) {
+  db.lrange(fullQueueIdH, 0, maxElems, function onRangeH(errH, dataH) {
+    var dataHlength = dataH.length;
     logger.debug('onRangeH(errH, dataH)', [ errH, dataH ]);
     if (errH && !firstElem) {//errH
       manageError(errH, callback);
     } else {
-      if (!errH || firstElem[0] === fullQueueIdH) {  //buggy indexes beware
-        var k = -1;
-        if (firstElem[0] === fullQueueIdH) {
-          dataH = [
-            firstElem[1]
-          ].concat(dataH);
-          k = 0;
+      db.ltrim(fullQueueIdH, dataH.length, -1, function onTrimH(err) {
+        if (err) {
+          logger.warning('onTrimH', err);
         }
-        //forget about first elem priority (-2)
-        db.ltrim(fullQueueIdH, 0, -dataH.length - k, function onTrimH(err) {
-          if (err) {
-            logger.warning('onTrimH', err);
-          }
-          //the trim fails!! duplicates warning!!
-        });
-        if (dataH.length < maxElems) {
-          restElems = maxElems - dataH.length;
-          //Extract from both queues
-          db.lrange(fullQueueIdL, -restElems, -1,
-            function on_rangeL(errL, dataL) {
-              if (errL && firstElem[0] !== fullQueueIdL) {
-                //fail but we may have data of previous range
-                if (dataH) {
-                  //if there is dataH dismiss the low priority error
-                  getPopData(dataH, callback, queue);
-                } else {
-                  manageError(errL, callback);
-                }
+        //the trim fails!! duplicates warning!!
+      });
+
+      if (firstElem[0] === fullQueueIdH) {  //buggy indexes beware
+        dataH = [
+          firstElem[1]
+        ].concat(dataH);
+      }
+
+
+      if (dataHlength < maxElems) {
+        restElems = maxElems - dataHlength;
+        //Extract from both queues
+        db.lrange(fullQueueIdL, 0, restElems, function on_rangeL(errL, dataL) {
+            var dataLLength = dataL.length;
+            if (errL && firstElem[0] !== fullQueueIdL) {
+              //fail but we may have data of previous range
+              if (dataH) {
+                //if there is dataH dismiss the low priority error
+                getPopData(dataH, callback, queue);
               } else {
-                if (!errL || firstElem[0] === fullQueueIdL) {
-                  var k = -1;
-                  if (firstElem[0] === fullQueueIdL) {
-                    dataL = [
-                      firstElem[1]
-                    ].concat(dataL);
-                    k = 0;
-                  }
-                  db.ltrim(fullQueueIdL, 0, -dataL.length - k,
-                    function on_trimL(err) {
-                      //the trim fails!! duplicates warning!!
-                    });
-                  if (dataL) {
-                    dataH = dataL.concat(dataH);
-                  }
-                  getPopData(dataH, callback, queue);
-                }
+                manageError(errL, callback);
               }
-            });
-        } else {
-          //just one queue used
-          getPopData(dataH, callback, queue);
-        }
+            } else {
+              if (firstElem[0] === fullQueueIdL) {
+                dataL = [
+                  firstElem[1]
+                ].concat(dataL);
+
+                db.ltrim(fullQueueIdL, 0, dataL.length, function on_trimL(err) {
+                    //the trim fails!! duplicates warning!!
+                  });
+                if (dataL) {
+                  dataH = dataH.concat(dataL);
+                }
+                getPopData(dataH, callback, queue);
+              }
+            }
+          });
+      } else {
+        //just one queue used
+        getPopData(dataH, callback, queue);
       }
     }
   });
@@ -236,10 +231,11 @@ var blockingPop = function(appPrefix, queue, maxElems, blockingTime, callback) {
 
   //Set the last PopAction over the queue
   var popDate = Math.round(Date.now() / 1000);
-  db.set(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate', popDate);
+  db.set(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
+    popDate);
 
-    //Do the blocking part (over the two lists)
-  db.brpop(fullQueueIdH, fullQueueIdL, blockingTime,
+  //Do the blocking part (over the two lists)
+  db.blpop(fullQueueIdH, fullQueueIdL, blockingTime,
     function onPopData(err, data) {
       if (err) {
         dbCluster.free(db);
@@ -519,14 +515,15 @@ var getQueue = function(appPrefix, queueId, callback) {
     db.lrange(fullQueueIdL, 0, -1, function onLRange(err, lQueue) {
       logger.debug('onLRange(err, lQueue)', [err, lQueue]);
       dbCluster.free(db);
-      db.get(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate', function(err, lastPopDate) {
-        if (err) {
-          lastPopDate = null;
-        }
-        if (callback) {
-          callback(err, hQueue, lQueue, lastPopDate);
-        }
-      });
+      db.get(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
+        function(err, lastPopDate) {
+          if (err) {
+            lastPopDate = null;
+          }
+          if (callback) {
+            callback(err, hQueue, lQueue, lastPopDate);
+          }
+        });
 
     });
   });
@@ -569,8 +566,8 @@ var setExpirationDate = function(extTransactionId, date, cb) {
   logger.debug('expirationDate(transactionId, date, cb)',
     [extTransactionId, date, cb]);
   var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
-      extTransactionId + ':meta', state = config.dbKeyTransPrefix +
-      extTransactionId + ':state';
+    extTransactionId + ':meta', state = config.dbKeyTransPrefix +
+    extTransactionId + ':state';
 
   dbTr.hset(meta, 'expirationDate', date, function cbHsetExpirationDate(errE) {
     logger.debug('cbSetPayload(errE)', [errE]);
