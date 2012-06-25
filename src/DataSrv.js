@@ -29,8 +29,9 @@ var pushTransaction = function(appPrefix, provision, callback) {
     processBatch = [], //feeding the process batch
     dbTr = dbCluster.getTransactionDb(transactionId), i = 0, queue, db;
 
-  if(!provision.expirationDate){
-        provision.expirationDate = Math.round(Date.now()/1000) + config.defaultExpireDelay;
+  if (!provision.expirationDate) {
+    provision.expirationDate =
+      Math.round(Date.now() / 1000) + config.defaultExpireDelay;
   }
 
   processBatch.push(helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',
@@ -41,7 +42,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
     //launch push/sets/expire in parallel for one ID
     processBatch.push(processOneId(dbTr, transactionId, queue, priority));
   }
-  logger.debug('pushTransaction- processBatch',processBatch );
+  logger.debug('pushTransaction- processBatch', processBatch);
   async.parallel(processBatch,
     function pushEnd(err) {   //parallel execution may apply also
       logger.debug('pushEnd(err)', [err]);
@@ -105,27 +106,31 @@ var pushTransaction = function(appPrefix, provision, callback) {
  * @param callback
  */
 
-var updateTransMeta = function (extTransactionId, provision, callback) {
-    'use strict';
-    logger.debug('updateTransMeta(transId, provision, callback)', [extTransactionId, provision, callback]);
-    var transactionId = config.dbKeyTransPrefix + extTransactionId,
-        dbTr = dbCluster.getTransactionDb(transactionId);
+var updateTransMeta = function(extTransactionId, provision, callback) {
+  'use strict';
+  logger.debug('updateTransMeta(transId, provision, callback)',
+    [extTransactionId, provision, callback]);
+  var transactionId = config.dbKeyTransPrefix +
+      extTransactionId, dbTr = dbCluster.getTransactionDb(transactionId);
 
-    // curry for async (may be refactored)
+  // curry for async (may be refactored)
 
-    helper.hsetMetaHashParallel(dbTr, transactionId, ':meta', provision)(function (err) {
-        if (err) {
-            callback(err);
-        }
-        else {
-            helper.setExpirationDate(dbTr, transactionId + ':meta', provision, function (err2) {
-                helper.setExpirationDate(dbTr, transactionId + ':state', provision, function (err3) {
-                    callback(err2 || err3);
-                });
+  helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',
+    provision)(function(err) {
+    if (err) {
+      callback(err);
+    } else {
+      helper.setExpirationDate(dbTr, transactionId + ':meta', provision,
+        function(err2) {
+          helper.setExpirationDate(dbTr, transactionId + ':state', provision,
+            function(err3) {
+              callback(err2 || err3);
             });
-        }
-    });
-}
+        });
+    }
+  });
+};
+
 var setSecHash = function(appPrefix, queueId, user, passwd, callback) {
   "use strict";
   logger.debug('setSecHash(appPrefix, queueId, user, passwd, callback)',
@@ -228,7 +233,11 @@ var blockingPop = function(appPrefix, queue, maxElems, blockingTime, callback) {
     fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id, //
     fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id, //
     firstElem = null;
-  //Do the blocking part (over the two lists)
+
+  //Set the last PopAction over the queue
+  db.set(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate', new Date().getTime());
+
+    //Do the blocking part (over the two lists)
   db.brpop(fullQueueIdH, fullQueueIdL, blockingTime,
     function onPopData(err, data) {
       if (err) {
@@ -456,73 +465,79 @@ var getTransaction = function(extTransactionId, state, summary, callback) {
 
 //callback return transaction info
 var getTransactionMeta = function(extTransactionId, callback) {
-    'use strict';
-    logger.debug('getTransactionMeta(extTransactionId, callback)', [extTransactionId, callback]);
+  'use strict';
+  logger.debug('getTransactionMeta(extTransactionId, callback)',
+    [extTransactionId, callback]);
 
-    var err, dbTr, transactionId;
+  var err, dbTr, transactionId;
 
-    //obtain transaction info
-    dbTr = dbCluster.getTransactionDb(extTransactionId);
-    transactionId = config.dbKeyTransPrefix + extTransactionId;
-    dbTr.hgetall(transactionId + ':meta', function onDataMeta(err, data) {
-        logger.debug('onDataMeta(err, data)', [err, data]);
+  //obtain transaction info
+  dbTr = dbCluster.getTransactionDb(extTransactionId);
+  transactionId = config.dbKeyTransPrefix + extTransactionId;
+  dbTr.hgetall(transactionId + ':meta', function onDataMeta(err, data) {
+    logger.debug('onDataMeta(err, data)', [err, data]);
+    if (err) {
+      manageError(err, callback);
+    } else {
+      if (callback) {
+        callback(null, data);
+      }
+    }
+  });
+};
+
+var queueSize = function(appPrefix, queueId, callback) {
+  'use strict';
+  logger.debug('queueSize(appPrefix, queueId, callback)',
+    [appPrefix, queueId, callback]);
+  var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
+    queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
+    queueId, db = dbCluster.getDb(queueId);
+
+  db.llen(fullQueueIdH, function onHLength(err, hLength) {
+    logger.debug('onHLength(err, hLength)', [err, hLength]);
+    db.llen(fullQueueIdL, function onLLength(err, lLength) {
+      logger.debug('onLLength(err, lLength)', [err, lLength]);
+      dbCluster.free(db);
+      if (callback) {
+        callback(err, hLength + lLength);
+      }
+    });
+  });
+};
+var getQueue = function(appPrefix, queueId, callback) {
+  'use strict';
+  logger.debug('popQueue(appPrefix, queueId, callback)',
+    [appPrefix, queueId, callback]);
+  var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
+    queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
+    queueId, db = dbCluster.getDb(queueId);
+
+  db.lrange(fullQueueIdH, 0, -1, function onHRange(err, hQueue) {
+    logger.debug('onHRange(err, hQueue)', [err, hQueue]);
+    db.lrange(fullQueueIdL, 0, -1, function onLRange(err, lQueue) {
+      logger.debug('onLRange(err, lQueue)', [err, lQueue]);
+      dbCluster.free(db);
+      db.get(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate', function(err, lastPopDate) {
         if (err) {
-            manageError(err, callback);
-        } else {
-            if (callback) {
-                callback(null, data);
-            }
+          lastPopDate = null;
         }
-    });
-};
+        if (callback) {
+          callback(err, hQueue, lQueue, lastPopDate);
+        }
+      });
 
-var queueSize = function (appPrefix, queueId, callback) {
-    'use strict';
-    logger.debug('queueSize(appPrefix, queueId, callback)', [appPrefix, queueId, callback]);
-    var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
-        queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
-        queueId, db = dbCluster.getDb(queueId);
-
-    db.llen(fullQueueIdH, function onHLength(err, hLength) {
-        logger.debug('onHLength(err, hLength)', [err, hLength]);
-        db.llen(fullQueueIdL, function onLLength(err, lLength) {
-            logger.debug('onLLength(err, lLength)', [err, lLength]);
-            dbCluster.free(db);
-            if (callback) {
-                callback(err, hLength+lLength);
-            }
-        });
     });
-};
-var getQueue = function (appPrefix, queueId, callback) {
-    'use strict';
-    logger.debug('popQueue(appPrefix, queueId, callback)', [appPrefix, queueId, callback]);
-    var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
-        queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
-        queueId, db = dbCluster.getDb(queueId);
-
-    db.lrange(fullQueueIdH, 0, -1, function onHRange(err, hQueue) {
-        logger.debug('onHRange(err, hQueue)', [err, hQueue]);
-        db.lrange(fullQueueIdL ,0, -1, function onLRange(err, lQueue) {
-            logger.debug('onLRange(err, lQueue)', [err, lQueue]);
-            dbCluster.free(db);
-            if (callback) {
-                callback(err, hQueue,lQueue);
-            }
-        });
-    });
+  });
 };
 
 
-
-
-
-var deleteTrans = function (extTransactionId, cb) {
+var deleteTrans = function(extTransactionId, cb) {
   "use strict";
   logger.debug('deleteTrans(transactionId)', [extTransactionId]);
   var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
-      extTransactionId + ':meta', state = config.dbKeyTransPrefix + extTransactionId +
-      ':state';
+    extTransactionId + ':meta', state = config.dbKeyTransPrefix +
+    extTransactionId + ':state';
 
   dbTr.del(meta, state, function onDeleted(err) {
     logger.debug('onDeleted(err)', [err]);
@@ -532,12 +547,12 @@ var deleteTrans = function (extTransactionId, cb) {
   });
 };
 
-var setPayload = function (extTransactionId, payload, cb) {
+var setPayload = function(extTransactionId, payload, cb) {
   "use strict";
   logger.debug('setPayload(transactionId, payload, cb)',
     [extTransactionId, payload, cb]);
   var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
-      extTransactionId + ':meta';
+    extTransactionId + ':meta';
 
   dbTr.hset(meta, 'payload', payload, function cbSetPayload(err) {
     logger.debug('cbSetPayload(err)', [err]);
@@ -548,28 +563,28 @@ var setPayload = function (extTransactionId, payload, cb) {
 };
 
 //deprecated
-var setExpirationDate = function (extTransactionId, date, cb) {
-    'use strict';
-    logger.debug('expirationDate(transactionId, date, cb)',
-        [extTransactionId, date, cb]);
-    var dbTr = dbCluster.getTransactionDb(extTransactionId),
-        meta = config.dbKeyTransPrefix + extTransactionId + ':meta',
-        state = config.dbKeyTransPrefix + extTransactionId + ':state';
+var setExpirationDate = function(extTransactionId, date, cb) {
+  'use strict';
+  logger.debug('expirationDate(transactionId, date, cb)',
+    [extTransactionId, date, cb]);
+  var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
+      extTransactionId + ':meta', state = config.dbKeyTransPrefix +
+      extTransactionId + ':state';
 
-    dbTr.hset(meta, 'expirationDate', date, function cbHsetExpirationDate(errE) {
-        logger.debug('cbSetPayload(errE)', [errE]);
-        helper.setExpirationDate(dbTr, meta, {expirationDate:date},
-            function cbExpirationDateMeta(errM) {
-                logger.debug('cbExpirationDateMeta(errM)', [errM]);
-                helper.setExpirationDate(dbTr, state, {expirationDate:date},
-                    function cbExpirationDateState(errS) {
-                        logger.debug('cbExpirationDateState(errS)', [errS]);
-                        if (cb) {
-                            cb(errE || errM || errS);
-                        }
-                    });
-            });
-    });
+  dbTr.hset(meta, 'expirationDate', date, function cbHsetExpirationDate(errE) {
+    logger.debug('cbSetPayload(errE)', [errE]);
+    helper.setExpirationDate(dbTr, meta, {expirationDate: date},
+      function cbExpirationDateMeta(errM) {
+        logger.debug('cbExpirationDateMeta(errM)', [errM]);
+        helper.setExpirationDate(dbTr, state, {expirationDate: date},
+          function cbExpirationDateState(errS) {
+            logger.debug('cbExpirationDateState(errS)', [errS]);
+            if (cb) {
+              cb(errE || errM || errS);
+            }
+          });
+      });
+  });
 };
 
 //Public Interface Area
@@ -673,7 +688,7 @@ exports.setExpirationDate = setExpirationDate;
  * @param provision
  * @param callback
  */
-exports.updateTransMeta = updateTransMeta
+exports.updateTransMeta = updateTransMeta;
 
 //aux
 function manageError(err, callback) {
