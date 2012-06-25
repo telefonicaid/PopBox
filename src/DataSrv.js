@@ -235,7 +235,8 @@ var blockingPop = function(appPrefix, queue, maxElems, blockingTime, callback) {
     firstElem = null;
 
   //Set the last PopAction over the queue
-  db.set(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate', new Date().getTime());
+  var popDate = Math.round(Date.now() / 1000);
+  db.set(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate', popDate);
 
     //Do the blocking part (over the two lists)
   db.brpop(fullQueueIdH, fullQueueIdL, blockingTime,
