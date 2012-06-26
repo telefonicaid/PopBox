@@ -1,39 +1,40 @@
-p OK
-#ok #{ok}
-p SIZE
-#size #{size}
-p last pop
-if lastPop
-  -var date = (new Date(lastPop*1000))
-  #lastPop #{date}
-else
-    p Not available
-end
+p ok: 
+  span#ok #{ok}
+p size: 
+  span#ok #{size} 
+p last pop: 
+  if lastPop
+    -var date = (new Date(lastPop*1000))
+    span#lastPop #{date}
+  else
+    span#lastPop Not available
+  end
 p HIGH PRIORITY QUEUES
 - var baseurl ='http://'+host+'/trans/'
 #high
   each qobj in high
     - var ref = baseurl+qobj.id
       div(id='#{qobj.id}')
-        #{qobj.id} &nbsp;
-        a(href='#{ref}?queues=All') All
-        &nbsp;
-        a(href='#{ref}?queues=Pending') Pending
-        &nbsp;
-        a(href='#{ref}?queues=Delivered') Delivered
-        &nbsp;
-        a(href='#{ref}?queues=summary') Summary
+        pre #{qobj.id} 
+          a(href='#{ref}?queues=All') All
+          &ensp;
+          a(href='#{ref}?queues=Pending') Pending
+          &ensp;
+          a(href='#{ref}?queues=Delivered') Delivered
+          &ensp;
+          a(href='#{ref}?queues=summary') Summary
+          &ensp;
 p LOW PRIORITY QUEUES
-#low
+pre#low
   each qobj in low
     - var ref = baseurl+qobj.id
       div(id='#{qobj.id}')
-        #{qobj.id}
-        &nbsp;
-        a(href='#{ref}?queues=All') All
-        &nbsp;
-        a(href='#{ref}?queues=Pending') Pending
-        &nbsp;
-        a(href='#{ref}?queues=Delivered') Delivered
-        &nbsp;
-        a(href='#{ref}?queues=summary') Summary
+        pre #{qobj.id} 
+          a(href='#{ref}?queues=All') All
+          &ensp;
+          a(href='#{ref}?queues=Pending') Pending
+          &ensp;
+          a(href='#{ref}?queues=Delivered') Delivered
+          &ensp;
+          a(href='#{ref}?queues=summary') Summary
+          &ensp;
