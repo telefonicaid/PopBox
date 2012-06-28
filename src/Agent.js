@@ -66,6 +66,8 @@ if (cluster.isMaster && numCPUs !== 0) {
     app.use(express.limit("1mb"));
     app.use(prefixer.prefixer(app.prefix));
     app.use(sendrender.sendRender());
+    app.use(express.static(__dirname )) ;
+    app.use(express.directory(__dirname)) ;
 
 
     appSec.use(express.query());
