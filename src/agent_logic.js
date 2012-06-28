@@ -232,7 +232,6 @@ function getQueue(req, res) {
     var queueId = req.param('id');
     var prefix = req.prefix;
 
-    
     req.template='queues.jade';
 
     dataSrv.getQueue(prefix, queueId, function onGetQueue(err, hQ, lQ, lastPop) {
