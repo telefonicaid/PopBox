@@ -9,13 +9,17 @@ var log = require('PDITCLogger');
 var logger = log.newLogger();
 logger.prefix = path.basename(module.filename,'.js');
 
-function postTrans (prefix, req, res) {
+
+
+
+
+function postTrans(req, res) {
   'use strict';
-  logger.debug('postTrans (prefix, req, res)', [prefix, req, res]);
+  logger.debug('postTrans (req, res)', [ req, res]);
   var errors = validate.errorsTrans(req.body);
   logger.debug('postTrans - errors', errors);
   var ev = {};
-
+  var prefix = req.prefix;
 
 
   req.connection.setTimeout(config.agent.prov_timeout * 1000);
@@ -82,15 +86,16 @@ function putTransMeta(req, res) {
 
 }
 
-function postQueue (appPrefix, req, res) {
+function postQueue (req, res) {
   'use strict';
 
-    logger.debug('postQueue (appPrefix, req, res)', [appPrefix, req, res]);
+    logger.debug('postQueue (req, res)', [req, res]);
   var errors = [] ;//validate.errorsTrans(req.body);
   var ev = {};
   var queue = req.body.queue,
     user = req.body.user,
     passwd = req.body.password;
+   var appPrefix = req.prefix;
 
   if (errors.length === 0) {
     dataSrv.setSecHash(appPrefix, queue, user, passwd, function (err) {
@@ -203,10 +208,12 @@ function expirationDate(req, res) {
         res.send({errors:['missing id']}, 400);
     }
 }
-function queueSize (prefix, req, res) {
+function queueSize (req, res) {
   'use strict';
-  logger.debug('queueSize (prefix, req, res)', [prefix, req, res]);
+  logger.debug('queueSize (req, res)', [req, res]);
   var queueId = req.param('id');
+  var prefix = req.prefix;
+
   dataSrv.queueSize(prefix, queueId, function onQueueSize(err, length) {
     logger.debug('onQueueSize(err, length)', [err, length]);
     if (err) {
@@ -219,12 +226,43 @@ function queueSize (prefix, req, res) {
   });
 }
 
-function getQueue(appPrefix, req, res) {
+function getQueue(req, res) {
+    'use strict';
+    logger.debug('getQueue (req, res)', [req, res]);
+    var queueId = req.param('id');
+    var prefix = req.prefix;
+
+    
+    req.template='queues.jade';
+
+    dataSrv.getQueue(prefix, queueId, function onGetQueue(err, hQ, lQ, lastPop) {
+        logger.debug('onGetQueue(err, hQ, lQ, lastPop)', [err, hQ, lQ, lastPop]);
+        if (err) {
+            logger.info('onGetQueue',[String(err), 500]);
+            res.sendCond({errors:[String(err)]}, 500);
+        } else {
+            var mapTrans = function (v){
+                var id = v.split("|")[1];
+                return {
+                    id: id,
+                    href:'http://'+req.headers.host+ '/trans/'+ id+"?queues=All",
+                };
+            }
+            hQ = hQ.map(mapTrans);
+            lQ = lQ.map(mapTrans);
+            res.send({ok: true, host: req.headers.host, lastPop: lastPop,
+                size: hQ.length + lQ.length, high: hQ, low: lQ  });
+        }
+    });
+}
+
+function popQueue(req, res) {
   'use strict';
-    logger.debug('getQueue(appPrefix, req, res)', [appPrefix, req, res]);
+    logger.debug('popQueue(req, res)', [req, res]);
   var queueId = req.param('id');
   var maxMsgs = req.param('max', config.agent.max_messages);
   var tOut = req.param('timeout', config.agent.pop_timeout);
+  var appPrefix = req.prefix;
 
   maxMsgs = parseInt(maxMsgs, 10);
   if (isNaN(maxMsgs)) {
@@ -281,15 +319,16 @@ function getQueue(appPrefix, req, res) {
   });
 }
 
-function checkPerm(appPrefix, req, res, cb) {
+function checkPerm(req, res, cb) {
   'use strict';
- logger.debug('checkPerm(appPrefix, req, res, cb)', [appPrefix, req, res, cb]);
+  logger.debug('checkPerm(appPrefix, req, res, cb)', [appPrefix, req, res, cb]);
   var header = req.headers['authorization'] || '', // get the header
     token = header.split(/\s+/).pop() || '', // and the encoded auth token
     auth = new Buffer(token, 'base64').toString(), // convert from base64
     parts = auth.split(/:/), // split on colon
     username = parts[0],
     password = parts[1];
+  var appPrefix = req.prefix;
 
   var shasum = crypto.createHash('sha1'),
     digest;
@@ -328,8 +367,58 @@ function checkPerm(appPrefix, req, res, cb) {
 
   }
 
-exports.queueSize = queueSize;
+
+function transMeta(req, res) {
+    'use strict';
+    logger.debug('transMeta(req, res)', [req, res]);
+    console.log(req.prefix);
+    var id = req.param('id_trans', null);
+    var queues = req.param('queues', null);
+    var summary = false;
+
+    req.template = 'trans.jade';
+
+    if (queues === 'summary') {
+        summary = true;
+        queues = 'All';
+    }
+    if (id === null) {
+        res.send({errors:["missing id"]},400);
+    } else {
+        dataSrv.getTransactionMeta(id, function (errM, dataM) {
+            if (errM) {
+                res.send({errors:[errM]}, 400);
+            } else {
+                if (queues !== null) {
+                    dataSrv.getTransaction(id, queues, summary, function (errQ, dataQ) {
+                        if (errQ) {
+                            res.send({errors:[errQ]},400);
+                        } else {
+                            dataM.queues = dataQ;
+                            if(!summary) {
+                                for(var p in dataQ) {
+                                    if(dataQ.hasOwnProperty(p)) {
+                                        dataQ[p] = {state: dataQ[p], href: 'http://'+req.headers.host+ '/queue/'+p};
+                                    }
+                                }
+                            }
+                            //res.send({ok:true, data:dataM});
+                            res.send(dataM);
+                        }
+                    });
+                }
+                else {
+                    //res.send({ok:true, data:dataM});
+                    res.send(dataM);
+                }
+            }
+        });
+    }
+}
+
+
 exports.getQueue = getQueue;
+exports.popQueue = popQueue;
 exports.transState = transState;
 exports.postTrans = postTrans;
 exports.deleteTrans = deleteTrans;
@@ -340,21 +429,3 @@ exports.checkPerm = checkPerm;
 exports.transMeta = transMeta;
 exports.putTransMeta = putTransMeta;
 
-
-function  transMeta(req, res) {
-    'use strict';
-    logger.debug('transMeta(req, res)', [req, res]);
-    var id = req.param('id_trans', null);
-
-    if (id) {
-        dataSrv.getTransactionMeta(id, function (e, data) {
-            if (e) {
-                res.send({errors:[e]}, 400);
-            } else {
-                res.send({ok: true, data:data});
-            }
-        });
-    } else {
-        res.send({errors:['missing id']}, 400);
-    }
-}

@@ -13,6 +13,8 @@ var log = require('PDITCLogger');
 var logger = log.newLogger();
 logger.prefix = path.basename(module.filename,'.js');
 
+var prefixer = require('./prefixer') ;
+var sendrender = require('./sendrender') ;
 
 if (config.cluster.numcpus >= 0 && config.cluster.numcpus < numCPUs) {
     numCPUs = config.cluster.numcpus;
@@ -42,7 +44,7 @@ if (cluster.isMaster && numCPUs !== 0) {
     var cbLsnr = require('./ev_callback_lsnr');
 
     var app = express.createServer();
-
+    app.set('views', __dirname + '/views');
 
     var options = {
         key: fs.readFileSync('./PopBox/utils/server.key'),
@@ -62,28 +64,33 @@ if (cluster.isMaster && numCPUs !== 0) {
     app.use(express.query());
     app.use(express.bodyParser());
     app.use(express.limit("1mb"));
+    app.use(prefixer.prefixer(app.prefix));
+    app.use(sendrender.sendRender());
+    app.use(express.static(__dirname )) ;
+    app.use(express.directory(__dirname)) ;
+
 
     appSec.use(express.query());
     appSec.use(express.bodyParser());
     appSec.use(express.limit("1mb"));
 
-    appSec.post('/trans', function(req, res) {logic.postTrans(appSec.prefix,req,res);});
+    appSec.post('/trans', logic.postTrans);
     app.put('/trans/:id_trans', logic.putTransMeta);
     appSec.get('/trans/:id_trans/state/:state?', logic.transState);
-    appSec.get('/queue/:id/size', function(req, res) {logic.checkPerm(appSec.prefix, req, res, logic.queueSize);});
-    appSec.get('/queue/:id', function(req, res) {logic.checkPerm(appSec.prefix, req, res, logic.getQueue);});
-    appSec.post('/queue', function(req, res) {logic.postQueue(appSec.prefix, req, res);});
+    appSec.get('/queue/:id/size', logic.checkPerm);
+    appSec.post('/queue/:id/pop',logic.checkPerm);
+    appSec.post('/queue', logic.postQueue);
 
 
-    app.delete('/trans/:id_trans', logic.deleteTrans);
-    app.get('/trans/:id_trans/state/:state?', logic.transState);
+    app.del('/trans/:id_trans', logic.deleteTrans);
+    //app.get('/trans/:id_trans/state/:state?', logic.transState);
     app.get('/trans/:id_trans', logic.transMeta);
     app.put('/trans/:id_trans', logic.putTransMeta);
     app.post('/trans/:id_trans/payload', logic.payloadTrans);
     app.post('/trans/:id_trans/expirationDate', logic.expirationDate);
-    app.post('/trans', function(req, res) {logic.postTrans(app.prefix,req,res);});
-    app.get('/queue/:id/size', function(req, res) { logic.queueSize(app.prefix,req,res)});
-    app.get('/queue/:id', function(req, res) {logic.getQueue(app.prefix, req, res );});
+    app.post('/trans', logic.postTrans);
+    app.get('/queue/:id', logic.getQueue);
+    app.post('/queue/:id/pop', logic.popQueue);
 
 
 
