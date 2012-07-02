@@ -28,25 +28,29 @@ First draft of the installation manual. Please contact us at dtc_support@tid.es 
 ##Architecture overview
 PopBox has a distributed architecture composed by processing nodes, aka. Agents, and data management nodes (Redis instances). Optionally we can provide a MongoDB in order to keep historic track of the state changes and error log.
 
-The Agents will provide an stateless service with all the necessary operations for any of the roles: Provisioner (may produce and provision new messages to the queues), Consumers (may Pop messages from their inbox), Inspectors (may query transactions and queues to obtain right time information.
+The Agents will provide an stateless service with all the necessary operations for any of the roles: Provisioner (may produce and provision new messages to the queues), Consumers (may Pop messages from their inbox), Inspectors (may query transactions and queues to obtain right time information).
 
 The overall architecture may be seen as a central DB cluster (with specialised nodes depending on stored data types) surrounded by N Agents interacting throught that cluster.
 
 
 ##Setup the config file
-At PopBox/src/config.js
+    At PopBox/src/config.js
 
 In this file it is mandatory to stablish where reside the Redis DBs by stabilising the following properties:
+###Queue Servers
 ```
 exports.redisServers = [{host:'localhost'}, {host:'localhost', port:'6789'}];
 ```
 A list of Redis servers to manage the different queues of the system. Queues will be distributed among the nodes (non elastic yet). If you have more than one Agent it is important to keep the same redisServers list in all of them.
+###Transaction Servers
 ```
 exports.tranRedisServer = 'localhost';
 ```
 The hostname of the Redis Server intended to keep track of the transactions and their delivery state. (Notice that it is going to use always Redis default port in this version).
 
 The same Redis instance may be used between transactions and queues.
+
+###Historic support (opional)
 ```
 exports.ev_lsnr.mongo_host = 'localhost';
 exports.ev_lsnr.mongo_port = 27017;
@@ -55,10 +59,12 @@ Optionally you may indicate a MongoDB in order to keep track of historic data.
 
 
 ##Links and resources dependencies
+
+```
 Redis: http://redis.googlecode.com/files/redis-2.4.15.tar.gz
 Mongo: http://www.mongodb.org/downloads
 Node: http://nodejs.org (preferred v6.* not tested in v8)
-
+```
 ##Install
 
 ###HTTPS Support (this may be optional/improved in near future)
@@ -80,4 +86,7 @@ cp server.key server.key.org
 openssl rsa -in server.key.org -out server.key
 openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
 ```
-At this point you should be able to start all the processes (Redis, MongoDB, Databases and Agents).
+At this point you should be able to start all the processes: 
+Redis 
+Agents (node Agent.js)
+and MongoDB (if necessary)
