@@ -68,7 +68,7 @@ Node: http://nodejs.org (preferred v6.* not tested in v8)
 ##Install
 
 ###HTTPS Support (this may be optional/improved in near future)
-Popbox is expecting server certificates in order to stablish secure comunitions with secure boxes (Basic HTTP).
+Popbox is expecting server certificates in order to stablish secure comunitions with secure boxes (BasicAuth-HTTPS).
 
 The certificates path are hardcoded (sorry):
 ```
