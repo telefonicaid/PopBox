@@ -32,4 +32,4 @@ function sendRender() {
     }
 }
 
-exports.sendRender = sendRender
+exports.sendRender = sendRender;
