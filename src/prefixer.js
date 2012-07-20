@@ -13,4 +13,4 @@ function prefixer(prefix) {
     }
 }
 
-exports.prefixer = prefixer
+exports.prefixer = prefixer;
