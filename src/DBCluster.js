@@ -29,8 +29,7 @@ var getDb = function(queueId) {
   'use strict';
     logger.debug('getDb(queueId)', [queueId]);
   var hash = hashMe(queueId, config.redisServers.length);
-  var rc = dbArray[hash];
-  return rc;
+  return dbArray[hash];
 };
 
 var getOwnDb = function(queueId) {
