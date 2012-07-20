@@ -27,7 +27,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
     extTransactionId = uuid.v4(), transactionId = config.dbKeyTransPrefix +
       extTransactionId, //setting up the bach proceses for async module.
     processBatch = [], //feeding the process batch
-    dbTr = dbCluster.getTransactionDb(transactionId), i = 0, queue, db;
+    dbTr = dbCluster.getTransactionDb(transactionId), i , queue;
 
   if (!provision.expirationDate) {
     provision.expirationDate =
@@ -185,7 +185,6 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback,
         restElems = maxElems - dataHlength;
         //Extract from both queues
         db.lrange(fullQueueIdL, 0, restElems-1, function on_rangeL(errL, dataL) {
-            var dataLLength = dataL.length;
             if (errL && firstElem[0] !== fullQueueIdL) {
               //fail but we may have data of previous range
               if (dataH) {
@@ -201,7 +200,7 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback,
                 ].concat(dataL);
               }
                 db.ltrim(fullQueueIdL,dataL.length, -1, function on_trimL(err) {
-                    //the trim fails!! duplicates warning!!
+                    logger.warning('on_trimL', err);
                   });
                 if (dataL) {
                   dataH = dataH.concat(dataL);
@@ -316,9 +315,7 @@ function retrieveData(queue, transactionList, callback) {
   'use strict';
   logger.debug('retrieveData(queue, transactionList, callback)',
     [queue, transactionList, callback]);
-  var ghostBusterBatch = [
-  ];
-  ghostBusterBatch =
+  var ghostBusterBatch =
     transactionList.map(function prepareDataBatch(transaction) {
       logger.debug('prepareDataBatch(transaction)', [transaction]);
       var dbTr = dbCluster.getTransactionDb(transaction);
