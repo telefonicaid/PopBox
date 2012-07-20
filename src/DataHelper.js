@@ -96,7 +96,6 @@ var hsetMetaHashParallel = function(dbTr, transaction_id, sufix, provision) {
     var meta = {};
      for (var p in provision) {
          if(provision.hasOwnProperty(p) && provision[p] !== null &&  provision[p] !== undefined && p !== 'queue') {
-             console.log(p);console.log(typeof p);
              meta[p] = provision[p];
          }
      }
