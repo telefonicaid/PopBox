@@ -7,8 +7,6 @@ var mongodb = require('mongodb');
 
 var config = require('./config').ev_lsnr;
 
-var clients = [];
-
 var path = require('path');
 var log = require('PDITCLogger');
 var logger = log.newLogger();
@@ -18,37 +16,36 @@ logger.prefix = path.basename(module.filename,'.js');
 function init(emitter) {
     'use strict';
     return function (callback) {
-        var client = new mongodb.Db(config.mongo_db,
+        var db = new mongodb.Db(config.mongo_db,
             new mongodb.Server(config.mongo_host,
-                config.mongo_port, {}));
-        client.open(function (errOpen, p_client) {
+                config.mongo_port, {auto_reconnect: true}));
+        db.open(function (errOpen, db) {
             if (!errOpen) {
-                client.collection(config.collection, function (err, c) {
+                db.collection(config.collection, function (err, collection) {
                     if (err) {
                         if (callback) {
                             callback(err);
                         }
                     } else {
-                        var collection = c;
                         logger.debug("mongo is susbcribed");
-                        emitter.on('NEWSTATE', function onNewEvent(data) {
+                        emitter.on('NEWSTATE', function onNewState(data) {
                             try {
-                                logger.debug('onNewEvent(data)',[data]);
-                                collection.insert(data, function (err, docs) {
+                                logger.debug('onNewState(data)',[data]);
+                                collection.insert(data, function (err) {
                                     if (err) {
-                                        logger.warning('onNewEvent',err);
+                                        logger.warning('onNewState',err);
                                     }
                                 });
                             } catch (e) {
                                 logger.warning(e);
                             }
                         });
-                        emitter.on('ACTION', function onNewError(data) {
+                        emitter.on('ACTION', function onAction(data) {
                             try {
-                                logger.debug('onNewError(data)',[data]);
-                                collection.insert(data, function (err, docs) {
+                                logger.debug('onAction(data)',[data]);
+                                collection.insert(data, function (err) {
                                     if (err) {
-                                       logger.warning('onNewError',err);
+                                       logger.warning('onAction',err);
                                     }
                                 });
                             } catch (e) {
@@ -65,7 +62,6 @@ function init(emitter) {
                 callback(errOpen);
             }
         });
-        clients.push(client);
     };
 }
 
