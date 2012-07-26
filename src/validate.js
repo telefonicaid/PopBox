@@ -19,6 +19,9 @@ function errorsTrans(trans) {
   if (!trans.priority) {
     errors.push('undefined priority');
   }
+  else if (trans.priority !== 'H' && trans.priority !== 'L'){
+      errors.push('invalid priority')
+  }
 
   if (!trans.queue) {
     errors.push('undefined queue');
