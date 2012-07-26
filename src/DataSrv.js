@@ -115,6 +115,9 @@ var updateTransMeta = function(extTransactionId, provision, callback) {
 
   // curry for async (may be refactored)
 
+    delete provision.queue;
+    delete provision.priority;
+    
   helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',
     provision)(function(err) {
     if (err) {
