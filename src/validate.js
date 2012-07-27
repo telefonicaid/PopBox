@@ -9,6 +9,8 @@ var log = require('PDITCLogger');
 var logger = log.newLogger();
 logger.prefix = path.basename(module.filename,'.js');
 
+var MAX_TIMESTAMP = config.MAX_TIMESTAMP;
+
 function errorsTrans(trans) {
   'use strict';
   logger.debug('errorsTrans(trans)', [trans]);
@@ -49,6 +51,19 @@ function errorsTrans(trans) {
       trans.payload.length > maxPayloadSize) {
     errors.push('payload greater than '+maxPayloadSize);
   }
+
+    if (trans.expirationDate) {
+        if (typeof trans.expirationDate !== 'number') {
+            errors.push('expirationDate is not a number')
+        } 
+        else {
+            // not 0, the current date ??
+            if (trans.expirationDate < 0 || trans.expirationDate > MAX_TIMESTAMP) {      
+                errors.push('expirationDate out of range')
+            }
+        }
+
+    }
 
   return errors;
 

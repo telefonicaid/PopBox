@@ -146,3 +146,11 @@ exports.cluster= {};
  * @type {Number} number of CPUS to be used in cluster mode (-1 for all)
  */
 exports.cluster.numcpus = 0;
+
+
+
+/**
+ *
+ * @type {Number} max value for expirationDate
+ */
+exports.MAX_TIMESTAMP = 2147483647; // 32-bit, 19 January 2038
