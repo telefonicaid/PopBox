@@ -58,20 +58,34 @@ function postTrans(req, res) {
 }
 function putTransMeta(req, res) {
     logger.debug('putTransMeta(req, res)', [req, res]);
-    var id = req.param('id_trans', null);
+    var id = req.param('id_trans', null),
+        empty = true, filteredReq = {}, errorsP, errorsExpDate, errors = [];
 
-    var empty = true;
-    for (var p in req.body) {
-        if (req.body.hasOwnProperty(p)) {
-            empty = false;
-            break;
-        }
-    }
+    filteredReq.payload = req.body.payload;
+    filteredReq.callback = req.body.callback;
+    filteredReq.expirationDate = req.body.expirationDate;
+
+    empty = (filteredReq.payload === undefined) &&
+        (filteredReq.callback === undefined) &&
+        (filteredReq.expirationDate === undefined);
+
     if (empty) {
         res.send({ok:true, data:"empty data"});
     }
     else {
-        if (id) {
+        if (id === null) {
+            errors.push('missing id');
+        }
+        errorsP = validate.errorsPayload(filteredReq.payload, false);
+        errors = errors.concat(errorsP);
+
+        errorsExpDate = validate.errorsExpirationDate(filteredReq.expirationDate);
+        errors = errors.concat(errorsExpDate);
+
+        if (errors.length > 0) {
+            res.send({errors:errors}, 400);
+        }
+        else {
             dataSrv.updateTransMeta(id, req.body, function (e, data) {
                 if (e) {
                     res.send({errors:[String(e)]}, 400);
@@ -79,11 +93,8 @@ function putTransMeta(req, res) {
                     res.send({ok:true, data:data});
                 }
             });
-        } else {
-            res.send({errors:['missing id']}, 400);
         }
     }
-
 }
 
 function postQueue (req, res) {
@@ -173,6 +184,7 @@ function payloadTrans(req, res) {
     logger.debug('payloadTrans(req, res)', [req, res]);
     var id = req.param('id_trans', null);
     logger.debug('payloadTrans - id req.body', id, req.body);
+    
 
     if (!id) {
         res.send({errors:['missing id']}, 400);
@@ -194,9 +206,13 @@ function payloadTrans(req, res) {
 function expirationDate(req, res) {
     'use strict';
     logger.debug('expirationDate(req, res)', [req, res]);
-    var id = req.param('id_trans', null);
+    var id = req.param('id_trans', null),
+        errors;
     logger.debug("expirationDate - id  req.body", id, req.body);
     if (id) {
+        errors = validate.errorsExpirationDate(req.body.expirationDate);
+        if (errors.length == 0) {
+        logger.debug('putTransMeta - errors', errors);
         dataSrv.setExpirationDate(id, req.body, function (e) {
             if (e) {
                 res.send({errors:[String(e)]}, 400);
@@ -204,6 +220,10 @@ function expirationDate(req, res) {
                 res.send({ok: true});
             }
         });
+        }
+        else {
+            res.send({errors:errors}, 400);  
+        }
     } else {
         res.send({errors:['missing id']}, 400);
     }

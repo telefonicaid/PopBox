@@ -106,32 +106,43 @@ var pushTransaction = function(appPrefix, provision, callback) {
  * @param callback
  */
 
-var updateTransMeta = function(extTransactionId, provision, callback) {
-  'use strict';
-  logger.debug('updateTransMeta(transId, provision, callback)',
-    [extTransactionId, provision, callback]);
-  var transactionId = config.dbKeyTransPrefix +
-    extTransactionId, dbTr = dbCluster.getTransactionDb(transactionId);
+var updateTransMeta = function (extTransactionId, provision, callback) {
+    'use strict';
+    logger.debug('updateTransMeta(transId, provision, callback)',
+        [extTransactionId, provision, callback]);
+    var transactionId = config.dbKeyTransPrefix +
+        extTransactionId, dbTr = dbCluster.getTransactionDb(transactionId);
 
-  // curry for async (may be refactored)
+    // curry for async (may be refactored)
 
     delete provision.queue;
     delete provision.priority;
     
-  helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',
-    provision)(function(err) {
-    if (err) {
-      callback(err);
-    } else {
-      helper.setExpirationDate(dbTr, transactionId + ':meta', provision,
-        function(err2) {
-          helper.setExpirationDate(dbTr, transactionId + ':state', provision,
-            function(err3) {
-              callback(err2 || err3);
+    helper.exists(dbTr, transactionId + ':meta', function (errE, value) {
+        if (errE) {
+               callback(errE);
+        }
+        else if (!value) {
+               callback(extTransactionId + " does not exist");
+        }
+        else {
+            helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',
+                provision)(function (err) {
+                if (err) {
+                    callback(err);
+                } else {
+                    helper.setExpirationDate(dbTr, transactionId + ':meta', provision,
+                        function (err2) {
+                            helper.setExpirationDate(dbTr, transactionId + ':state', provision,
+                                function (err3) {
+                                    callback(err2 || err3);
+                                });
+                        });
+                }
             });
-        });
-    }
-  });
+        }
+    });
+
 };
 
 var setSecHash = function(appPrefix, queueId, user, passwd, callback) {
@@ -544,44 +555,65 @@ var deleteTrans = function(extTransactionId, cb) {
   });
 };
 
-var setPayload = function(extTransactionId, payload, cb) {
-  "use strict";
-  logger.debug('setPayload(transactionId, payload, cb)',
-    [extTransactionId, payload, cb]);
-  var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
-    extTransactionId + ':meta';
+var setPayload = function (extTransactionId, payload, cb) {
+    "use strict";
+    logger.debug('setPayload(transactionId, payload, cb)',
+        [extTransactionId, payload, cb]);
+    var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
+        extTransactionId + ':meta';
 
-  dbTr.hset(meta, 'payload', payload, function cbSetPayload(err) {
-    logger.debug('cbSetPayload(err)', [err]);
-    if (cb) {
-      cb(err);
-    }
-  });
-};
+    helper.exists(dbTr, meta, function (errE, value) {
+        if (errE) {
+            cb(errE);
+        }
+        else if (!value) {
+            cb(extTransactionId + " does not exist");
+        }
+        else {
+
+            dbTr.hset(meta, 'payload', payload, function cbSetPayload(err) {
+                logger.debug('cbSetPayload(err)', [err]);
+                if (cb) {
+                    cb(err);
+                }
+            });
+        }
+    });
+}
 
 //deprecated
-var setExpirationDate = function(extTransactionId, date, cb) {
-  'use strict';
-  logger.debug('expirationDate(transactionId, date, cb)',
-    [extTransactionId, date, cb]);
-  var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
-    extTransactionId + ':meta', state = config.dbKeyTransPrefix +
-    extTransactionId + ':state';
+var setExpirationDate = function (extTransactionId, date, cb) {
+    'use strict';
+    logger.debug('expirationDate(transactionId, date, cb)',
+        [extTransactionId, date, cb]);
+    var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
+        extTransactionId + ':meta', state = config.dbKeyTransPrefix +
+        extTransactionId + ':state';
 
-  dbTr.hset(meta, 'expirationDate', date, function cbHsetExpirationDate(errE) {
-    logger.debug('cbSetPayload(errE)', [errE]);
-    helper.setExpirationDate(dbTr, meta, {expirationDate: date},
-      function cbExpirationDateMeta(errM) {
-        logger.debug('cbExpirationDateMeta(errM)', [errM]);
-        helper.setExpirationDate(dbTr, state, {expirationDate: date},
-          function cbExpirationDateState(errS) {
-            logger.debug('cbExpirationDateState(errS)', [errS]);
-            if (cb) {
-              cb(errE || errM || errS);
-            }
-          });
-      });
-  });
+    helper.exists(dbTr, meta, function (errE, value) {
+        if (errE) {
+            cb(errE);
+        }
+        else if (!value) {
+            cb(extTransactionId + " does not exist");
+        }
+        else {
+            dbTr.hset(meta, 'expirationDate', date, function cbHsetExpirationDate(errE) {
+                logger.debug('cbSetPayload(errE)', [errE]);
+                helper.setExpirationDate(dbTr, meta, {expirationDate:date},
+                    function cbExpirationDateMeta(errM) {
+                        logger.debug('cbExpirationDateMeta(errM)', [errM]);
+                        helper.setExpirationDate(dbTr, state, {expirationDate:date},
+                            function cbExpirationDateState(errS) {
+                                logger.debug('cbExpirationDateState(errS)', [errS]);
+                                if (cb) {
+                                    cb(errE || errM || errS);
+                                }
+                            });
+                    });
+            });
+        }
+    });
 };
 
 //Public Interface Area

@@ -41,6 +41,20 @@ var getKey = function(db, id, callback) {
   });
 };
 
+var exists = function (db, id, callback) {
+    "use strict";
+    logger.debug('exists(db, id, callback)', [db, id, callback]);
+    db.exists(id, function(err, value) {
+        if (err) {
+            //error pushing
+            logger.warning(err);
+        }
+        if (callback) {
+            callback(err, value === 1);
+        }
+    });   
+};
+
 var pushParallel = function(db, queue, priority, transaction_id) {
   'use strict';
   logger.debug('pushParallel(db, queue, priority, transaction_id)',
@@ -182,4 +196,6 @@ exports.setExpirationDate = setExpirationDate;
 exports.setKey = setKey;
 
 exports.getKey = getKey;
+
+exports.exists= exists;
 
