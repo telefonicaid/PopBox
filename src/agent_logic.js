@@ -165,7 +165,7 @@ function deleteTrans(req, res) {
     'use strict';
     logger.debug('deleteTrans(req, res)', [req, res]);
     var id = req.param('id_trans', null);
-    console.log("deleting transaction", id);
+
     if (id) {
         dataSrv.deleteTrans(id, function (e) {
             if (e) {
@@ -413,7 +413,6 @@ function checkPerm(req, res, cb) {
 function transMeta(req, res) {
     'use strict';
     logger.debug('transMeta(req, res)', [req, res]);
-    console.log(req.prefix);
     var id = req.param('id_trans', null);
     var queues = req.param('queues', null);
     var summary = false;
