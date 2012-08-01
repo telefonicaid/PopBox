@@ -579,7 +579,34 @@ var setPayload = function (extTransactionId, payload, cb) {
             });
         }
     });
-}
+};
+
+var setUrlCallback = function (extTransactionId, urlCallback, cb) {
+    "use strict";
+    logger.debug('setUrlCallback(transactionId, payload, cb)',
+        [extTransactionId, urlCallback, cb]);
+    var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
+        extTransactionId + ':meta';
+
+    helper.exists(dbTr, meta, function (errE, value) {
+        if (errE) {
+            cb(errE);
+        }
+        else if (!value) {
+            cb(extTransactionId + " does not exist");
+        }
+        else {
+
+            dbTr.hset(meta, 'callback', urlCallback, function cbSetUrlCallback(err) {
+                logger.debug('cbSetUrlCallback(err)', [err]);
+                if (cb) {
+                    cb(err);
+                }
+            });
+        }
+    });
+};
+
 
 //deprecated
 var setExpirationDate = function (extTransactionId, date, cb) {
@@ -702,6 +729,15 @@ exports.deleteTrans = deleteTrans;
  * @param cb
  */
 exports.setPayload = setPayload;
+
+/**
+ *
+ * @param {string} extTransactionId valid uuid.v1.
+ * @param {string} URL for callback
+ * @param cb
+ */
+
+exports.setUrlCallback = setUrlCallback;
 
 /**
  *

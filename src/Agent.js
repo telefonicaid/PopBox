@@ -88,6 +88,7 @@ if (cluster.isMaster && numCPUs !== 0) {
     app.put('/trans/:id_trans', logic.putTransMeta);
     app.post('/trans/:id_trans/payload', logic.payloadTrans);
     app.post('/trans/:id_trans/expirationDate', logic.expirationDate);
+    app.post('/trans/:id_trans/callback', logic.callbackTrans);
     app.post('/trans', logic.postTrans);
     app.get('/queue/:id', logic.getQueue);
     app.post('/queue/:id/pop', logic.popQueue);

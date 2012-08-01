@@ -203,6 +203,29 @@ function payloadTrans(req, res) {
     }
 }
 
+function callbackTrans(req, res) {
+    'use strict';
+    logger.debug('callbackTrans(req, res)', [req, res]);
+    var id = req.param('id_trans', null);
+    logger.debug('callbackTrans - id req.body', id, req.body);
+
+
+    if (!id) {
+        res.send({errors:['missing id']}, 400);
+    }
+    else if (!req.body) {
+        res.send({errors:['missing body']}, 400);
+    }
+    else {
+        dataSrv.setUrlCallback(id, req.body, function (e) {
+            if (e) {
+                res.send({errors:[String(e)]}, 400);
+            } else {
+                res.send({ok: true});
+            }
+        });
+    }
+}
 function expirationDate(req, res) {
     'use strict';
     logger.debug('expirationDate(req, res)', [req, res]);
@@ -443,6 +466,7 @@ exports.postTrans = postTrans;
 exports.deleteTrans = deleteTrans;
 exports.expirationDate = expirationDate;
 exports.payloadTrans = payloadTrans;
+exports.callbackTrans = callbackTrans;
 exports.postQueue = postQueue;
 exports.checkPerm = checkPerm;
 exports.transMeta = transMeta;
