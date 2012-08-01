@@ -583,7 +583,7 @@ var setPayload = function (extTransactionId, payload, cb) {
 
 var setUrlCallback = function (extTransactionId, urlCallback, cb) {
     "use strict";
-    logger.debug('setUrlCallback(transactionId, payload, cb)',
+    logger.debug('setUrlCallback(transactionId, urlCallback, cb)',
         [extTransactionId, urlCallback, cb]);
     var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
         extTransactionId + ':meta';
