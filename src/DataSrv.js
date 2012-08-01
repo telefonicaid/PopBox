@@ -214,7 +214,9 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback,
                 ].concat(dataL);
               }
                 db.ltrim(fullQueueIdL,dataL.length, -1, function on_trimL(err) {
-                    logger.warning('on_trimL', err);
+                    if(err) {
+                        logger.warning('on_trimL', err);
+                    }
                   });
                 if (dataL) {
                   dataH = dataH.concat(dataL);
