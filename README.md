@@ -70,11 +70,14 @@ Node: http://nodejs.org (preferred v6.* not tested in v8)
 ###HTTPS Support (this may be optional/improved in near future)
 Popbox is expecting server certificates in order to stablish secure comunitions with secure boxes (BasicAuth-HTTPS).
 
-The certificates path are hardcoded (sorry):
-```
-key: fs.readFileSync('./PopBox/utils/server.key'),
-cert: fs.readFileSync('./PopBox/utils/server.crt')
-```
+The certificates are located in /PopBox/utils/, or you can choose your own path in the config file
+...
+
+server.key
+server.crt
+
+...
+
 To obtain them you may execute the following script:
 PopBox/utils/create_http_certificates.sh
 
