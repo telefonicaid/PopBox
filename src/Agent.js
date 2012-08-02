@@ -18,7 +18,7 @@ var sendrender = require('./sendrender') ;
 
 if (config.cluster.numcpus >= 0 && config.cluster.numcpus < numCPUs) {
     numCPUs = config.cluster.numcpus;
-    logger.debug('numCPUs='+numCPUs);
+    logger.info('numCPUs='+numCPUs);
 }
 
 
@@ -33,7 +33,7 @@ if (cluster.isMaster && numCPUs !== 0) {
         logger.warning('worker ' + worker.pid + ' died');
     });
 } else {
-    logger.debug('cluster worker',cluster);
+    logger.debug('cluster worker', cluster);
 
     var fs = require('fs');
     var express = require('express');
@@ -43,66 +43,59 @@ if (cluster.isMaster && numCPUs !== 0) {
     var evLsnr = require('./ev_lsnr');
     var cbLsnr = require('./ev_callback_lsnr');
 
+    var servers = [];
     var app = express.createServer();
-    app.set('views', __dirname + '/views');
-
-    var options = {
-        key: fs.readFileSync('./PopBox/utils/server.key'),
-        cert: fs.readFileSync('./PopBox/utils/server.crt')
-    };
-
-    var appSec = express.createServer(options);
-
-    var servers = [app, appSec];
     app.prefix = "UNSEC:";
     app.port = config.agent.port;
+    servers.push(app);
 
-    appSec.prefix = "SEC:";
-    appSec.port = Number(config.agent.port) + 1;
+    logger.info("config.enableSecure", config.enableSecure);
+    if (config.enableSecure === true ||  config.enableSecure === "true" || config.enableSecure === 1) {
+        var options = {
+            key:fs.readFileSync('./PopBox/utils/server.key'),
+            cert:fs.readFileSync('./PopBox/utils/server.crt')
+        }
+        var appSec = express.createServer(options);
+        appSec.prefix = "SEC:";
+        appSec.port = Number(config.agent.port) + 1;
 
+        servers.push(appSec);
+    }
 
-    app.use(express.query());
-    app.use(express.bodyParser());
-    app.use(express.limit("1mb"));
-    app.use(prefixer.prefixer(app.prefix));
-    app.use(sendrender.sendRender());
-    app.use(express.static(__dirname )) ;
-    app.use(express.directory(__dirname)) ;
+    servers.forEach(function (server) {
+        server.use(express.query());
+        server.use(express.bodyParser());
+        server.use(express.limit("1mb"));
+        server.use(prefixer.prefixer(server.prefix));
+        server.use(sendrender.sendRender());
+        server.use(express.static(__dirname));
+        server.use(express.directory(__dirname));
 
-
-    appSec.use(express.query());
-    appSec.use(express.bodyParser());
-    appSec.use(express.limit("1mb"));
-
-    appSec.post('/trans', logic.postTrans);
-    app.put('/trans/:id_trans', logic.putTransMeta);
-    appSec.get('/trans/:id_trans/state/:state?', logic.transState);
-    appSec.get('/queue/:id/size', logic.checkPerm);
-    appSec.post('/queue/:id/pop',logic.checkPerm);
-    appSec.post('/queue', logic.postQueue);
-
-
-    app.del('/trans/:id_trans', logic.deleteTrans);
-    //app.get('/trans/:id_trans/state/:state?', logic.transState);
-    app.get('/trans/:id_trans', logic.transMeta);
-    app.put('/trans/:id_trans', logic.putTransMeta);
-    app.post('/trans/:id_trans/payload', logic.payloadTrans);
-    app.post('/trans/:id_trans/expirationDate', logic.expirationDate);
-    app.post('/trans/:id_trans/callback', logic.callbackTrans);
-    app.post('/trans', logic.postTrans);
-    app.get('/queue/:id', logic.getQueue);
-    app.post('/queue/:id/pop', logic.popQueue);
-
+        server.del('/trans/:id_trans', logic.deleteTrans);
+        //app.get('/trans/:id_trans/state/:state?', logic.transState);
+        server.get('/trans/:id_trans', logic.transMeta);
+        server.put('/trans/:id_trans', logic.putTransMeta);
+        server.post('/trans/:id_trans/payload', logic.payloadTrans);
+        server.post('/trans/:id_trans/expirationDate', logic.expirationDate);
+        server.post('/trans/:id_trans/callback', logic.callbackTrans);
+        server.post('/trans', logic.postTrans);
+        server.get('/queue/:id', logic.getQueue);
+        server.post('/queue/:id/pop', logic.popQueue);
+    });
 
 
 //Add subscribers
     async.parallel([evLsnr.init(emitter), cbLsnr.init(emitter)],
         function onSubscribed() {
             'use strict';
-           // logger.debug('onSubscribed()', []);
-            servers.forEach(function(server){server.listen(server.port);});
+            // logger.debug('onSubscribed()', []);
+            servers.forEach(function (server) {
+                server.listen(server.port);
+            });
         });
-    servers.forEach(function(server){server.listen(server.port);});
+   /* servers.forEach(function (server) {
+        server.listen(server.port);
+    });*/
 }
 
 /*
