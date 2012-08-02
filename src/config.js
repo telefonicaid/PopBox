@@ -4,16 +4,17 @@
 //
 /**
  *
- * @type {String}
+ * @type {Array} ex. [{host:'localhost'}, {host:'localhost', port:'6789'}]
  */
 //exports.redisServers = [{host:'localhost'}, {host:'localhost', port:'6789'}];
-exports.redisServers = [{host:'localhost'}];
+exports.redisServers = [{host:'localhost', port: 1234}];
 
 /**
  *
- * @type {String}
+ * @type {Object} ex. { host:'hostname', port: 'port'} 
+ * 
  */
-exports.tranRedisServer = 'localhost';
+exports.tranRedisServer = {host:'localhost', port: 1234};
 
 /**
  *

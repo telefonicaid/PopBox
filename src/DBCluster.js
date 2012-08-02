@@ -13,8 +13,8 @@ var log = require('PDITCLogger');
 var logger = log.newLogger();
 logger.prefix = path.basename(module.filename,'.js');
 
-var rc = redisModule.createClient(redisModule.DEFAULT_PORT,
-    config.tranRedisServer);
+var rc = redisModule.createClient(config.tranRedisServer.port ||redisModule.DEFAULT_PORT,
+    config.tranRedisServer.host);
 rc.select(config.selected_db); //false pool for pushing
 var dbArray = [];
 for (var i = 0; i < config.redisServers.length; i++) {
@@ -50,8 +50,8 @@ var getTransactionDb = function(transactionId) {
     logger.debug('getTransactionDb(transactionId)', [transactionId]);
     if (!rc || !rc.connected) {
     rc =
-        redisModule.createClient(redisModule.DEFAULT_PORT,
-            config.tranRedisServer);
+        redisModule.createClient(config.tranRedisServer.port ||redisModule.DEFAULT_PORT,
+            config.tranRedisServer.host);
   }
   //return a client for transactions
   return rc;
