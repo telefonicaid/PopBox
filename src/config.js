@@ -161,3 +161,9 @@ exports.MAX_TIMESTAMP = 2147483647; // 32-bit, 19 January 2038
  * @type {boolean}
  */
 exports.enableSecure= true;
+
+/**
+ *
+ * @type {String} absolute path for the certs and keys. Default will be chosen when empty.
+ */
+exports.agent.crt_path = "";

@@ -11,14 +11,16 @@ var numCPUs = require('os').cpus().length;
 var path = require('path');
 var log = require('PDITCLogger');
 var logger = log.newLogger();
-logger.prefix = path.basename(module.filename,'.js');
+logger.prefix = path.basename(module.filename, '.js');
 
-var prefixer = require('./prefixer') ;
-var sendrender = require('./sendrender') ;
+var dirModule = path.dirname(module.filename);
+
+var prefixer = require('./prefixer');
+var sendrender = require('./sendrender');
 
 if (config.cluster.numcpus >= 0 && config.cluster.numcpus < numCPUs) {
     numCPUs = config.cluster.numcpus;
-    logger.info('numCPUs='+numCPUs);
+    logger.info('numCPUs=' + numCPUs);
 }
 
 
@@ -50,11 +52,37 @@ if (cluster.isMaster && numCPUs !== 0) {
     servers.push(app);
 
     logger.info("config.enableSecure", config.enableSecure);
-    if (config.enableSecure === true ||  config.enableSecure === "true" || config.enableSecure === 1) {
-        var options = {
-            key:fs.readFileSync('./PopBox/utils/server.key'),
-            cert:fs.readFileSync('./PopBox/utils/server.crt')
+    if (config.enableSecure === true || config.enableSecure === "true" || config.enableSecure === 1) {
+        if (!config.agent.crt_path) {
+            var options_dir = {
+                key: path.resolve(dirModule, '../utils/server.key'),
+                cert: path.resolve(dirModule, '../utils/server.crt')
+            };
+        } else {
+            var options_dir = {
+                key: path.resolve(config.agent.crt_path, 'server.key'),
+                cert: path.resolve(config.agent.crt_path, 'server.crt')
+            };
         }
+
+        /*checks whether the cert files exist or not
+         and starts the appSec server*/
+
+        if (path.existsSync(options_dir.key) &&
+            path.existsSync(options_dir.cert) &&
+            fs.statSync(options_dir.key).isFile() &&
+            fs.statSync(options_dir.cert).isFile()) {
+
+            var options = {
+                key: fs.readFileSync(options_dir.key),
+                cert: fs.readFileSync(options_dir.cert)
+            };
+            logger.info("valid certificates")
+        } else {
+            logger.debug('certs not found', options_dir);
+            throw new Error("No valid certificates were found in the given path");
+        }
+
         var appSec = express.createServer(options);
         appSec.prefix = "SEC:";
         appSec.port = Number(config.agent.port) + 1;
@@ -68,8 +96,8 @@ if (cluster.isMaster && numCPUs !== 0) {
         server.use(express.limit("1mb"));
         server.use(prefixer.prefixer(server.prefix));
         server.use(sendrender.sendRender());
-        server.use(express.static(__dirname));
-        server.use(express.directory(__dirname));
+        //server.use(express.static(__dirname));
+       // server.use(express.directory(__dirname));
 
         server.del('/trans/:id_trans', logic.deleteTrans);
         //app.get('/trans/:id_trans/state/:state?', logic.transState);
@@ -93,16 +121,16 @@ if (cluster.isMaster && numCPUs !== 0) {
                 server.listen(server.port);
             });
         });
-   /* servers.forEach(function (server) {
-        server.listen(server.port);
-    });*/
+    /* servers.forEach(function (server) {
+     server.listen(server.port);
+     });*/
 }
 
 /*
-process.on('uncaughtException', function onUncaughtException (err) {
-    'use strict';
-    logger.warning('onUncaughtException', err);
-});
+ process.on('uncaughtException', function onUncaughtException (err) {
+ 'use strict';
+ logger.warning('onUncaughtException', err);
+ });
  */
 
 
