@@ -7,6 +7,7 @@
 var config = require('./config.js');
 var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
+var jade = require('jade');
 
 var path = require('path');
 var log = require('PDITCLogger');
@@ -96,9 +97,7 @@ if (cluster.isMaster && numCPUs !== 0) {
         server.use(express.limit("1mb"));
         server.use(prefixer.prefixer(server.prefix));
         server.use(sendrender.sendRender());
-        //server.use(express.static(__dirname));
-       // server.use(express.directory(__dirname));
-
+        server.use("/", express.static(__dirname + '/public'));
         server.del('/trans/:id_trans', logic.deleteTrans);
         //app.get('/trans/:id_trans/state/:state?', logic.transState);
         server.get('/trans/:id_trans', logic.transMeta);
