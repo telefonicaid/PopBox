@@ -3,87 +3,124 @@ In the Provision port, a number of paths provide information about transactions
 GET /trans/<<transaction_id>>/
 	Shows the state of the message on each queue of the transaction
 
-GET /trans/<<transaction_id>>/summary
+GET /trans/<<transaction_id>>?queues=summary
 	Shows number of messages on each state and the total count
 
-GET /trans/<<transaction_id>>/Pending
+GET /trans/<<transaction_id>>?queues=Pending
 	Show the queues of the transaction with the message wating to be delivered
 
-GET /trans/<<transaction_id>>/Delivered
+GET /trans/<<transaction_id>>?queues=Delivered
 	Show the queues of the transaction with the messages having been delivered
-	
+
 Examples
 
-----	
-GET /trans/81aebce0-7278-11e1-bf56-9f693fcde0c7 HTTP/1.1
-Host: metis:3001
-User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
+----
+
+GET /trans/b55bf004-587c-4f64-929e-71429663d7e0 HTTP/1.1
+Host: localhost:3001
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0.1
+Accept: application/json
 Accept-Encoding: gzip, deflate
 Connection: keep-alive
-
+ 
 HTTP/1.1 200 OK
 X-Powered-By: Express
 Content-Type: application/json; charset=utf-8
-Content-Length: 33
+Content-Length: 179
 Connection: keep-alive
 
-{"q1":"Pending","q2":"Delivered"}
-----
+{
+  "payload": "{\"spanish\": \"hola\", \"english\": \"hello\", \"to\":\"Mr Lopez\"}",
+  "priority": "H",
+  "callback": "http://foo.bar",
+  "expirationDelay": "360",
+  "expirationDate": "1342775322"
+}
 
 ----
-GET /trans/81aebce0-7278-11e1-bf56-9f693fcde0c7/summary 
-HTTP/1.1
-Host: metis:3001
-User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
+
+GET /trans/b55bf004-587c-4f64-929e-71429663d7e0?queues=summary HTTP/1.1
+Host: localhost:3001
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0.1
+Accept: application/json
 Accept-Encoding: gzip, deflate
 Connection: keep-alive
-
+ 
 HTTP/1.1 200 OK
 X-Powered-By: Express
 Content-Type: application/json; charset=utf-8
-Content-Length: 51
+Content-Length: 225
 Connection: keep-alive
+ 
+{
+  "payload": "{\"spanish\": \"hola\", \"english\": \"hello\", \"to\":\"Mr Lopez\"}",
+  "priority": "H",
+  "callback": "http://foo.bar",
+  "expirationDelay": "360",
+  "expirationDate": "1342775322",
+  "queues": {
+	"totalNotifications": 2,
+	"Pending": 2
+  }
+}
 
-{"total_notifications":2,"Pending":1,"Delivered":1}
 ----
 
-----
-GET /trans/81aebce0-7278-11e1-bf56-9f693fcde0c7/Pending HTTP/1.1
-Host: metis:3001
-User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
+GET /trans/b55bf004-587c-4f64-929e-71429663d7e0?queues=Pending HTTP/1.1
+Host: localhost:3001
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0.1
+Accept: application/json
 Accept-Encoding: gzip, deflate
 Connection: keep-alive
-
-
+ 
 HTTP/1.1 200 OK
 X-Powered-By: Express
 Content-Type: application/json; charset=utf-8
-Content-Length: 16
+Content-Length: 320
 Connection: keep-alive
+ 
+{
+  "payload": "{\"spanish\": \"hola\", \"english\": \"hello\", \"to\":\"Mr Lopez\"}",
+  "priority": "H",
+  "callback": "http://foo.bar",
+  "expirationDelay": "360",
+  "expirationDate": "1342775322",
+  "queues": {
+	"Ax": {
+  	"state": "Pending",
+  	"href": "http://localhost:3001/queue/Ax"
+	},
+	"Bx": {
+  	"state": "Pending",
+  	"href": "http://localhost:3001/queue/Bx"
+	}
+  }
+}
 
-{"q1":"Pending"}
 ----
 
-----
-GET /trans/81aebce0-7278-11e1-bf56-9f693fcde0c7/Delivered HTTP/1.1
-Host: metis:3001
-User-Agent: Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-Accept-Language: es-es,es;q=0.8,en-us;q=0.5,en;q=0.3
+GET /trans/b55bf004-587c-4f64-929e-71429663d7e0?queues=Delivered HTTP/1.1
+Host: localhost:3001
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0.1
+Accept: application/json
 Accept-Encoding: gzip, deflate
 Connection: keep-alive
-
+ 
 HTTP/1.1 200 OK
 X-Powered-By: Express
 Content-Type: application/json; charset=utf-8
-Content-Length: 18
+Content-Length: 191
 Connection: keep-alive
+ 
+{
+  "payload": "{\"spanish\": \"hola\", \"english\": \"hello\", \"to\":\"Mr Lopez\"}",
+  "priority": "H",
+  "callback": "http://foo.bar",
+  "expirationDelay": "360",
+  "expirationDate": "1342775322",
+  "queues": {}
+}
 
-{"q2":"Delivered"}	
-----
+---
+
+

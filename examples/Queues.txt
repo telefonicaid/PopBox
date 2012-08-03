@@ -46,7 +46,7 @@ Transfer-Encoding: chunked
 {"id":"d84814f0-6776-11e1-a330-3324e9d100c2"}
 0
 
-----
+
 
 Example of error : priority missing, payload spelling
 
@@ -80,57 +80,6 @@ Transfer-Encoding: chunked
 34
 {"error":["undefined priority","undefined payload"]}
 0
-
-----
-
-Example: overwriting the payload of an existing transation. The body of the request must be a String.
-
-POST /trans/b43d82d3-1c8a-41f3-848d-04d17b13b73f/payload HTTP/1.1
-Host: localhost:3001
-User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0.1
-Accept: application/json
-Accept-Encoding: gzip, deflate
-Connection: keep-alive
-Content-Type: application/json; charset=UTF-8
-Content-Length: 14
-Pragma: no-cache
-Cache-Control: no-cache
-
-"New message"
-
-HTTP/1.1 200 OK
-X-Powered-By: Express
-Content-Type: application/json; charset=utf-8
-Content-Length: 11
-Connection: keep-alive
-
-{"ok":true}
-
-----
-
-Example: overwriting the expirationDate of an existing transation. The date must be an UNIXSTAMP (i.e.: 1343710800)
-
-POST /trans/b43d82d3-1c8a-41f3-848d-04d17b13b73f/payload HTTP/1.1
-Host: localhost:3001
-User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0.1
-Accept: application/json
-Accept-Encoding: gzip, deflate
-Connection: keep-alive
-Content-Type: application/json; charset=UTF-8
-Content-Length: 14
-Pragma: no-cache
-Cache-Control: no-cache
-
-1343710800
-
-HTTP/1.1 200 OK
-X-Powered-By: Express
-Content-Type: application/json; charset=utf-8
-Content-Length: 11
-Connection: keep-alive
-
-{"ok":true}
-
 
 -----------------------------------------------------------
 
