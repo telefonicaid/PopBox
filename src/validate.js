@@ -54,6 +54,7 @@ function errorsTrans(trans) {
 
 
 function errorsPayload(payload, required) {
+    logger.debug('errorsPayload(payload)', [payload]);
     var maxPayloadSize = config.agent.max_payload_size,
         errors = [];
     if (required && !payload) {
@@ -65,7 +66,7 @@ function errorsPayload(payload, required) {
     }
     return errors;
 }
-function errorsExpirationDate(expirationDate) {
+function errorsExpirationDate(expirationDate, required) {
     logger.debug('errorsExpirationDate(expirationDate)', [expirationDate]);
     var errors = [];
     if (expirationDate) {
