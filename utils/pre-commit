@@ -1,0 +1,27 @@
+#!/bin/sh
+
+for js in $(git diff-index --name-only --cached HEAD -- | grep '\.js$'); do
+
+	err_log=`gjslint $js`
+	errors=`echo $err_log | grep -c 'E:*:'`
+    if [ $((errors)) -gt 0 ] ; then
+    	echo "Some errors found in $js..."
+    	echo "trying to autofix them..."
+    	fixjsstyle $js  	
+		err_log=`gjslint $js`;
+		errors=`echo $err_log | grep -c 'E:*:'`
+		if [ $((errors)) -gt 0 ] ; then
+			echo "Could not autofix..."
+			echo
+			echo "$err_log"
+			echo "exiting..."
+			exit 1
+		else "$js succesfuly fixed"
+		fi
+    else
+        echo "$js validated"
+    fi  
+done
+
+echo "js files validated"
+exit 0;
