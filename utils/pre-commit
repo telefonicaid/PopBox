@@ -1,5 +1,8 @@
 #!/bin/sh
 
+
+flag_error=false;
+
 for js in $(git diff-index --name-only --cached HEAD -- | grep '\.js$'); do
 
 	err_log=`gjslint $js`
@@ -11,11 +14,11 @@ for js in $(git diff-index --name-only --cached HEAD -- | grep '\.js$'); do
 		err_log=`gjslint $js`;
 		errors=`echo $err_log | grep -c 'E:*:'`
 		if [ $((errors)) -gt 0 ] ; then
+			flag_error=true;
 			echo "Could not autofix..."
 			echo
 			echo "$err_log"
-			echo "exiting..."
-			exit 1
+			echo
 		else "$js succesfuly fixed"
 		fi
     else
@@ -23,5 +26,26 @@ for js in $(git diff-index --name-only --cached HEAD -- | grep '\.js$'); do
     fi  
 done
 
-echo "js files validated"
-exit 0;
+if $flag_error; then
+echo "files to be commited contain style errors"
+	read -p "do you want to commit anyway? y/n " yno
+	case $yno in
+
+        [yY]* )
+        		echo "commiting"
+                exit 0;
+                break
+                ;;
+
+        [nN]* )
+        		echo "commiting"
+                exit 1
+                break
+                ;;
+        *) echo "Invalid input"
+            ;;
+	esac
+else
+	echo "js files validated"
+	exit 0;
+fi
