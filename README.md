@@ -41,12 +41,12 @@ In this file it is mandatory to stablish where reside the Redis DBs by stabilisi
 ```
 exports.redisServers = [{host:'localhost'}, {host:'localhost', port:'6789'}];
 ```
-A list of Redis servers to manage the different queues of the system. Queues will be distributed among the nodes (non elastic yet). If you have more than one Agent it is important to keep the same redisServers list in all of them.
+A list of Redis servers to manage the different queues of the system. Queues will be distributed among the nodes (non elastic yet). '''If you have more than one Agent it is important to keep the same redisServers list in all of them'''.
 ###Transaction Servers
 ```
-exports.tranRedisServer = 'localhost';
+exports.tranRedisServer = {'localhost' [, port:]};
 ```
-The hostname of the Redis Server intended to keep track of the transactions and their delivery state. (Notice that it is going to use always Redis default port in this version).
+The hostname of the Redis Server intended to keep track of the transactions and their delivery state.
 
 The same Redis instance may be used between transactions and queues.
 
@@ -65,20 +65,32 @@ Redis: http://redis.googlecode.com/files/redis-2.4.15.tar.gz
 Mongo: http://www.mongodb.org/downloads
 Node: http://nodejs.org (preferred v6.* not tested in v8)
 ```
-##Install
-
 ###HTTPS Support (this may be optional/improved in near future)
 Popbox is expecting server certificates in order to stablish secure comunitions with secure boxes (BasicAuth-HTTPS).
 
-The certificates are located in /PopBox/utils/, or you can choose your own path in the config file
-...
-
+You may enable the Secure behavior at config file:
+```
+/**
+ *
+ * @type {boolean}
+ */
+exports.enableSecure= true;
+```
+The certificates are located in /PopBox/utils/ by default, or you can choose your own path in the config file.
+```
+/**
+ *
+ * @type {String} absolute path for the certs and keys. Default will be chosen when empty.
+ */
+exports.agent.crt_path = "";
+```
+Epected files:
+```
 server.key
 server.crt
+```
 
-...
-
-To obtain them you may execute the following script:
+To obtain them you may execute the following script (You must have openssl properly installed):
 PopBox/utils/create_http_certificates.sh
 
 or execute this commands:
@@ -91,5 +103,5 @@ openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
 ```
 At this point you should be able to start all the processes: 
 Redis 
+External Systems (Optional)
 Agents (node Agent.js)
-and MongoDB (if necessary)
