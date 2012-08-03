@@ -233,7 +233,7 @@ function expirationDate(req, res) {
         errors;
     logger.debug("expirationDate - id  req.body", id, req.body);
     if (id) {
-        errors = validate.errorsExpirationDate(req.body.expirationDate);
+        errors = validate.errorsExpirationDate(req.body);
         if (errors.length == 0) {
         logger.debug('putTransMeta - errors', errors);
         dataSrv.setExpirationDate(id, req.body, function (e) {
