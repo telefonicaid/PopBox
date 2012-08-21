@@ -8,8 +8,8 @@ var port = config.port;
 
 var trans, trans1 = {};
 
-describe('#PUT', function () {
-    beforeEach(function (done) {
+describe('#PUT', function() {
+    beforeEach(function(done) {
         trans1 = {
             'payload': '{\"spanish\": \"prueba1\", \"english\": ' +
                 '\"test1\", \"to\": \"Mr Lopez\"}',
@@ -22,12 +22,12 @@ describe('#PUT', function () {
             'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
         };
         rest.postJson('http://' + host + ':' + port + '/trans',
-            trans1).on('complete', function (data, response) {
+            trans1).on('complete', function(data, response) {
                 trans = {id: data.data, value: trans1};
                 done();
             });
     });
-    afterEach(function (done) {
+    afterEach(function(done) {
         this.timeout(8000); //Mocha timeout
 
         var urlQ1 = 'http://' + host + ':' + port +
@@ -36,37 +36,37 @@ describe('#PUT', function () {
             '/queue/q2/Pop';
         var completed = 0;
 
-        rest.post(urlQ1).on('complete', function () {
+        rest.post(urlQ1).on('complete', function() {
             completed++;
             if (completed == 2) done();
         });
-        rest.post(urlQ1).on('complete', function () {
+        rest.post(urlQ1).on('complete', function() {
             completed++;
             if (completed == 2) done();
         });
     });
-    it('should change payload,callback and expirationDate', function (done) {
+    it('should change payload,callback and expirationDate', function(done) {
         var datos_PUT = {
             'payload': 'MESSAGE 1',
             'callback': 'www.fi.upm.es',
             'expirationDate': 1447483646
         };
         async.series([
-            function (callback) {
+            function(callback) {
                 rest.put('http://' + host + ':' + port + '/trans/' + trans.id,
                     {headers: {'Content-Type': 'application/json',
                         'Accept': 'application/json'},
                         data: JSON.stringify(datos_PUT)})
-                    .on('complete', function (data, response) {
+                    .on('complete', function(data, response) {
                         response.statusCode.should.be.equal(200);
                         callback();
                     });
             },
 
-            function (callback) {
+            function(callback) {
                 rest.get('http://' + host + ':' + port + '/trans/' + trans.id,
                     {headers: {'Accept': 'application/json'}}).on('complete',
-                    function (data, response) {
+                    function(data, response) {
                         response.statusCode.should.be.equal(200);
                         data.payload.should.be.equal('MESSAGE 1');
                         data.callback.should.be.equal('www.fi.upm.es');
@@ -75,33 +75,33 @@ describe('#PUT', function () {
                     });
             }
         ],
-            function () {
+            function() {
                 done();
             });
     });
 
-    it('should not change priority', function (done) {
+    it('should not change priority', function(done) {
         var datos_PUT = {
             'payload': 'MESSAGE 2',
             'priority': 'L',
             'expirationDate': 1447483646
         };
         async.series([
-            function (callback) {
+            function(callback) {
                 rest.put('http://' + host + ':' + port + '/trans/' + trans.id,
                     {headers: {'Content-Type': 'application/json',
                         'Accept': 'application/json'},
                         data: JSON.stringify(datos_PUT)})
-                    .on('complete', function (data, response) {
+                    .on('complete', function(data, response) {
                         response.statusCode.should.be.equal(200);
                         callback();
 
                     });
             },
-            function (callback) {
+            function(callback) {
                 rest.get('http://' + host + ':' + port + '/trans/' + trans.id,
                     {headers: {'Accept': 'application/json'}}).on('complete',
-                    function (data, response) {
+                    function(data, response) {
                         response.statusCode.should.be.equal(200);
                         //console.log(response.statusCode)
                         //console.log(data)
@@ -112,7 +112,7 @@ describe('#PUT', function () {
                     });
             }
         ],
-            function () {
+            function() {
                 done();
             });
     });

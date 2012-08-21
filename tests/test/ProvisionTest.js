@@ -8,9 +8,9 @@ var port = config.port;
 
 var trans, trans1 = {};
 
-describe('Provision', function () {
+describe('Provision', function() {
 
-    beforeEach(function (done) {
+    beforeEach(function(done) {
         trans1 = {
             'payload': '{\"spanish\": \"prueba1\", \"english\": ' +
                 '\"test1\", \"to\": \"Mr Lopez\"}',
@@ -23,12 +23,12 @@ describe('Provision', function () {
             'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
         };
         rest.postJson('http://' + host + ':' + port + '/trans',
-            trans1).on('complete', function (data, response) {
+            trans1).on('complete', function(data, response) {
                 trans = {id: data.data, value: trans1};
                 done();
             });
     });
-    afterEach(function (done) {
+    afterEach(function(done) {
         this.timeout(8000); //Mocha timeout
         var urlQ1 = 'http://' + host + ':' + port +
             '/queue/q1/Pop';
@@ -36,37 +36,37 @@ describe('Provision', function () {
             '/queue/q2/Pop';
         var completed = 0;
 
-        rest.post(urlQ1).on('complete', function () {
+        rest.post(urlQ1).on('complete', function() {
             completed++;
             if (completed == 2) done();
         });
-        rest.post(urlQ1).on('complete', function () {
+        rest.post(urlQ1).on('complete', function() {
             completed++;
             if (completed == 2) done();
         });
     });
 
-    describe('Expiration times:', function () {
+    describe('Expiration times:', function() {
 
         it('Should return an empty responses ' +
-            'for expired transactions', function (done) {
+            'for expired transactions', function(done) {
             this.timeout(10000); //Mocha timeout
             trans.value.expirationDate =
                 Math.round(new Date().getTime() / 1000 + 2);
             rest.postJson('http://' + host + ':' + port + '/trans',
-                trans.value).on('complete', function (data, response) {
+                trans.value).on('complete', function(data, response) {
                     if (response.statusCode === 200) {
                         trans = {id: data.data, value: trans.value};
                     }
                     getCallback();
                 });
 
-            var getCallback = function () {
+            var getCallback = function() {
 
-                setTimeout(function () {
+                setTimeout(function() {
                     rest.get('http://' + host + ':' + port + '/trans/' + trans.id,
                         {headers: {'Accept': 'application/json'}}).on('complete',
-                        function (data, response) {
+                        function(data, response) {
                             data.should.eql({});
                             done();
                         });
@@ -75,12 +75,12 @@ describe('Provision', function () {
         });
     });
 
-    describe('#GET', function () {
+    describe('#GET', function() {
 
-        it('should retrieve the original transation', function (done) {
+        it('should retrieve the original transation', function(done) {
             rest.get('http://' + host + ':' + port + '/trans/' + trans.id,
                 {headers: {'Accept': 'application/json'}}).on('complete',
-                function (data, response) {
+                function(data, response) {
                     trans.value.payload.should.be.equal(data.payload);
                     trans.value.callback.should.be.equal(data.callback);
                     trans.value.priority.should.be.equal(data.priority);
@@ -88,20 +88,20 @@ describe('Provision', function () {
                 });
         });
 
-        it('the data response should be empty', function (done) {
+        it('the data response should be empty', function(done) {
             rest.get('http://' + host + ':' + port + '/trans/' + 'fake_transaction',
                 {headers: {'Accept': 'application/json'}}).on('complete',
-                function (data, response) {
+                function(data, response) {
                     data.should.eql({});
                     done();
                 });
         });
 
-        it('the transaction should be inside two queues', function (done) {
+        it('the transaction should be inside two queues', function(done) {
             rest.get('http://' + host + ':' + port + '/trans/' +
                 trans.id + '?queues=Pending',
                 {headers: {'Accept': 'application/json'}}).on('complete',
-                function (data, response) {
+                function(data, response) {
                     for (var i = 0; i < trans.value.queue.length; i++) {
                         var currentQueue = trans.value.queue[i].id;
                         data.queues.should.have.property(currentQueue);
