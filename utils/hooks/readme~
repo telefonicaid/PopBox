@@ -1,0 +1,23 @@
+To all commiters:
+-----------------------
+
+This directory shows all the git hooks necessary to keep the code clean and
+bugs-free. We encourage you to install them in the following directory:
+
+.git/hooks/
+
+
+#################################
+Style checker - Google jsLint
+#################################
+
+This project follows the style guide given by Google, this hook will
+check your code for style errors and, if it`s possible, will fix them.
+
+Before starting commit please do:
+
+$ cd /tmp
+$ sudo easy_install http://closure-linter.googlecode.com/files/closure_linter-latest.tar.gz
+
+#################################
+
