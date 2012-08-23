@@ -5,6 +5,7 @@ var config = require('./config.js');
 
 var host = config.hostname;
 var port = config.port;
+var protocol = config.protocol;
 
 var trans, trans1 = {};
 
@@ -18,7 +19,7 @@ describe('Bugs', function() {
 
             async.series([
                 function(callback) {
-                    rest.put('http://' + host + ':' + port + '/trans/' + 'false',
+                    rest.put(protocol + '://' + host + ':' + port + '/trans/' + 'false',
                         {headers: {'Content-Type': 'application/json',
                             'Accept': 'application/json'},
                             data: JSON.stringify(datos_PUT)})
@@ -31,7 +32,7 @@ describe('Bugs', function() {
                 },
 
                 function(callback) {
-                    rest.get('http://' + host + ':' + port + '/trans/' + 'false',
+                    rest.get(protocol + '://' + host + ':' + port + '/trans/' + 'false',
                         {headers: {'Accept': 'application/json'}}).on('complete',
                         function(data, response) {
                             response.statusCode.should.be.equal(200);
@@ -58,7 +59,7 @@ describe('Bugs', function() {
                 'payload': '{\"spanish\": \"prueba1\", \"english\": ' +
                     '\"test1\", \"to\": \"Mr Lopez\"}',
                 'priority': 'H',
-                'callback': 'http://foo.bar',
+                'callback': protocol + '://foo.bar',
                 'queue': [
                     { 'id': 'q1' },
                     { 'id': 'q2' }
@@ -68,7 +69,7 @@ describe('Bugs', function() {
             var hash_code;
             async.series([
                 function(callback) {
-                    rest.post('http://' + host + ':' + port + '/trans/',
+                    rest.post(protocol + '://' + host + ':' + port + '/trans/',
                         {headers: {'Content-Type': 'application/json',
                             'Accept': 'application/json'},
                             data: JSON.stringify(datos_POST)})
@@ -80,7 +81,7 @@ describe('Bugs', function() {
                         });
                 },
                 function(callback) {
-                    rest.put('http://' + host + ':' + port + '/trans/' + hash_code,
+                    rest.put(protocol + '://' + host + ':' + port + '/trans/' + hash_code,
                         {headers: {'Content-Type': 'application/json',
                             'Accept': 'application/json'},
                             data: JSON.stringify(datos_PUT)})
@@ -92,7 +93,7 @@ describe('Bugs', function() {
                 },
 
                 function(callback) {
-                    rest.get('http://' + host + ':' + port + '/trans/' + hash_code,
+                    rest.get(protocol + '://' + host + ':' + port + '/trans/' + hash_code,
                         {headers: {'Accept': 'application/json'}}).on('complete',
                         function(data, response) {
                             response.statusCode.should.be.equal(200);
@@ -113,7 +114,7 @@ describe('Bugs', function() {
         it('should return errors (does not exist [id])', function(done) {
             async.series([
                 function(callback) {
-                    rest.post('http://' + host + ':' + port + '/trans/' + 'false/' + 'expirationDate', {headers: {'Content-Type': 'application/json',
+                    rest.post(protocol + '://' + host + ':' + port + '/trans/' + 'false/' + 'expirationDate', {headers: {'Content-Type': 'application/json',
                         'Accept': 'application/json'},
                         data: 2147483645})
                         .on('complete', function(data, response) {
@@ -123,7 +124,7 @@ describe('Bugs', function() {
                         });
                 },
                 function(callback) {
-                    rest.get('http://' + host + ':' + port + '/trans/' + 'false',
+                    rest.get(protocol + '://' + host + ':' + port + '/trans/' + 'false',
                         {headers: {'Accept': 'application/json'}}).on('complete',
                         function(data, response) {
                             response.statusCode.should.be.equal(200);
@@ -132,7 +133,7 @@ describe('Bugs', function() {
                         });
                 },
                 function(callback) {
-                    rest.post('http://' + host + ':' + port + '/trans/' + 'false/' + 'payload', {headers: {'Content-Type': 'application/json',
+                    rest.post(protocol + '://' + host + ':' + port + '/trans/' + 'false/' + 'payload', {headers: {'Content-Type': 'application/json',
                         'Accept': 'application/json'},
                         data: '\"Hola\"'})
                         .on('complete', function(data, response) {
@@ -142,7 +143,7 @@ describe('Bugs', function() {
                         });
                 },
                 function(callback) {
-                    rest.get('http://' + host + ':' + port + '/trans/' + 'false',
+                    rest.get(protocol + '://' + host + ':' + port + '/trans/' + 'false',
                         {headers: {'Accept': 'application/json'}}).on('complete',
                         function(data, response) {
                             response.statusCode.should.be.equal(200);

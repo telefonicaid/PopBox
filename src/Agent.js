@@ -8,6 +8,7 @@ var config = require('./config.js');
 var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
 var jade = require('jade');
+var crypto = require('crypto');
 
 var path = require('path');
 var log = require('PDITCLogger');
@@ -78,7 +79,7 @@ if (cluster.isMaster && numCPUs !== 0) {
                 key: fs.readFileSync(options_dir.key),
                 cert: fs.readFileSync(options_dir.cert)
             };
-            logger.info("valid certificates")
+            logger.info("valid certificates");
         } else {
             logger.debug('certs not found', options_dir);
             throw new Error("No valid certificates were found in the given path");

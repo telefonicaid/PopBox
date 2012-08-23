@@ -5,6 +5,7 @@ var config = require('./config.js');
 
 var host = config.hostname;
 var port = config.port;
+var protocol = config.protocol;
 
 var trans, trans1 = {};
 
@@ -12,9 +13,9 @@ describe('Inbox', function() {
 
     afterEach(function(done) {
         this.timeout(8000); //Mocha timeout
-        var urlQ1 = 'http://localhost:' + port +
+        var urlQ1 = protocol + '://localhost:' + port +
             '/queue/q1/Pop';
-        var urlQ2 = 'http://localhost:' + port +
+        var urlQ2 = protocol + '://localhost:' + port +
             '/queue/q2/Pop';
         var completed = 0;
 
@@ -37,7 +38,7 @@ describe('Inbox', function() {
         var trans1 = {
             'payload': 'Prueba 1',
             'priority': 'H',
-            'callback': 'http://foo.bar',
+            'callback': protocol + '://foo.bar',
             'queue': [
                 { 'id': 'q1' },
                 { 'id': 'q2' }
@@ -48,7 +49,7 @@ describe('Inbox', function() {
         var trans2 = {
             'payload': 'Prueba 2',
             'priority': 'H',
-            'callback': 'http://foo.bar',
+            'callback': protocol + '://foo.bar',
             'queue': [
                 { 'id': 'q1' },
                 { 'id': 'q2' }
@@ -58,7 +59,7 @@ describe('Inbox', function() {
 
         async.series([
             function(callback) {
-                rest.postJson('http://' + host + ':' + port + '/trans',
+                rest.postJson(protocol + '://' + host + ':' + port + '/trans',
                     trans1).on('complete', function(data, response) {
                         trans = {id: data.data, value: trans1};
                         listaTrans.push(trans);
@@ -68,7 +69,7 @@ describe('Inbox', function() {
             function(callback) {
 
 
-                rest.postJson('http://' + host + ':' + port + '/trans',
+                rest.postJson(protocol + '://' + host + ':' + port + '/trans',
                     trans2).on('complete', function(data, response) {
                         trans = {id: data.data, value: trans2};
                         listaTrans.push(trans);
@@ -78,7 +79,7 @@ describe('Inbox', function() {
             },
             function(callback) {
 
-                rest.post('http://' + host + ':' + port + '/queue/q1/pop')
+                rest.post(protocol + '://' + host + ':' + port + '/queue/q1/pop')
                     .on('complete', function(data, response) {
                         data.data.length.should.be.equal(2);
                         data.data.should.include('Prueba 1');
@@ -97,21 +98,21 @@ describe('Inbox', function() {
         var trans3 = {
             'payload': 'Baja prioridad',
             'priority': 'L',
-            'callback': 'http://foo.bar',
+            'callback': protocol + '://foo.bar',
             'queue': [
                 { 'id': 'q1' },
                 { 'id': 'q2' }
             ],
             'expirationDate': Math.round(new Date().getTime() / 1000 + 60)
         };
-        rest.postJson('http://' + host + ':' + port + '/trans',
+        rest.postJson(protocol + '://' + host + ':' + port + '/trans',
             trans3).on('complete', function(data, response) {
             });
 
         var trans4 = {
             'payload': 'Alta prioridad',
             'priority': 'H',
-            'callback': 'http://foo.bar',
+            'callback': protocol + '://foo.bar',
             'queue': [
                 { 'id': 'q1' },
                 { 'id': 'q2' }
@@ -119,12 +120,12 @@ describe('Inbox', function() {
             'expirationDate': Math.round(new Date().getTime() / 1000 + 60)
         };
 
-        rest.postJson('http://' + host + ':' + port + '/trans',
+        rest.postJson(protocol + '://' + host + ':' + port + '/trans',
             trans4).on('complete', function(data, response) {
                 trans_nueva = {id: data.data, value: trans4};
             });
 
-        rest.post('http://' + host + ':' + port + '/queue/q1/pop?max=1')
+        rest.post(protocol + '://' + host + ':' + port + '/queue/q1/pop?max=1')
             .on('complete', function(data, response) {
                 data.data.length.should.be.equal(1);
                 'Alta prioridad'.should.be.equal(data.data.pop());
@@ -138,7 +139,7 @@ describe('Inbox', function() {
         var trans5 = {
             'payload': 'Prueba timeout',
             'priority': 'L',
-            'callback': 'http://foo.bar',
+            'callback': protocol + '://foo.bar',
             'queue': [
                 { 'id': 'q1' },
                 { 'id': 'q2' }
@@ -149,7 +150,7 @@ describe('Inbox', function() {
 
         var funcs = [
             function(cb) {
-                rest.post('http://' + host + ':' + port + '/queue/q1/pop?timeout=1',
+                rest.post(protocol + '://' + host + ':' + port + '/queue/q1/pop?timeout=1',
                     {headers: {'Accept': 'application/json'}})
                     .on('complete', function(data, response) {
                         //console.log(data);
@@ -160,7 +161,7 @@ describe('Inbox', function() {
             },
             function(cb) {
                 setTimeout(function() {
-                    rest.postJson('http://' + host + ':' + port + '/trans',
+                    rest.postJson(protocol + '://' + host + ':' + port + '/trans',
                         trans5).on('complete', function(data, response) {
                             cb();
                         });
@@ -181,7 +182,7 @@ describe('Inbox', function() {
         var trans6 = {
             'payload': 'Prueba timeout',
             'priority': 'L',
-            'callback': 'http://foo.bar',
+            'callback': protocol + '://foo.bar',
             'queue': [
                 { 'id': 'q1' },
                 { 'id': 'q2' }
@@ -192,7 +193,7 @@ describe('Inbox', function() {
 
         var funcs = [
             function(cb) {
-                rest.post('http://' + host + ':' + port + '/queue/q1/pop?timeout=7',
+                rest.post(protocol + '://' + host + ':' + port + '/queue/q1/pop?timeout=7',
                     {headers: {'Accept': 'application/json'}})
                     .on('complete', function(data, response) {
                         data.data.length.should.be.equal(1);
@@ -202,7 +203,7 @@ describe('Inbox', function() {
             },
             function(cb) {
                 setTimeout(function() {
-                    rest.postJson('http://' + host + ':' + port + '/trans',
+                    rest.postJson(protocol + '://' + host + ':' + port + '/trans',
                         trans6).on('complete', function(data, response) {
                             cb();
                         });
