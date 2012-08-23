@@ -17,7 +17,7 @@ Scalability has been taken into account from the very beginning (not dynamic yet
         node Agent.js to launch a PopBox Agent.        
     Requires REDIS
     Optional MongoDB (historic data support)
-#####Edit srv/config.js for configuration Options
+#####Edit src/config.js for configuration Options
 ### You can find some usage examples at examples folder
 
 [API DOC](https://github.com/telefonicaid/PopBox/wiki/User-Manual)
@@ -93,7 +93,7 @@ server.crt
 To obtain them you may execute the following script (You must have openssl properly installed):
 PopBox/utils/create_http_certificates.sh
 
-or execute this commands:
+or execute these commands:
 ```
 openssl genrsa -des3 -out server.key 1024
 openssl req -new -key server.key -out server.csr
