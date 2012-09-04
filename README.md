@@ -65,7 +65,7 @@ Redis: http://redis.googlecode.com/files/redis-2.4.15.tar.gz
 Mongo: http://www.mongodb.org/downloads
 Node: http://nodejs.org (preferred v6.* not tested in v8)
 ```
-###HTTPS Support (this may be optional/improved in near future)
+###HTTPS Support
 Popbox is expecting server certificates in order to stablish secure comunitions with secure boxes (BasicAuth-HTTPS).
 
 You may enable the Secure behavior at config file:
