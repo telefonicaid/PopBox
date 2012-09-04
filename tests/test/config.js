@@ -2,7 +2,7 @@
  *
  * @type {Number}
  */
-exports.port = 3002;
+exports.port = 3001;
 
 /**
  *
@@ -14,4 +14,4 @@ exports.hostname = 'localhost';
  *
  * @type {String}
  */
-exports.protocol = 'https';
+exports.protocol = 'http';
