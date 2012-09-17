@@ -14,6 +14,7 @@ var path = require('path');
 var log = require('PDITCLogger');
 var logger = log.newLogger();
 logger.prefix = path.basename(module.filename, '.js');
+logger.setLevel(config.logLevel);
 
 var dirModule = path.dirname(module.filename);
 
@@ -95,7 +96,7 @@ if (cluster.isMaster && numCPUs !== 0) {
     servers.forEach(function (server) {
         server.use(express.query());
         server.use(express.bodyParser());
-        server.use(express.limit("1mb"));
+        server.use(express.limit(config.max_req_size));
         server.use(prefixer.prefixer(server.prefix));
         server.use(sendrender.sendRender());
         server.use("/", express.static(__dirname + '/public'));
