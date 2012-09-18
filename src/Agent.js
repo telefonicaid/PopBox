@@ -21,6 +21,9 @@ var dirModule = path.dirname(module.filename);
 var prefixer = require('./prefixer');
 var sendrender = require('./sendrender');
 
+logger.info('Node version:', process.versions.node);
+logger.info('V8 version:', process.versions.v8);
+
 if (config.cluster.numcpus >= 0 && config.cluster.numcpus < numCPUs) {
     numCPUs = config.cluster.numcpus;
     logger.info('numCPUs=' + numCPUs);
@@ -96,7 +99,7 @@ if (cluster.isMaster && numCPUs !== 0) {
     servers.forEach(function (server) {
         server.use(express.query());
         server.use(express.bodyParser());
-        server.use(express.limit(config.max_req_size));
+        //server.use(express.limit(config.max_req_size));
         server.use(prefixer.prefixer(server.prefix));
         server.use(sendrender.sendRender());
         server.use("/", express.static(__dirname + '/public'));
@@ -120,6 +123,7 @@ if (cluster.isMaster && numCPUs !== 0) {
             // logger.debug('onSubscribed()', []);
             servers.forEach(function (server) {
                 server.listen(server.port);
+                logger.info('PopBox listening on', server.prefix+server.port);
             });
         });
     /* servers.forEach(function (server) {
