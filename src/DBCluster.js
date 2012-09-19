@@ -40,7 +40,7 @@ var getOwnDb = function (queueId) {
   var hash = hashMe(queueId, config.redisServers.length);
   var port = config.redisServers[hash].port || redisModule.DEFAULT_PORT;
   var rc = redisModule.createClient(port,
-    config.redisServers[hash]);
+    config.redisServers[hash].host);
   rc.select(config.selected_db);
   rc.isOwn = true;
   //returns a client from a cluster
