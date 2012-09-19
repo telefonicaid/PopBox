@@ -96,7 +96,7 @@ if (cluster.isMaster && numCPUs !== 0) {
     servers.forEach(function (server) {
         server.use(express.query());
         server.use(express.bodyParser());
-        server.use(express.limit(config.max_req_size));
+        server.use(express.limit(config.agent.max_req_size));
         server.use(prefixer.prefixer(server.prefix));
         server.use(sendrender.sendRender());
         server.use("/", express.static(__dirname + '/public'));
