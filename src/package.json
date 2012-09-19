@@ -24,6 +24,7 @@
         "express": "2.5.8",
 	"jade": "0.27.2", 
         "node-uuid": "1.3.3",
+	"mongodb": "1.1.7",
         "logger" : "https://github.com/crbrox/pditclogger/tarball/master"
     },
     "license": "AGPL",
