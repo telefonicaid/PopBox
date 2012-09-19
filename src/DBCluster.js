@@ -11,59 +11,61 @@ var config = require('./config.js');
 var path = require('path');
 var log = require('PDITCLogger');
 var logger = log.newLogger();
-logger.prefix = path.basename(module.filename,'.js');
+logger.prefix = path.basename(module.filename, '.js');
 
-var rc = redisModule.createClient(config.tranRedisServer.port ||redisModule.DEFAULT_PORT,
-    config.tranRedisServer.host);
+var rc = redisModule.createClient(config.tranRedisServer.port || redisModule.DEFAULT_PORT,
+  config.tranRedisServer.host);
 rc.select(config.selected_db); //false pool for pushing
 var dbArray = [];
 for (var i = 0; i < config.redisServers.length; i++) {
   var port = config.redisServers[i].port || redisModule.DEFAULT_PORT;
-  var cli = redisModule.createClient(port,config.redisServers[i].host);
+  var host = config.redisServers[i].host;
+  var cli = redisModule.createClient(port, host);
+  logger.info('Connected to REDIS ', host + ':' + port);
   cli.select(config.selected_db);
   cli.isOwn = false;
   dbArray.push(cli);
 }
 
-var getDb = function(queueId) {
+var getDb = function (queueId) {
   'use strict';
-    logger.debug('getDb(queueId)', [queueId]);
+  logger.debug('getDb(queueId)', [queueId]);
   var hash = hashMe(queueId, config.redisServers.length);
   return dbArray[hash];
 };
 
-var getOwnDb = function(queueId) {
+var getOwnDb = function (queueId) {
   'use strict';
-    logger.debug('getOwnDb(queueId)', [queueId]);
+  logger.debug('getOwnDb(queueId)', [queueId]);
   var hash = hashMe(queueId, config.redisServers.length);
   var port = config.redisServers[hash].port || redisModule.DEFAULT_PORT;
   var rc = redisModule.createClient(port,
-      config.redisServers[hash]);
+    config.redisServers[hash].host);
   rc.select(config.selected_db);
   rc.isOwn = true;
   //returns a client from a cluster
   return rc;
 };
 
-var getTransactionDb = function(transactionId) {
+var getTransactionDb = function (transactionId) {
   'use strict';
-    logger.debug('getTransactionDb(transactionId)', [transactionId]);
-    if (!rc || !rc.connected) {
+  logger.debug('getTransactionDb(transactionId)', [transactionId]);
+  if (!rc || !rc.connected) {
     rc =
-        redisModule.createClient(config.tranRedisServer.port ||redisModule.DEFAULT_PORT,
-            config.tranRedisServer.host);
+      redisModule.createClient(config.tranRedisServer.port || redisModule.DEFAULT_PORT,
+        config.tranRedisServer.host);
   }
   //return a client for transactions
   return rc;
 
 };
 
-var hashMe = function(id, mod) {
+var hashMe = function (id, mod) {
   "use strict";
   logger.debug('hashMe(id, mod)', [id, mod]);
   var i,
-      len,
-      sum = 0;
+    len,
+    sum = 0;
 
   if (typeof id !== 'string') {
     throw new TypeError('id must be a string');
@@ -75,11 +77,11 @@ var hashMe = function(id, mod) {
   return sum % mod;
 };
 
-var free = function(db) {
+var free = function (db) {
   'use strict';
-    //return to the pool TechDebt
-  logger.debug('free(db)',[db]);
-    if (db.isOwn) {
+  //return to the pool TechDebt
+  logger.debug('free(db)', [db]);
+  if (db.isOwn) {
     db.end();
   }
 };

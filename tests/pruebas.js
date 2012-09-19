@@ -3,16 +3,16 @@ var http = require('http');
 var enProceso = 0,
     hechas = 0,
     errores = 0,
-    HOST_PROV = 'localhost',
-    HOST_SRV = 'localhost',
+    HOST_PROV = 'relay2',
+    HOST_SRV = 'relay2',
     PORT = 3001,
     EXPIRATION_DELAY = 86400,
     PAYLOAD = new Array(1024).join('*');
 
 http.globalAgent.maxSockets = 20000;
 
-//pesadito(2);
-superProvision(6);
+//pesadito(5000);
+superProvision(20000);
 //forever();
 
 function forever() {
@@ -51,7 +51,7 @@ function superProvision(num) {
 
     for (var i = 0; i < num; i++) {
         queue = String(i);
-        superProv.queue.push({id: queue});
+        superProv.queue.push({id: "q0"});
     }
     superProv.priority = 'H';
     superProv.expirationDelay = EXPIRATION_DELAY;
@@ -70,7 +70,7 @@ function superProvision(num) {
 
 function doPop(queue, timeout, cb) {
     'use strict';
-    var options = { host: HOST_SRV, port: PORT, path: '/queue/' + queue + '?timeout=' + timeout, method: 'GET'};
+    var options = { host: HOST_SRV, port: PORT, path: '/queue/' + queue + '/pop?timeout=' + timeout, method: 'POST'};
 
     postObj(options, null, cb);
 }

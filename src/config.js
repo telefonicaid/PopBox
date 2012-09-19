@@ -2,6 +2,20 @@
 // Copyright (c) Telefonica I+D. All rights reserved.
 //
 //
+
+
+/**
+ * Level for logger
+ * debug
+ * warning
+ * error
+ *
+ * @type {String}
+ */
+exports.logLevel = 'warning';
+
+
+
 /**
  *
  * @type {Array} ex. [{host:'localhost'}, {host:'localhost', port:'6789'}]
@@ -77,7 +91,7 @@ exports.ev_lsnr.collection = 'popbox_ev';
 exports.agent = {};
 
 /**
- * Maximum size of request for provision
+ * Maximum size of request
  * @type {Number}
  */
 exports.agent.max_req_size = '1mb';
