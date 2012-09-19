@@ -21,6 +21,9 @@ var dirModule = path.dirname(module.filename);
 var prefixer = require('./prefixer');
 var sendrender = require('./sendrender');
 
+logger.info('Node version:', process.versions.node);
+logger.info('V8 version:', process.versions.v8);
+
 if (config.cluster.numcpus >= 0 && config.cluster.numcpus < numCPUs) {
     numCPUs = config.cluster.numcpus;
     logger.info('numCPUs=' + numCPUs);
@@ -120,6 +123,7 @@ if (cluster.isMaster && numCPUs !== 0) {
             // logger.debug('onSubscribed()', []);
             servers.forEach(function (server) {
                 server.listen(server.port);
+                logger.info('PopBox listening on', server.prefix+server.port);
             });
         });
     /* servers.forEach(function (server) {
