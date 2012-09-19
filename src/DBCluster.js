@@ -50,11 +50,7 @@ var getOwnDb = function (queueId) {
 var getTransactionDb = function (transactionId) {
   'use strict';
   logger.debug('getTransactionDb(transactionId)', [transactionId]);
-  if (!rc || !rc.connected) {
-    rc =
-      redisModule.createClient(config.tranRedisServer.port || redisModule.DEFAULT_PORT,
-        config.tranRedisServer.host);
-  }
+      
   //return a client for transactions
   return rc;
 
