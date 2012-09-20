@@ -8,23 +8,31 @@
 
 var rest = require('restler');
 var config = require('./config.js');
-var path = require('path');
-var fs = require('fs');
+var genProvision = require('./genProvision.js');
+var sender = require('./sender.js');
 
-var dirModule = path.dirname(module.filename);
-var data = fs.readFileSync(path.resolve(dirModule, 'Provision.json'),'utf8');
+numQueues = 0;
 
-console.time('in');
+var doNtimes = function () {
 
-rest.postJson(config.protocol + '://' + config.hostname + ':' + config.port + '/trans',
-    JSON.parse(data)).on('complete', function(data, response) {
-        if (response.statusCode === 200) {
-            console.log('Finished with status 200');
-            console.log(data);
-            process.stdout.write(process.argv[2] + ' inboxes have been provisioned with ' + process.argv[3] + ' bytes of payload ');
-            console.timeEnd('in');
-        }
-        else {
-            console.log('Provision error, server returned ' + response.statusCode);
-        }
-    });
+    var provision = genProvision.genProvision(numQueues, config.payload_length);
+    var init = new Date().valueOf();
+    rest.postJson(config.protocol + '://' + config.hostname + ':' + config.port + '/trans',
+        provision).on('complete', function (data, response) {
+            if (response && response.statusCode === 200) {
+                console.log('Finished with status 200');
+                console.log(data);
+                var end = new Date().valueOf();
+                var time = end - init;
+                console.log(numQueues + ' inboxes have been provisioned with ' + config.payload_length + ' bytes of payload in ' + time + ' ms');
+                sender.iosocket.emit('newPoint', {id: 1, Point: [numQueues, time]});
+                process.nextTick(doNtimes);
+            }
+            else {
+                console.log('Provision error, server returned ' + response.statusCode);
+            }
+        });
+    numQueues += 1000;
+};
+
+exports.doNtimes = doNtimes;
