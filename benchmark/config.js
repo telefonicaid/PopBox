@@ -17,7 +17,7 @@ exports.hostname = 'localhost';
 exports.protocol = 'http';
 
 
-exports.numPops = 8000;
+exports.numPops = 20000;
 
-exports.payload_length = 1000;
+exports.payload_length = 4000;
 

@@ -8,12 +8,21 @@
 
 var rest = require('restler');
 var config = require('./config.js');
+var http = require('http');
 var num_con = process.argv[2];
 
-for(var i = 0; i < num_con; i++){
-    rest.post(config.protocol + '://' + config.hostname + ':' +
-        config.port + '/queue/qx/pop?timeout=10').on('complete',function(data,response){
-          console.log(data)
-          //if(data.data == '{}')
-        });
-}
+http.globalAgent.maxSockets = 20000;
+var cont = 0;
+
+
+setInterval(function () {
+    for (var i = 0; i < 1000; i++) {
+        if (cont < num_con) {
+            cont++;
+            rest.post(config.protocol + '://' + config.hostname + ':' +
+                config.port + '/queue/qx/pop?timeout=300');
+        }
+        else
+            console.log('No envia y el cont es' + cont);
+    }
+}, 1000);
