@@ -3,16 +3,16 @@ var http = require('http');
 var enProceso = 0,
     hechas = 0,
     errores = 0,
-    HOST_PROV = 'relay2',
-    HOST_SRV = 'relay2',
+    HOST_PROV = 'localhost',
+    HOST_SRV = 'localhost',
     PORT = 3001,
     EXPIRATION_DELAY = 86400,
     PAYLOAD = new Array(1024).join('*');
 
 http.globalAgent.maxSockets = 20000;
 
-//pesadito(5000);
-superProvision(50000);
+pesadito(10000);
+//superProvision(2000);
 //forever();
 
 function forever() {
@@ -25,7 +25,8 @@ function pesadito(num, cb) {
     console.time('pesadito');
 
     for (var i = 0; i < num; i += 1) {
-        doPop(String(i), 30, printStats);
+        setTimeout(function() {doPop(String(i), 600, printStats);}, i*2);
+//     doPop(String(i), 120, printStats);
     }
 
     function printStats() {
@@ -141,5 +142,6 @@ function postObj(options, content, cb) {
 
     enProceso++;
 }
+
 
 
