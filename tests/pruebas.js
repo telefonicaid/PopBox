@@ -12,7 +12,7 @@ var enProceso = 0,
 http.globalAgent.maxSockets = 20000;
 
 //pesadito(5000);
-superProvision(20000);
+superProvision(50000);
 //forever();
 
 function forever() {
