@@ -55,6 +55,7 @@ if (cluster.isMaster && numCPUs !== 0) {
     var app = express.createServer();
     app.prefix = "UNSEC:";
     app.port = config.agent.port;
+    app._backlog = 2048;
     servers.push(app);
 
     logger.info("config.enableSecure", config.enableSecure);
