@@ -8,11 +8,26 @@
 
 
 var maxProvision = require('./maxProvision.js');
+var maxPop = require('./maxPop.js');
 var sender = require('./sender.js');
+var config = require('./config.js');
+var cpu_mem = require('./cpu_memory_monitor.js');
 
 sender.createSocket(function () {
-    sender.iosocket.on('connection', function (data) {
-        console.log('llega');
-        maxProvision.doNtimes();
+    sender.iosocket.on('newTest', function (data) {
+        switch (data){
+            case 1:
+                maxProvision.doNtimes(config.maxProvision.start_number_provisions, 1000);
+                break;
+            case 2:
+                maxPop.doNtimes(config.maxProvision.start_number_provisions, 1000);
+                break;
+            default:
+                maxProvision.doNtimes(config.maxProvision.start_number_provisions, 1000);
+
+        }
     });
+
+    cpu_mem.monitor(); // start monitoring cpu and memory
+
 });

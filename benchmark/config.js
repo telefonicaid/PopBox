@@ -19,5 +19,12 @@ exports.protocol = 'http';
 
 exports.numPops = 20000;
 
-exports.payload_length = 4000;
+exports.payload_length = 1000;
+
+
+exports.maxProvision = {};
+
+exports.maxProvision.start_number_provisions = 1000;
+
+exports.maxProvision.max_queues = 10000;
 

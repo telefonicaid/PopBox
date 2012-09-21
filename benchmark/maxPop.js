@@ -11,58 +11,98 @@ var config = require('./config.js');
 var genProvision = require('./genProvision.js');
 var rest = require('restler');
 var async = require('async');
+var sender = require('./sender.js');
 
-var provision = genProvision.genProvision(1, config.payload_length);
+var doNtimes_queues = function (countTimes, provision, callback) {
 
+    async.series([
+        function (callback) {
+            var contResponse = 0;
 
-async.series([
-    function (callback) {
-        var contResponse = 0, contRequest = 0;
-        var fun = callback;
-        var int = setInterval(function () {
-            for (var i = 0; i < 1000; i++) {
-                if (contRequest < config.numPops) {
-                    dataSrv.pushTransaction('UNSEC:', provision, function (err, res) {
-                        console.log(res);
-                        contResponse++;
-                        console.log(contResponse);
-                        if (contResponse == config.numPops) {
-                            clearInterval(int);
-                            fun();
-                        }
-                    });
-                    contRequest++;
-                }
-            }
-        }, 1000);
-    },
-    function (callback) {
-        var cont = 0;
-        console.time('Total time');
-        for (var i = 0; i < config.numPops; i++) {
-            rest.post(config.protocol + '://' + config.hostname
-                + ':' + config.port + '/queue/' + provision.queue[0].id + '/pop?max=1',
-                { headers: {'Accept': 'application/json'}}).on('complete', function (data, response) {
-                    //console.log(cont);
-                    cont++;
-                    if (response === null) {
-                        callback('Error', null);
-                    }
-                    else if (data.data === '[]') {
-                        callback('Error', null);
-                    }
-                    else if (cont == config.numPops) {
-                        callback(null, 'success');
+            var fillQueue = function (count) {
+
+                count++;
+
+                dataSrv.pushTransaction('UNSEC:', provision, function (err, res) {
+                    contResponse++;
+                    if (contResponse === countTimes) {
+                        console.log('llega');
+                        callback();
                     }
                 });
-        }
+                if (count < countTimes) {
 
-    }
-],
-    function (err, results) {
-        if (err) console.log(err);
-        if (results) console.log('hola');
-        console.timeEnd('Total time');
-    }
-)
-;
+                    process.nextTick(function () {
+                        setTimeout(function () {
+                            fillQueue(count);
+                        }, 2);
+                    });
+                }
+            };
+
+            fillQueue(0);
+        },
+        function (callback) {
+            var contResponse = 0;
+            var init = new Date().valueOf();
+            for (var i = 0; i < countTimes; i++) {
+                setTimeout(function () {
+                    pop();
+                }, i * 2);
+            }
+            var pop = function () {
+                rest.post(config.protocol + '://' + config.hostname
+                    + ':' + config.port + '/queue/' + provision.queue[0].id + '/pop?max=1',
+                    { headers: {'Accept': 'application/json'}}).on('complete', function (data, response) {
+                        //console.log(contResponse);
+                        contResponse++;
+                        if (response === null) {
+                            callback('Error', null);
+                        }
+                        else if (data.data === '[]') {
+                            callback('Error', null);
+                        }
+                        else if (contResponse === countTimes) {
+                            var end = new Date().valueOf();
+                            var time = end - init;
+                            sender.iosocket.emit('newPoint', {id: 1, Point: [countTimes, time]});
+                            callback(null, 1);
+                        }
+                    });
+            };
+        }
+    ], function (err, results) {
+            console.log('ha terminado');
+            if (err) console.log(err);
+            if (results) {
+                console.log('hace la siguiente');
+                if (countTimes < config.maxProvision.max_queues) {
+                    countTimes += 1000;
+                    process.nextTick(function () {
+                        setTimeout(function () {
+                            doNtimes_queues(countTimes, provision, callback);
+                        }, 2000);
+                    });
+                }
+                else {
+                    callback();
+                }
+            }
+        }
+    );
+};
+
+var doNtimes = function (numQueues, payload_length) {
+    console.log(payload_length);
+    var provision = genProvision.genProvision(1, payload_length);
+    doNtimes_queues(numQueues, provision, function () {
+        if (payload_length < 5000) {
+            payload_length += 1000;
+            process.nextTick(function () {
+                doNtimes(numQueues, payload_length);
+            });
+        }
+    });
+};
+
+exports.doNtimes = doNtimes;
