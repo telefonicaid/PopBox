@@ -14,15 +14,14 @@ var num_con = process.argv[2];
 http.globalAgent.maxSockets = 20000;
 var cont = 0;
 
+for(var i = 0; i < num_con; i++){
+    setTimeout(function(){pop()}, i*2);
+}
 
-setInterval(function () {
-    for (var i = 0; i < 1000; i++) {
-        if (cont < num_con) {
-            cont++;
+var pop =function () {
             rest.post(config.protocol + '://' + config.hostname + ':' +
-                config.port + '/queue/qx/pop?timeout=300');
-        }
-        else
-            console.log('No envia y el cont es' + cont);
-    }
-}, 1000);
+                config.port + '/queue/qx/pop?timeout=300').on('error', function(err, response){
+                    console.log(err);
+                });
+}
+
