@@ -14,7 +14,7 @@ var done = 0;
 http.globalAgent.maxSockets = 20000;
 var cont = 0;
 
-var pop = function (num_con) {
+var pop = function () {
     rest.post(config.protocol + '://' + config.hostname + ':' +
         config.port + '/queue/qx/pop?timeout=20').on('complete', function(err, response){
             done++;
