@@ -17,17 +17,19 @@ sender.createSocket(function () {
     sender.iosocket.on('newTest', function (data) {
         switch (data){
             case 1:
-                maxProvision.doNtimes(config.maxProvision.start_number_provisions, 1000);
+                maxProvision.doNtimes(config.maxProvision.start_number_provisions, config.maxProvision.payload_length);
                 break;
             case 2:
-                maxPop.doNtimes(config.maxProvision.start_number_provisions, 1000);
+                console.log('empieza el Pop');
+                maxPop.doNtimes(config.maxPop.start_number_pops, 1000);
                 break;
             default:
-                maxProvision.doNtimes(config.maxProvision.start_number_provisions, 1000);
+                maxPop.doNtimes(config.maxPop.start_number_pops, 200);
 
         }
+
+
     });
 
     cpu_mem.monitor(); // start monitoring cpu and memory
-
 });

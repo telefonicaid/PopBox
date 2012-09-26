@@ -24,11 +24,12 @@ var doNtimes_queues = function (numQueues, payload_length, callback) {
                 console.log(data);
                 var end = new Date().valueOf();
                 var time = end - init;
-                console.log(numQueues + ' inboxes have been provisioned with ' + payload_length + ' bytes of payload in ' + time + ' ms');
-                sender.iosocket.emit('newPoint', {id: 1, Point: [numQueues, time, payload_length]});
+                console.log(numQueues + ' inboxes have been provisioned with ' +
+                    payload_length + ' bytes of payload in ' + time + ' ms with no errors');
+                sender.iosocket.emit('newPoint', {id: 1, point: [numQueues, time, payload_length]});
                 process.nextTick(function () {
                     if (numQueues < config.maxProvision.max_queues) {
-                        numQueues += 1000;
+                        numQueues += config.maxProvision.queues_inteval;
                         doNtimes_queues(numQueues, payload_length, callback);
                     }
                     else {
@@ -37,19 +38,34 @@ var doNtimes_queues = function (numQueues, payload_length, callback) {
                 });
             }
             else {
-                sender.iosocket.emit('newPoint', {id: 1, err : true});
+                sender.iosocket.emit('newPoint', {id: 1, err: true});
             }
         });
 };
 
 var doNtimes = function (numQueues, payload_length) {
-    console.log(payload_length);
+
     doNtimes_queues(numQueues, payload_length, function () {
-        if (payload_length < 5000) {
-            payload_length += 1000;
+        if (payload_length < config.maxProvision.max_payload) {
+            payload_length += config.maxProvision.payload_length_interval;
             process.nextTick(function () {
                 doNtimes(numQueues, payload_length);
             });
+        }
+    });
+    sender.iosocket.on('pause', function (data) {
+        if (data.id === 1) {
+            pauseExecution(function () {
+                doNtimes(numQueues, payload_length);
+            });
+        }
+    });
+};
+
+var pauseExecution = function (callback) {
+    sender.iosocket.on('restartTest', function (data) {
+        if (data.id === 1) {
+            callback();
         }
     });
 };
