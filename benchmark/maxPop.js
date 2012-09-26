@@ -12,6 +12,9 @@ var genProvision = require('./genProvision.js');
 var rest = require('restler');
 var async = require('async');
 var sender = require('./sender.js');
+var http = require('http');
+
+http.globalAgent.maxSockets = 500;
 
 var doNtimes_queues = function (countTimes, provision, callback) {
 
@@ -26,7 +29,6 @@ var doNtimes_queues = function (countTimes, provision, callback) {
                 dataSrv.pushTransaction('UNSEC:', provision, function (err, res) {
                     contResponse++;
                     if (contResponse === countTimes) {
-                        console.log('llega');
                         callback();
                     }
                 });
@@ -45,19 +47,17 @@ var doNtimes_queues = function (countTimes, provision, callback) {
         function (callback) {
             var contResponse = 0;
             var init = new Date().valueOf();
-            for (var i = 0; i < countTimes; i++) {
-                setTimeout(function () {
-                    pop();
-                }, i * 2);
-            }
+
             var pop = function () {
+                //config.port = 3001 + 2 * (Math.round(Math.random()*2));
                 rest.post(config.protocol + '://' + config.hostname
                     + ':' + config.port + '/queue/' + provision.queue[0].id + '/pop?max=1',
                     { headers: {'Accept': 'application/json'}}).on('complete', function (data, response) {
-                        //console.log(contResponse);
+
                         contResponse++;
                         if (response === null) {
                             callback('Error', null);
+
                         }
                         else if (data.data === '[]') {
                             callback('Error', null);
@@ -66,17 +66,21 @@ var doNtimes_queues = function (countTimes, provision, callback) {
                             var end = new Date().valueOf();
                             var time = end - init;
                             sender.iosocket.emit('newPoint', {id: 1, Point: [countTimes, time]});
-                            callback(null, 1);
+                            callback(null, {numPops : countTimes, time : time});
                         }
                     });
             };
+            for (var i = 0; i < countTimes; i++) {
+                setTimeout(function(){
+                pop();
+                } , 0);
+            }
         }
     ], function (err, results) {
-            console.log('ha terminado');
             if (err) console.log(err);
             if (results) {
-                console.log('hace la siguiente');
-                if (countTimes < config.maxProvision.max_queues) {
+                console.log(results[1].numPops + ' pops in ' + results[1].time);
+                if (countTimes < config.maxPop.max_queues) {
                     countTimes += 1000;
                     process.nextTick(function () {
                         setTimeout(function () {
@@ -93,7 +97,6 @@ var doNtimes_queues = function (countTimes, provision, callback) {
 };
 
 var doNtimes = function (numQueues, payload_length) {
-    console.log(payload_length);
     var provision = genProvision.genProvision(1, payload_length);
     doNtimes_queues(numQueues, provision, function () {
         if (payload_length < 5000) {
