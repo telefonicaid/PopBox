@@ -24,7 +24,7 @@ var getProcMem = function (cb) {
         var elems = data.toString().split('\n');
         elems = elems[15].split('\t');
         elems = elems[1].split(' ');
-        cb(elems[2]);
+        cb(elems[elems.length - 2]);
     });
 };
 
