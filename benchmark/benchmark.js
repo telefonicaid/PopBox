@@ -15,16 +15,13 @@ var cpu_mem = require('./cpu_memory_monitor.js');
 
 sender.createSocket(function () {
     sender.iosocket.on('newTest', function (data) {
-        switch (data){
+        switch (data.id){
             case 1:
                 maxProvision.doNtimes(config.maxProvision.start_number_provisions, config.maxProvision.payload_length);
                 break;
             case 2:
-                console.log('empieza el Pop');
-                maxPop.doNtimes(config.maxPop.start_number_pops, 1000);
+                maxPop.doNtimes(config.maxPop.start_number_pops, 10);
                 break;
-            default:
-                maxPop.doNtimes(config.maxPop.start_number_pops, 200);
 
         }
 

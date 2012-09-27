@@ -8,7 +8,7 @@ exports.port = 3001;
  *
  * @type {String}
  */
-exports.hostname = 'localhost';
+exports.agentsHosts = [{host:'localhost', port: 3001}];
 
 /**
  *
@@ -36,7 +36,7 @@ exports.maxProvision.payload_length_interval = 1000;
 
 exports.maxPop = {};
 
-exports.maxPop.start_number_pops = 10000;
+exports.maxPop.start_number_pops = 2;
 
-exports.maxPop.max_queues = 11000;
+exports.maxPop.max_queues = 2;
 

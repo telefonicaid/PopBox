@@ -31,16 +31,13 @@ var doForever = function () {
         console.log("hace pop a " + queue_id + ' ' + times_Pop + ' veces');
     }
 
-    clearInterval(timer);
     var nextTime = randomize(1000, 60000);
     console.log("siguiente en " + nextTime + ' ms');
 
-    timer = setInterval(doForever, nextTime);
+    setTimeout(doForever, nextTime);
 
 
 };
-
-var timer = setInterval(doForever, 0);
 
 /**
  * Created with JetBrains WebStorm.
