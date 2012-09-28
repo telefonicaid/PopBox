@@ -8,18 +8,18 @@
 
 var express = require('express'),
     app = express()
-    , server = require('http').createServer(app)
-    , io = require('socket.io').listen(server);
-
-server.listen(8090);
+    , http = require('http')
+    , socketio = require('socket.io');
 
 app.use("/", express.static(__dirname + '/public'));
 
-var createSocket = function(callback){
+var createSocket = function (port, callback){
+    var server = http.createServer(app);
+    server.listen(port);
+    var io = socketio.listen(server);
     io.sockets.on('connection', function (socket) {
         'use strict';
-        exports.iosocket = socket;
-        callback();
+        callback(socket);
     });
 };
 

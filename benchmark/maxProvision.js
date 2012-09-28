@@ -9,7 +9,7 @@
 var rest = require('restler');
 var config = require('./config.js');
 var genProvision = require('./genProvision.js');
-var sender = require('./sender.js');
+var benchmark = require('./benchmark.js');
 
 
 var doNtimes_queues = function (numQueues, payload_length, callback) {
@@ -26,7 +26,7 @@ var doNtimes_queues = function (numQueues, payload_length, callback) {
                 var time = end - init;
                 console.log(numQueues + ' inboxes have been provisioned with ' +
                     payload_length + ' bytes of payload in ' + time + ' ms with no errors');
-                sender.iosocket.emit('newPoint', {id: 1, point: [numQueues, time, payload_length]});
+                benchmark.webSocket.emit('newPoint', {id: 1, point: [numQueues, time, payload_length]});
                 process.nextTick(function () {
                     if (numQueues < config.maxProvision.max_queues) {
                         numQueues += config.maxProvision.queues_inteval;
@@ -38,7 +38,7 @@ var doNtimes_queues = function (numQueues, payload_length, callback) {
                 });
             }
             else {
-                sender.iosocket.emit('newPoint', {id: 1, err: true});
+                benchmark.webSocket.emit('newPoint', {id: 1, err: true});
             }
         });
 };
@@ -63,7 +63,7 @@ var doNtimes = function (numQueues, payload_length) {
 };
 
 var pauseExecution = function (callback) {
-    sender.iosocket.on('restartTest', function (data) {
+    benchmark.webSocket.on('restartTest', function (data) {
         if (data.id === 1) {
             callback();
         }

@@ -11,12 +11,14 @@ var config = require('./config.js');
 var genProvision = require('./genProvision.js');
 var rest = require('restler');
 var async = require('async');
-var sender = require('./sender.js');
+var benchmark = require('./benchmark.js');
 var http = require('http');
+var fs = require('fs');
 
-http.globalAgent.maxSockets = 5000;
+http.globalAgent.maxSockets = 500;
+
 var cont = 0;
-var doNtimes_queues = function (countTimes, provision, callback) {
+var doNtimes_queues = function (numPops, provision, callback) {
 
     async.series([
         function (callback) {
@@ -27,7 +29,7 @@ var doNtimes_queues = function (countTimes, provision, callback) {
 
                 dataSrv.pushTransaction('UNSEC:', provision, function (err, res) {
                     contResponse++;
-                    if (contResponse === countTimes) {
+                    if (contResponse === numPops) {
                         console.log("ha termindado de provisionar");
 
                         callback();
@@ -35,9 +37,9 @@ var doNtimes_queues = function (countTimes, provision, callback) {
                 });
 
             };
-            for (var i = 0; i < countTimes; i++) {
+            for (var i = 0; i < numPops; i++) {
                 setTimeout(function () {
-                    fillQueue(0);
+                    fillQueue();
                 }, 0);
             }
         },
@@ -45,32 +47,34 @@ var doNtimes_queues = function (countTimes, provision, callback) {
             //callback('err',null);
             var contResponse = 0;
             var init = new Date().valueOf();
-            var pop = function () {
-                //config.port = 3001 + 2 * (Math.round(Math.random()));
-                rest.post(config.protocol + '://' + config.agentsHosts[0].host
-                    + ':' + config.agentsHosts[0].port + '/queue/q0/pop?max=1',
+            var pop = function (host, port) {
+                rest.post(config.protocol + '://' + host + ':' + port + '/queue/q0/pop?max=1',
                     { headers: {'Accept': 'application/json'}}).on('complete', function (data, response) {
                         if (response) {
                             contResponse++;
                         }
-                        console.log('llega algo');
-                        /*if (data.data === '[]') {
-                         console('da vacio');
-                         callback('Error: ' + data, null);
-                         }*/
+                        else {
+                            callback('Error, no response: ' + data, null);
+                        }
+                        if (data.data === '[]') {
+                         callback('Error, empty queue: ' + data, null);
+                         }
 
-                        if (contResponse === countTimes) {
+                        if (contResponse === numPops) {
                             var end = new Date().valueOf();
                             var time = end - init;
-                            sender.iosocket.emit('newPoint', {id: 1, Point: [countTimes, time]});
-                            callback(null, {numPops: countTimes, time: time});
+                            benchmark.webSocket.emit('newPoint', {id: 1, Point: [numPops, time]});
+                            callback(null, {numPops: numPops, time: time});
                         }
                     });
             };
-            for (var i = 0; i < countTimes; i++) {
+            for (var i = 0; i < numPops; i++) {
+                var agentIndex = Math.floor(i / config.slice) % config.agentsHosts.length;
+                var host = config.agentsHosts[agentIndex].host;
+                var port = config.agentsHosts[agentIndex].port;
                 setTimeout(function () {
-                    pop();
-                }, i * 1);
+                    pop(host, port);
+                }, i * 0);
             }
         }
     ], function (err, results) {
@@ -78,12 +82,12 @@ var doNtimes_queues = function (countTimes, provision, callback) {
                 console.log(err);
             }
             else {
-                console.log(results[1].numPops + ' pops in ' + results[1].time);
-                if (countTimes < config.maxPop.max_queues) {
-                    countTimes += 1000;
+                //console.log(results[1].numPops + ' pops in ' + results[1].time);
+                if (numPops < config.maxPop.max_pops) {
+                    numPops += 100;
                     setTimeout(function () {
-                        doNtimes_queues(countTimes, provision, callback);
-                    }, 2000);
+                        doNtimes_queues(numPops, provision, callback);
+                    }, 1000);
                 }
                 else {
                     callback();
@@ -96,11 +100,12 @@ var doNtimes_queues = function (countTimes, provision, callback) {
 var doNtimes = function (numQueues, payload_length) {
     var provision = genProvision.genProvision(1, payload_length);
     doNtimes_queues(numQueues, provision, function () {
-        if (payload_length < 5000) {
-            payload_length += 1000;
+        if (payload_length < config.maxPop.max_payload) {
+            payload_length += config.maxPop.payload_length_interval;
             doNtimes(numQueues, payload_length);
         }
     });
 };
+
 
 exports.doNtimes = doNtimes;
