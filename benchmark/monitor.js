@@ -9,13 +9,14 @@
 var childProcess = require('child_process');
 var monitor = require('./cpu_memory_monitor.js');
 var net = require('net');
+var os = require('os');
 var connection;
 
 
 var server = new net.Server();
 
 server = net.createServer(function (c) { //'connection' listener
-    console.log(server.connections)
+
     if (server.connections === 1) {
         connection = c;
 
@@ -23,7 +24,6 @@ server = net.createServer(function (c) { //'connection' listener
         c.on('end', function () {
             console.log('Client closed connection');
             c.end();
-            console.log('conexiones: ' + server.connections);
         });
         var pid = execute();
         msg(pid);
@@ -48,7 +48,7 @@ var msg = function (pid) {
             console.log('Cpu: ' + res.cpu);
             console.log('Memory ' + res.memory);
 
-            connection.write(JSON.stringify({cpu: {percentage: res.cpu}, memory: {value: res.memory}}));
+            connection.write(JSON.stringify({host: os.hostname(), cpu: {percentage: res.cpu}, memory: {value: res.memory}}));
         });
     }, 3000)
 }
