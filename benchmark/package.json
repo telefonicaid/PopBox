@@ -1,0 +1,21 @@
+{
+  "author": "David Barriga Ruano <dbarriga@conwet.com>",
+  "name": "benchmark",
+  "description": "benchmark for popbox",
+  "version": "0.0.1-265-g2a70f90",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/telefonicaid/PopBox.git"
+  },
+  "dependencies": {
+      "async": "0.1.22",
+      "express": "3.0.0rc4",
+      "restler": "2.0.1",
+      "socket.io": "0.9.10"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  }
+}

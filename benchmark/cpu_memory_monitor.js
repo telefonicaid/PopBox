@@ -1,8 +1,8 @@
 var fs = require('fs');
-var sender = require('./sender.js');
+//var sender = require('./sender.js');
 
-var getUserUsage = function (cb) {
-    fs.readFile('/proc/' + process.argv[2] + '/stat', function (err, data) {
+var getUserUsage = function (pid, cb) {
+    fs.readFile('/proc/' + pid + '/stat', function (err, data) {
         var elems = data.toString().split(' ');
         var utime = parseInt(elems[13]);
         var stime = parseInt(elems[14]);
@@ -19,36 +19,39 @@ var getSysUsage = function (cb) {
     });
 };
 
-var getProcMem = function (cb) {
-    fs.readFile('/proc/' + process.argv[2] + '/status', function (err, data) {
+var getProcMem = function (pid, cb) {
+    fs.readFile('/proc/' + pid + '/status', function (err, data) {
         var elems = data.toString().split('\n');
         elems = elems[15].split('\t');
         elems = elems[1].split(' ');
-        cb(elems[2]);
+        cb(elems[elems.length - 2]);
     });
 };
 
-var monitor = function () {
-    setInterval(function () {
-        getUserUsage(function (startTimeU) {
-            getSysUsage(function (startTimeS) {
-                setTimeout(function () {
-                    getUserUsage(function (endTimeU) {
-                        getSysUsage(function (endTimeS) {
-                            getProcMem(function (mem) {
-                                var cpu_user = endTimeU - startTimeU;
-                                var cpu_sys = endTimeS - startTimeS;
-                                var percentage = 100 * (cpu_user / cpu_sys);
+var monitor = function (pid, callback) {
+    getUserUsage(pid,function (startTimeU) {
+        getSysUsage(function (startTimeS) {
+            setTimeout(function () {
+                getUserUsage(pid, function (endTimeU) {
+                    getSysUsage(function (endTimeS) {
+                        getProcMem(pid, function (mem) {
+                            var cpu_user = endTimeU - startTimeU;
+                            var cpu_sys = endTimeS - startTimeS;
+                            var percentage = 100 * (cpu_user / cpu_sys);
 
-                                sender.iosocket.emit('cpu', {time : 1, cpu : percentage});
-                                sender.iosocket.emit('memory', {time : 1, memory : mem});
-                            });
+                            var result = {
+                                memory: mem,
+                                cpu: percentage
+                            };
+
+                            callback(result);
+
                         });
                     });
-                }, 1000);
-            });
+                });
+            }, 1000);
         });
-    }, 3000);
+    });
 };
 
 exports.monitor = monitor;

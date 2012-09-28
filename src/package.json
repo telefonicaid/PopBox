@@ -17,7 +17,9 @@
         "type": "git",
         "url": "git@github.com:mrutid/PopBox.git"
     },
-
+    "scripts": {
+        "install": "cd ../tests/test && npm install"
+    },
     "dependencies": {
         "redis": "0.7.1",
         "async": "0.1.18",
