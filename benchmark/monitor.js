@@ -8,25 +8,35 @@
 
 var childProcess = require('child_process');
 var monitor = require('./cpu_memory_monitor.js');
+var config = require('../src/config.js')
 var net = require('net');
 var os = require('os');
-var connection;
+
 
 
 var server = new net.Server();
 
 server = net.createServer(function (c) { //'connection' listener
 
+    var pid;
+
     if (server.connections === 1) {
-        connection = c;
 
         console.log('server connected');
+
+        c.on('data', function(data){
+
+            config.tranRedisServer = JSON.parse(data);
+            pid = execute();
+            msg(pid, c);
+        });
+
         c.on('end', function () {
             console.log('Client closed connection');
+            process.kill(pid);
             c.end();
         });
-        var pid = execute();
-        msg(pid);
+
     }
     else{
         c.end();
@@ -41,14 +51,14 @@ var execute = function () {
     return pid;
 }
 
-var msg = function (pid) {
+var msg = function (pid, c) {
     console.log("A new Agent has been launched with pid: " + pid);
     setInterval(function () {
         var res = monitor.monitor(pid, function (res) {
             console.log('Cpu: ' + res.cpu);
             console.log('Memory ' + res.memory);
 
-            connection.write(JSON.stringify({host: os.hostname(), cpu: {percentage: res.cpu}, memory: {value: res.memory}}));
+            c.write(JSON.stringify({host: os.hostname(), cpu: {percentage: res.cpu}, memory: {value: res.memory}}));
         });
     }, 3000)
 }
