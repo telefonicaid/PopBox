@@ -1,9 +1,7 @@
 var async = require('async');
 var uuid = require('node-uuid');
 var redisModule = require('redis');
-var helper = require('../src/DataHelper.js');
 var config = require('./config.js');
-
 
 var pushTransaction = function(hostname, port, appPrefix, provision, callback) {
     'use strict';
@@ -13,82 +11,68 @@ var pushTransaction = function(hostname, port, appPrefix, provision, callback) {
         queues = provision.queue,
         extTransactionId = uuid.v4(),
         transactionId = config.dbKeyTransPrefix + extTransactionId,
-        processBatch = [], //feeding the process batch
-        dbTr = redisModule.createClient(port, hostname),
-        i,
-        queue;
+        dbTr = redisModule.createClient(port, hostname);
+
+
 
     if (!provision.expirationDate) {
-        //FIXME: Change 3600 by a config property
         provision.expirationDate = Math.round(Date.now() / 1000) + config.defaultExpireDelay;
     }
 
-    processBatch.push(helper.hsetMetaHashParallel(dbTr, transactionId, ':meta', provision));
 
-    for (i = 0; i < queues.length; i += 1) {
-        queue = queues[i];
+    var meta = {};
+    for (var p in provision) {
 
-        //launch push/sets/expire in parallel for one ID
-        processBatch.push(processOneId(dbTr, transactionId, queue, priority));
+        if(provision.hasOwnProperty(p) && provision[p] !== null &&  provision[p] !== undefined && p !== 'queue') {
+            meta[p] = provision[p];
+        }
+
     }
 
-    async.parallel(processBatch,
-        function pushEnd(err) {   //parallel execution may apply also
+    dbTr.hmset(transactionId + ':meta', meta, function onHmset(err) {
+        if (err) {
 
-            //MAIN Exit point
-            if (err) {
-                manageErr(dbTr,err, callback)
-            } else {
+            dbTr.end();
+            callback(err, null);
 
-                //Set expires for :meta and :state collections
-                helper.setExpirationDate(dbTr, transactionId + ':state', provision,
-                    function expirationDateStateEnd(err) {
-                        if (err) {
-                            manageErr(dbTr,err, callback)
-                        }
-                    });
+        } else {
 
-                helper.setExpirationDate(dbTr, transactionId + ':meta', provision,
-                    function expirationDateMetaEnd(err) {
-                        if (err) {
-                            manageErr(dbTr,err, callback)
-                        }
-                    });
+            async.forEach(queues, function(queue, asyncCallback) {
+
+                var fullQueueId = config.db_key_queue_prefix + priority + appPrefix + queue.id;
+                dbTr.rpush(fullQueueId, transactionId, function onLpushed(err) {
+
+                    if (err) {
+                        asyncCallback(err, null);
+                    } else {
+                        asyncCallback(null, null);
+                    }
+
+                });
+
+                dbTr.hmset(transactionId + ':state', queue.id, 'Pending', function(err) {
+
+                    if (err) {
+                        asyncCallback(err, null);
+                    } else {
+                        asyncCallback(null, null);
+                    }
+
+                });
+
+            }, function(err) {
 
                 dbTr.end();
 
-                if (callback) {
+                if (err) {
+                    callback(err, null);
+                } else {
                     callback(null, extTransactionId);
                 }
-            }
-        });
 
-    function processOneId(dbTr, transactionId, queue, priority) {
-
-        return function processOneIdAsync(callback) {
-
-            async.parallel([
-                helper.pushParallel(dbTr, {id: appPrefix + queue.id}, priority,
-                    transactionId),
-                helper.hsetHashParallel(dbTr, queue, transactionId, ':state', 'Pending')
-            ], function parallel_end(err) {
-
-                if (err) {
-                    manageErr(dbTr,err, callback)
-                }
-                callback(null);
             });
-        };
-    }
-
-    function manageErr(dbTr, err, callback) {
-        console.log('Error: ' + err);
-        dbTr.end();
-
-        if (callback) {
-            callback(err, null);
         }
-    }
+    });
 };
 
 exports.pushTransaction = pushTransaction;
