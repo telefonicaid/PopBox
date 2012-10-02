@@ -8,9 +8,9 @@ exports.port = 3001;
  *
  * @type {String}
  */
-exports.agentsHosts = [{host:'192.168.1.51', port: 3001}/*,{host:'192.168.1.84', port : 3001}*/];
+exports.agentsHosts = [{host:'localhost', port: 3001}/*,{host:'192.168.1.84', port : 3001}*/];
 
-exports.redisTrans= {host:'192.168.1.51', port: 6379};
+exports.redisTrans= {host:'localhost', port: 6379};
 /**
  *
  * @type {Number}
@@ -20,6 +20,8 @@ exports.slice = 5;
 exports.defaultExpireDelay = 3600;
 
 exports.dbKeyTransPrefix = 'PB:T|';
+
+exports.db_key_queue_prefix = 'PB:Q|';
 
 /**
  *
@@ -47,7 +49,7 @@ exports.maxProvision = {};
  *
  * @type {Number}
  */
-exports.maxProvision.start_number_provisions = 10000;
+exports.maxProvision.start_number_provisions = 60000;
 
 /**
  *
@@ -81,13 +83,13 @@ exports.maxPop = {};
  *
  * @type {Number}
  */
-exports.maxPop.start_number_pops = 1000;
+exports.maxPop.start_number_pops = 10000;
 
 /**
  *
  * @type {Number}
  */
-exports.maxPop.max_pops = 10000;
+exports.maxPop.max_pops = 20000;
 
 /**
  *
