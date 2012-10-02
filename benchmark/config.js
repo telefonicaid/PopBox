@@ -8,13 +8,18 @@ exports.port = 3001;
  *
  * @type {String}
  */
-exports.agentsHosts = [{host:'192.168.1.51', port: 3001},{host:'192.168.1.84', port : 3001}];
+exports.agentsHosts = [{host:'192.168.1.51', port: 3001}/*,{host:'192.168.1.84', port : 3001}*/];
 
+exports.redisTrans= {host:'192.168.1.51', port: 6379};
 /**
  *
  * @type {Number}
  */
 exports.slice = 5;
+
+exports.defaultExpireDelay = 3600;
+
+exports.dbKeyTransPrefix = 'PB:T|';
 
 /**
  *
@@ -34,6 +39,7 @@ exports.numPops = 20000;
  */
 exports.payload_length = 1000;
 
+//MAX ROVISION
 
 exports.maxProvision = {};
 
@@ -67,6 +73,8 @@ exports.maxProvision.queues_inteval = 10000;
  */
 exports.maxProvision.payload_length_interval = 1000;
 
+//MAX POP
+
 exports.maxPop = {};
 
 /**
@@ -93,3 +101,15 @@ exports.maxPop.max_payload = 5000;
  */
 exports.maxPop.payload_length_interval = 1000;
 
+
+//RANDOM TEST
+
+exports.randomTest = {};
+exports.randomTest.maxQueues = 10;
+exports.randomTest.minPayloadLength =  500;
+exports.randomTest.maxPayloadLength = 5000;
+exports.randomTest.maxTimesPush = 50;
+exports.randomTest.maxTimesPop = 1000;
+exports.randomTest.minTimeOut = 1;
+exports.randomTest.maxTimeOut = 300;
+exports.randomTest.maxMessages = 1000;

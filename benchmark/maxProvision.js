@@ -12,25 +12,34 @@ var genProvision = require('./genProvision.js');
 var benchmark = require('./benchmark.js');
 
 
-var doNtimes_queues = function (numQueues, payload_length, callback) {
+var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, messageEmit) {
 
     'use strict';
     var provision = genProvision.genProvision(numQueues, payload_length),
         init = new Date().valueOf();
-    rest.postJson(config.protocol + '://' + config.hostname + ':' + config.port + '/trans',
+
+    var times = timesCall;
+    var agentIndex = Math.floor(times / config.slice) % config.agentsHosts.length;
+    var host = config.agentsHosts[agentIndex].host;
+    var port = config.agentsHosts[agentIndex].port;
+
+    rest.postJson(config.protocol + '://' + host + ':' + port + '/trans',
         provision).on('complete', function (data, response) {
+            console.log(data);
             if (response && response.statusCode === 200) {
                 console.log('Finished with status 200');
-                console.log(data);
                 var end = new Date().valueOf();
                 var time = end - init;
                 console.log(numQueues + ' inboxes have been provisioned with ' +
                     payload_length + ' bytes of payload in ' + time + ' ms with no errors');
-                benchmark.webSocket.emit('newPoint', {id: 1, point: [numQueues, time, payload_length]});
+                if (messageEmit && typeof(messageEmit) === 'function') {
+                    messageEmit({id: 1, point: [numQueues, time, payload_length]});
+                }
                 process.nextTick(function () {
                     if (numQueues < config.maxProvision.max_queues) {
                         numQueues += config.maxProvision.queues_inteval;
-                        doNtimes_queues(numQueues, payload_length, callback);
+                        times++;
+                        doNtimes_queues(numQueues, payload_length, times, callback, messageEmit);
                     }
                     else {
                         callback();
@@ -43,17 +52,16 @@ var doNtimes_queues = function (numQueues, payload_length, callback) {
         });
 };
 
-var doNtimes = function (numQueues, payload_length) {
-
-    doNtimes_queues(numQueues, payload_length, function () {
+var doNtimes = function (numQueues, payload_length, messageEmit) {
+    doNtimes_queues(numQueues, payload_length, 0, function () {
         if (payload_length < config.maxProvision.max_payload) {
             payload_length += config.maxProvision.payload_length_interval;
             process.nextTick(function () {
-                doNtimes(numQueues, payload_length);
+                doNtimes(numQueues, payload_length, messageEmit);
             });
         }
-    });
-    sender.iosocket.on('pause', function (data) {
+    }, messageEmit);
+    benchmark.webSocket.on('pause', function (data) {
         if (data.id === 1) {
             pauseExecution(function () {
                 doNtimes(numQueues, payload_length);

@@ -17,44 +17,48 @@ var net = require('net');
 var webSocket;
 var monitorSockets = [];
 
+var receiveMessage = sender.receiveMessage;
+var sendMessage = sender.sendMessage;
+
 sender.createSocket(8090, function (socket) {
     'use strict';
     webSocket = socket;
     exports.webSocket = webSocket;
-    webSocket.on('newTest', function (data) {
-
-        launchAgents(function () {
-            for (var i = 0; i < monitorSockets.length; i++) {
-                monitorSockets[i].on('data', function (data) {
-                    var JSONdata = JSON.parse(data);
-                    webSocket.emit('cpu', {time: 1, cpu: JSONdata.cpu.percentage});
-                    webSocket.emit('memory', {time: 1, memory: JSONdata.memory.value});
-                });
-            }
-            switch (data.id) {
-                case 1:
-                    maxProvision.doNtimes(config.maxProvision.start_number_provisions, config.payload_length);
-                    break;
-                case 2:
-                    maxPop.doNtimes(config.maxPop.start_number_pops, config.payload_length);
-                    break;
-
-            }
+    receiveMessage(webSocket, 'newTest', function (data) {
+        createAgents(function () {
+            launchAgents(function () {
+                for (var i = 0; i < monitorSockets.length; i++) {
+                    monitorSockets[i].on('data', function (data) {
+                        var JSONdata = JSON.parse(data);
+                        sendMessage(webSocket, 'cpu', {host: JSONdata.host, time: 1, cpu: JSONdata.cpu.percentage});
+                        sendMessage(webSocket, 'memory', {host: JSONdata.host, time: 1, memory: JSONdata.memory.value});
+                    });
+                }
+                switch (data.id) {
+                    case 1:
+                        maxProvision.doNtimes(config.maxProvision.start_number_provisions, config.payload_length, function(data){
+                            sendMessage(webSocket, 'newPoint',data);
+                        });
+                        break;
+                    case 2:
+                        maxPop.doNtimes(config.maxPop.start_number_pops, config.payload_length, function(data){
+                            sendMessage(webSocket, 'newPoint',data);
+                        });
+                        break;
+                }
+            });
         });
-
     });
 });
 
-
-
-var launchAgents = function (callback) {
+var createAgents = function (callback) {
+    'use strict';
     var numResponses = 0;
     for (var i = 0; i < config.agentsHosts.length; i++) {
         var host = config.agentsHosts[i].host;
         var client = new net.Socket();
         console.log(client);
-        client = net.connect(8091,host, function () {
-
+        client = net.connect(8091, host, function () {
             console.log('connected to');
             numResponses++;
             if (numResponses === config.agentsHosts.length) {
@@ -64,4 +68,25 @@ var launchAgents = function (callback) {
         });
         monitorSockets.push(client);
     }
+};
+
+var launchAgents = function (callback) {
+    'use strict';
+    var i = 0;
+    var numResponses = 0;
+
+    var sendConfig = function (i) {
+        monitorSockets[i].write(JSON.stringify(config.redisTrans), function () {
+            numResponses++;
+            if (numResponses === (monitorSockets.length)) {
+                setTimeout(callback, 3000);
+            }
+        });
+        if (i < monitorSockets.length - 1)
+            process.nextTick(function () {
+                sendConfig(++i);
+            });
+    };
+
+    sendConfig(i);
 };

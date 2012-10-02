@@ -13,7 +13,7 @@ var express = require('express'),
 
 app.use("/", express.static(__dirname + '/public'));
 
-var createSocket = function (port, callback){
+var createSocket = function (port, callback) {
     var server = http.createServer(app);
     server.listen(port);
     var io = socketio.listen(server);
@@ -23,7 +23,21 @@ var createSocket = function (port, callback){
     });
 };
 
+var sendMessage = function (socket, type, data) {
+    'use strict';
+    socket.emit(type, data);
+};
+
+var receiveMessage = function (socket, trigger, callback) {
+
+    socket.on(trigger, function (data) {
+        callback(data);
+    });
+};
+
 var cont = 0;
 
 exports.createSocket = createSocket;
 
+exports.sendMessage = sendMessage;
+exports.receiveMessage = receiveMessage;

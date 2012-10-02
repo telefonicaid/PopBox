@@ -6,7 +6,7 @@
  * To change this template use File | Settings | File Templates.
  */
 
-var dataSrv = require('../src/DataSrv');
+var dbPusher = require('./DBPusher.js');
 var config = require('./config.js');
 var genProvision = require('./genProvision.js');
 var rest = require('restler');
@@ -18,20 +18,18 @@ var fs = require('fs');
 http.globalAgent.maxSockets = 500;
 
 var cont = 0;
-var doNtimes_queues = function (numPops, provision, callback) {
+var doNtimes_queues = function (numPops, provision, callback, messageEmit) {
 
     async.series([
         function (callback) {
             var contResponse = 0;
-            console.log('va a provisionar');
 
             var fillQueue = function () {
 
-                dataSrv.pushTransaction('UNSEC:', provision, function (err, res) {
+                dbPusher.pushTransaction(config.redisTrans.host, config.redisTrans.port, 'UNSEC:', provision, function (err, res) {
                     contResponse++;
+                    console.log(res);
                     if (contResponse === numPops) {
-                        console.log("ha termindado de provisionar");
-
                         callback();
                     }
                 });
@@ -40,11 +38,10 @@ var doNtimes_queues = function (numPops, provision, callback) {
             for (var i = 0; i < numPops; i++) {
                 setTimeout(function () {
                     fillQueue();
-                }, 0);
+                }, i);
             }
         },
         function (callback) {
-            //callback('err',null);
             var contResponse = 0;
             var init = new Date().valueOf();
             var pop = function (host, port) {
@@ -57,13 +54,15 @@ var doNtimes_queues = function (numPops, provision, callback) {
                             callback('Error, no response: ' + data, null);
                         }
                         if (data.data === '[]') {
-                         callback('Error, empty queue: ' + data, null);
-                         }
+                            callback('Error, empty queue: ' + data, null);
+                        }
 
                         if (contResponse === numPops) {
                             var end = new Date().valueOf();
                             var time = end - init;
-                            benchmark.webSocket.emit('newPoint', {id: 1, Point: [numPops, time]});
+                            if (messageEmit && typeof (messageEmit) === 'function') {
+                                messageEmit({id: 1, Point: [numPops, time]});
+                            }
                             callback(null, {numPops: numPops, time: time});
                         }
                     });
@@ -86,7 +85,7 @@ var doNtimes_queues = function (numPops, provision, callback) {
                 if (numPops < config.maxPop.max_pops) {
                     numPops += 100;
                     setTimeout(function () {
-                        doNtimes_queues(numPops, provision, callback);
+                        doNtimes_queues(numPops, provision, callback, messageEmit);
                     }, 1000);
                 }
                 else {
@@ -97,14 +96,14 @@ var doNtimes_queues = function (numPops, provision, callback) {
     );
 };
 
-var doNtimes = function (numQueues, payload_length) {
+var doNtimes = function (numQueues, payload_length, messageEmit) {
     var provision = genProvision.genProvision(1, payload_length);
     doNtimes_queues(numQueues, provision, function () {
         if (payload_length < config.maxPop.max_payload) {
             payload_length += config.maxPop.payload_length_interval;
-            doNtimes(numQueues, payload_length);
+            doNtimes(numQueues, payload_length, messageEmit);
         }
-    });
+    }, messageEmit);
 };
 
 
