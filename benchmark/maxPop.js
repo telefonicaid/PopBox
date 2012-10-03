@@ -94,7 +94,7 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit) {
                 console.log(err);
             }
             else {
-                //console.log(results[1].numPops + ' pops in ' + results[1].time);
+                dbPusher.flushBBDD();
                 if (numPops < config.maxPop.max_pops) {
                     numPops += config.maxPop.queues_inteval;
                     setTimeout(function () {
@@ -115,6 +115,10 @@ var doNtimes = function (numQueues, payload_length, messageEmit) {
         if (payload_length < config.maxPop.max_payload) {
             payload_length += config.maxPop.payload_length_interval;
             doNtimes(numQueues, payload_length, messageEmit);
+        }
+        else {
+            dbPusher.closeDBConnections();
+            console.log('all tests finished');
         }
     }, messageEmit);
 };

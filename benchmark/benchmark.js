@@ -75,8 +75,9 @@ var launchAgents = function (callback) {
     var i = 0;
     var numResponses = 0;
 
+    var redisServers = {trans : config.redisTrans, queues : config.redisQueues};
     var sendConfig = function (i) {
-        monitorSockets[i].write(JSON.stringify(config.redisTrans), function () {
+        monitorSockets[i].write(JSON.stringify(redisServers), function () {
             numResponses++;
             if (numResponses === (monitorSockets.length)) {
                 setTimeout(callback, 3000);

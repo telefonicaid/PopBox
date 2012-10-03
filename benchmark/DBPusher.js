@@ -98,6 +98,14 @@ var closeDBConnections = function() {
     for (var i = 0; i < dbArray.length; i++) {
         dbArray[i].end();
     }
+};
+
+exports.flushBBDD = function () {
+    dbTr.send_command('FLUSHALL', []);
+
+    for (var i = 0; i < dbArray.length; i++) {
+        dbArray[i].send_command('FLUSHALL', []);
+    }
 }
 
 exports.pushTransaction = pushTransaction;

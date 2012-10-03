@@ -8,7 +8,7 @@ exports.port = 3001;
  *
  * @type {String}
  */
-exports.agentsHosts = [{host:'localhost', port: 3001}/*,{host:'192.168.1.84', port : 3001}*/];
+exports.agentsHosts = [{host:'192.168.1.51', port: 3001}/*,{host:'192.168.1.84', port : 3001}*/];
 
 exports.redisTrans= {host:'localhost', port: 6379};
 
@@ -86,6 +86,10 @@ exports.maxPop = {};
  * @type {Number}
  */
 exports.maxPop.start_number_pops = 10000;
+
+exports.maxPop.max_pops = 20000;
+
+exports.maxPop.queues_inteval = 1000;
 
 /**
  *
