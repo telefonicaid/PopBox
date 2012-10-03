@@ -28,7 +28,7 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit) {
 
                 dbPusher.pushTransaction(config.redisTrans.host, config.redisTrans.port, 'UNSEC:', provision, function (err, res) {
                     contResponse++;
-                    console.log(res);
+                    //console.log(res);
                     if (contResponse === numPops) {
                         callback();
                     }
@@ -38,7 +38,7 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit) {
             for (var i = 0; i < numPops; i++) {
                 setTimeout(function () {
                     fillQueue();
-                }, i);
+                }, 0);
             }
         },
         function (callback) {
@@ -67,14 +67,27 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit) {
                         }
                     });
             };
-            for (var i = 0; i < numPops; i++) {
-                var agentIndex = Math.floor(i / config.slice) % config.agentsHosts.length;
+
+            function doPop(numTimes) {
+                /*var agentIndex = Math.floor(numTimes / config.slice) % config.agentsHosts.length;
                 var host = config.agentsHosts[agentIndex].host;
                 var port = config.agentsHosts[agentIndex].port;
-                setTimeout(function () {
+                if (numTimes < numPops) {
                     pop(host, port);
-                }, i * 0);
+                    doPop(++numTimes);
+                }*/
+
+                var agentIndex, host, port;
+
+                for (numTimes;numTimes < numPops; numTimes++) {
+                    agentIndex = Math.floor(numTimes / config.slice) % config.agentsHosts.length;
+                    host = config.agentsHosts[agentIndex].host;
+                    port = config.agentsHosts[agentIndex].port;
+                    pop(host, port);
+                }
             }
+
+            doPop(0);
         }
     ], function (err, results) {
             if (err) {
@@ -83,10 +96,10 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit) {
             else {
                 //console.log(results[1].numPops + ' pops in ' + results[1].time);
                 if (numPops < config.maxPop.max_pops) {
-                    numPops += 100;
+                    numPops += config.maxPop.queues_inteval;
                     setTimeout(function () {
                         doNtimes_queues(numPops, provision, callback, messageEmit);
-                    }, 1000);
+                    }, 5000);
                 }
                 else {
                     callback();
