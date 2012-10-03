@@ -43,7 +43,6 @@ var pushTransaction = function(appPrefix, provision, callback) {
     dbTr.hmset(transactionId + ':meta', meta, function onHmset(err) {
         if (err) {
 
-            dbTr.end();
             callback(err, null);
 
         } else {
@@ -81,8 +80,6 @@ var pushTransaction = function(appPrefix, provision, callback) {
                 });
 
             }, function(err) {
-
-                dbTr.end();
 
                 if (err) {
                     callback(err, null);
