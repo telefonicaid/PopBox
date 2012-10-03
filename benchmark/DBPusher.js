@@ -3,7 +3,19 @@ var uuid = require('node-uuid');
 var redisModule = require('redis');
 var config = require('./config.js');
 
-var pushTransaction = function(hostname, port, appPrefix, provision, callback) {
+var dbTr = redisModule.createClient(config.redisTrans.port, config.redisTrans.host);
+dbTr.select(config.selected_db);
+
+var dbArray = [];
+for (var i = 0; i < config.redisServers.length; i++) {
+    var port = config.redisServers[i].port || redisModule.DEFAULT_PORT;
+    var host = config.redisServers[i].host;
+    var cli = redisModule.createClient(port, host);
+    cli.select(config.selected_db);
+    dbArray.push(cli);
+}
+
+var pushTransaction = function(appPrefix, provision, callback) {
     'use strict';
 
     //handles a new transaction  (N ids involved)
@@ -11,8 +23,7 @@ var pushTransaction = function(hostname, port, appPrefix, provision, callback) {
         queues = provision.queue,
         extTransactionId = uuid.v4(),
         transactionId = config.dbKeyTransPrefix + extTransactionId,
-        dbTr = redisModule.createClient(port, hostname);
-
+        sum = 0, i, bd, fullQueueId;
 
 
     if (!provision.expirationDate) {
@@ -32,15 +43,23 @@ var pushTransaction = function(hostname, port, appPrefix, provision, callback) {
     dbTr.hmset(transactionId + ':meta', meta, function onHmset(err) {
         if (err) {
 
-            dbTr.end();
             callback(err, null);
 
         } else {
 
             async.forEach(queues, function(queue, asyncCallback) {
 
-                var fullQueueId = config.db_key_queue_prefix + priority + appPrefix + queue.id;
-                dbTr.rpush(fullQueueId, transactionId, function onLpushed(err) {
+                fullQueueId = config.db_key_queue_prefix + priority + appPrefix + queue.id;
+
+                //Choose DB
+                for (i = 0; i < queue.id.length; i++) {
+                    sum += queue.id.charCodeAt(i);
+                }
+
+                bd = dbArray[sum % config.redisServers.length];
+
+                //Insert transaction in the queue
+                bd.rpush(fullQueueId, transactionId, function onLpushed(err) {
 
                     if (err) {
                         asyncCallback(err, null);
@@ -62,8 +81,6 @@ var pushTransaction = function(hostname, port, appPrefix, provision, callback) {
 
             }, function(err) {
 
-                dbTr.end();
-
                 if (err) {
                     callback(err, null);
                 } else {
@@ -75,4 +92,13 @@ var pushTransaction = function(hostname, port, appPrefix, provision, callback) {
     });
 };
 
+var closeDBConnections = function() {
+    dbTr.end();
+
+    for (var i = 0; i < dbArray.length; i++) {
+        dbArray[i].end();
+    }
+}
+
 exports.pushTransaction = pushTransaction;
+exports.closeDBConnections = closeDBConnections;

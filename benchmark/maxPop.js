@@ -26,7 +26,7 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit) {
 
             var fillQueue = function () {
 
-                dbPusher.pushTransaction(config.redisTrans.host, config.redisTrans.port, 'UNSEC:', provision, function (err, res) {
+                dbPusher.pushTransaction('UNSEC:', provision, function (err, res) {
                     contResponse++;
                     //console.log(res);
                     if (contResponse === numPops) {
