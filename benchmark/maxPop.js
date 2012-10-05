@@ -99,7 +99,7 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit) {
                 console.log(err);
             }
             else {
-                //dbPusher.flushBBDD();
+                dbPusher.flushBBDD();
                 if (numPops < config.maxPop.max_pops) {
                     numPops += config.maxPop.queues_inteval;
                     setTimeout(function () {
