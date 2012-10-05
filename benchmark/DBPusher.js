@@ -100,7 +100,7 @@ var closeDBConnections = function() {
     }
 };
 
-exports.flushBBDD = function () {
+var flushBBDD = function () {
     dbTr.send_command('FLUSHALL', []);
 
     for (var i = 0; i < dbArray.length; i++) {
@@ -110,3 +110,4 @@ exports.flushBBDD = function () {
 
 exports.pushTransaction = pushTransaction;
 exports.closeDBConnections = closeDBConnections;
+exports.flushBBDD = flushBBDD;

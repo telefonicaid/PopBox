@@ -11,6 +11,7 @@ var config = require('./config.js');
 var genProvision = require('./genProvision.js');
 var benchmark = require('./benchmark.js');
 
+pointsArray = [];
 
 var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, messageEmit) {
 
@@ -32,6 +33,9 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                 var time = end - init;
                 console.log(numQueues + ' inboxes have been provisioned with ' +
                     payload_length + ' bytes of payload in ' + time + ' ms with no errors');
+                var point = [numQueues, time];
+                pointsArray.push(point);
+
                 if (messageEmit && typeof(messageEmit) === 'function') {
                     messageEmit({id: 1, point: [numQueues, time, payload_length]});
                 }
@@ -47,7 +51,7 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                 });
             }
             else {
-                benchmark.webSocket.emit('newPoint', {id: 1, err: true});
+                messageEmit({id: 1, err: true});
             }
         });
 };
@@ -60,7 +64,11 @@ var doNtimes = function (numQueues, payload_length, messageEmit) {
                 doNtimes(numQueues, payload_length, messageEmit);
             });
         }
+        else{
+            //console.log(pointsArray);
+        }
     }, messageEmit);
+
     benchmark.webSocket.on('pause', function (data) {
         if (data.id === 1) {
             pauseExecution(function () {
