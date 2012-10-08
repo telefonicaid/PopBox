@@ -246,7 +246,7 @@ var blockingPop = function (appPrefix, queue, maxElems, blockingTime, callback) 
     //Set the last PopAction over the queue
     var popDate = Math.round(Date.now() / 1000);
 
-    db.on('connect', blockingPop_aux);
+    db.on('ready', blockingPop_aux);
     db.on('error', function (err) {
         dbCluster.free(db);
         //db.end();
