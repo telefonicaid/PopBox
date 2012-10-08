@@ -9,13 +9,12 @@
 var rest = require('restler');
 var config = require('./config.js');
 var http = require('http');
+http.globalAgent.maxSockets = 40000;
+
+var num_con = config.max_con.numCon;
 var completed = 0;
 var ok = 0;
-var error=0;
-var num_con = 20000;
-http.globalAgent.maxSockets = 20000;
-var cont = 0;
-error=0;
+
 var pop = function () {
     rest.post(config.protocol + '://' + 'localhost' + ':' +
         '3001' + '/queue/qx/pop?timeout=120').on('complete', function(err, response){

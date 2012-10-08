@@ -115,3 +115,7 @@ exports.randomTest.maxTimesPop = 1000;
 exports.randomTest.minTimeOut = 1;
 exports.randomTest.maxTimeOut = 300;
 exports.randomTest.maxMessages = 1000;
+
+//MAX_CON
+exports.max_con = {};
+exports.max_con.numCon = 20000;
