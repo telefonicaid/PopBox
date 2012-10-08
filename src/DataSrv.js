@@ -769,7 +769,7 @@ exports.updateTransMeta = updateTransMeta;
 //aux
 function manageError(err, callback) {
   'use strict';
-  logger.debug('manageError(err, callback)', [err, callback]);
+  logger.warning('manageError(err, callback)', [err, callback]);
   if (callback) {
     callback(err);
   }
