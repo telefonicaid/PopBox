@@ -17,6 +17,8 @@ var fs = require('fs');
 
 http.globalAgent.maxSockets = 500;
 
+pointsArray = [];
+
 var cont = 0;
 var doNtimes_queues = function (numPops, provision, callback, messageEmit) {
 
@@ -61,30 +63,33 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit) {
                             var end = new Date().valueOf();
                             var time = end - init;
                             if (messageEmit && typeof (messageEmit) === 'function') {
-                                messageEmit({id: 1, Point: [numPops, time]});
+                                messageEmit({id: 1, Point: [numPops, time, provision.payload.length]});
                             }
                             callback(null, {numPops: numPops, time: time});
                         }
                     });
             };
 
+            var agentIndex, host, port;
+
             function doPop(numTimes) {
-                /*var agentIndex = Math.floor(numTimes / config.slice) % config.agentsHosts.length;
-                var host = config.agentsHosts[agentIndex].host;
-                var port = config.agentsHosts[agentIndex].port;
+                agentIndex = Math.floor(numTimes / config.slice) % config.agentsHosts.length;
+                host = config.agentsHosts[agentIndex].host;
+                port = config.agentsHosts[agentIndex].port;
                 if (numTimes < numPops) {
-                    pop(host, port);
-                    doPop(++numTimes);
-                }*/
-
-                var agentIndex, host, port;
-
-                for (numTimes;numTimes < numPops; numTimes++) {
-                    agentIndex = Math.floor(numTimes / config.slice) % config.agentsHosts.length;
-                    host = config.agentsHosts[agentIndex].host;
-                    port = config.agentsHosts[agentIndex].port;
-                    pop(host, port);
+                    setTimeout(function () {
+                        pop(host, port);
+                        doPop(++numTimes);
+                    },0);
                 }
+
+                /*
+                 for (numTimes;numTimes < numPops; numTimes++) {
+                 agentIndex = Math.floor(numTimes / config.slice) % config.agentsHosts.length;
+                 host = config.agentsHosts[agentIndex].host;
+                 port = config.agentsHosts[agentIndex].port;
+                 pop(host, port);
+                 }*/
             }
 
             doPop(0);
@@ -98,8 +103,9 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit) {
                 if (numPops < config.maxPop.max_pops) {
                     numPops += config.maxPop.queues_inteval;
                     setTimeout(function () {
+                        console.log('trying with %d queues', numPops);
                         doNtimes_queues(numPops, provision, callback, messageEmit);
-                    }, 5000);
+                    }, 10000);
                 }
                 else {
                     callback();

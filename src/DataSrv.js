@@ -233,66 +233,75 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback,
 };
 
 
-var blockingPop = function(appPrefix, queue, maxElems, blockingTime, callback) {
-  'use strict';
-  logger.debug('blockingPop(appPrefix, queue, maxElems, blockingTime, callback)',
-    [appPrefix, queue, maxElems, blockingTime, callback]);
-  var queueId = queue.id, //
-    db = dbCluster.getOwnDb(queueId), //
-    fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id, //
-    fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id, //
-    firstElem = null;
+var blockingPop = function (appPrefix, queue, maxElems, blockingTime, callback) {
+    'use strict';
+    logger.debug('blockingPop(appPrefix, queue, maxElems, blockingTime, callback)',
+        [appPrefix, queue, maxElems, blockingTime, callback]);
+    var queueId = queue.id, //
+        db = dbCluster.getOwnDb(queueId),
+        fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id, //
+        fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id, //
+        firstElem = null;
 
-  //Set the last PopAction over the queue
-  var popDate = Math.round(Date.now() / 1000);
-  db.set(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
-    popDate);
+    //Set the last PopAction over the queue
+    var popDate = Math.round(Date.now() / 1000);
 
-  //Do the blocking part (over the two lists)
-  db.blpop(fullQueueIdH, fullQueueIdL, blockingTime,
-    function onPopData(err, data) {
-      if (err) {
+    db.on('connect', blockingPop_aux);
+    db.on('error', function (err) {
         dbCluster.free(db);
+        //db.end();
         manageError(err, callback);
-
-      } else {
-        //data:: A two-element multi-bulk with the first element being
-        // the name of the key where an element was popped and the second
-        // element being the value of the popped element.
-        //if data == null => timeout || empty queue --> nothing to do
-        if (!data) {
-          dbCluster.free(db);
-          if (callback) {
-            callback(null, null);
-          }
-        } else {
-          //we got one elem -> need to check the rest
-          firstElem = data;
-          if (maxElems > 1) {
-            popNotification(db, appPrefix, queue, maxElems - 1,
-              function onPop(err, clean_data) {
-                dbCluster.free(db); //add free() when pool
-                if (err) {
-                  if (callback) {
-                    err.data = true; //flag for err+data
-                    callback(err, firstElem); //weird
-                  }
-                } else {
-                  if (callback) {
-                    callback(null, clean_data);
-                  }
-                }
-              }, firstElem); //last optional param
-          } else {
-            dbCluster.free(db);
-            //just first_elem
-            getPopData([
-              firstElem[1]
-            ], callback, queue);
-          }
-        }
-      }
     });
+
+
+    function blockingPop_aux() {
+        db.set(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
+            popDate);
+        //Do the blocking part (over the two lists)
+        db.blpop(fullQueueIdH, fullQueueIdL, blockingTime,
+            function onPopData(err, data) {
+                if (err) {
+                    dbCluster.free(db);
+                    manageError(err, callback);
+                } else {
+                    //data:: A two-element multi-bulk with the first element being
+                    // the name of the key where an element was popped and the second
+                    // element being the value of the popped element.
+                    //if data == null => timeout || empty queue --> nothing to do
+                    if (!data) {
+                        dbCluster.free(db);
+                        if (callback) {
+                            callback(null, null);
+                        }
+                    } else {
+                        //we got one elem -> need to check the rest
+                        firstElem = data;
+                        if (maxElems > 1) {
+                            popNotification(db, appPrefix, queue, maxElems - 1,
+                                function onPop(err, clean_data) {
+                                    dbCluster.free(db); //add free() when pool
+                                    if (err) {
+                                        if (callback) {
+                                            err.data = true; //flag for err+data
+                                            callback(err, firstElem); //weird
+                                        }
+                                    } else {
+                                        if (callback) {
+                                            callback(null, clean_data);
+                                        }
+                                    }
+                                }, firstElem); //last optional param
+                        } else {
+                            dbCluster.free(db);
+                            //just first_elem
+                            getPopData([
+                                firstElem[1]
+                            ], callback, queue);
+                        }
+                    }
+                }
+            });
+    }
 };
 
 function getPopData(dataH, callback, queue) {

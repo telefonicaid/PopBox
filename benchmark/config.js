@@ -8,11 +8,11 @@ exports.port = 3001;
  *
  * @type {String}
  */
-exports.agentsHosts = [{host:'192.168.1.51', port: 3001}/*,{host:'192.168.1.84', port : 3001}*/];
+exports.agentsHosts = [{host:'192.168.1.84', port: 3001}, {host:'192.168.1.58', port : 3001}];
 
-exports.redisTrans= {host:'localhost', port: 6379};
+exports.redisTrans= {host:'192.168.1.84', port: 6379};
 
-exports.redisServers = [{host: 'localhost', port: 6379}];
+exports.redisServers = [{host: '192.168.1.84', port: 6379}];
 /**
  *
  * @type {Number}
@@ -35,12 +35,6 @@ exports.protocol = 'http';
  *
  * @type {Number}
  */
-exports.numPops = 20000;
-
-/**
- *
- * @type {Number}
- */
 exports.payload_length = 1000;
 
 //MAX ROVISION
@@ -51,13 +45,13 @@ exports.maxProvision = {};
  *
  * @type {Number}
  */
-exports.maxProvision.start_number_provisions = 60000;
+exports.maxProvision.start_number_provisions = 5000;
 
 /**
  *
  * @type {Number}
  */
-exports.maxProvision.max_queues = 100000;
+exports.maxProvision.max_queues = 50000;
 
 /**
  *
@@ -69,7 +63,7 @@ exports.maxProvision.max_payload = 5000;
  *
  * @type {Number}
  */
-exports.maxProvision.queues_inteval = 10000;
+exports.maxProvision.queues_inteval = 2000;
 
 /**
  *
@@ -85,7 +79,7 @@ exports.maxPop = {};
  *
  * @type {Number}
  */
-exports.maxPop.start_number_pops = 10000;
+exports.maxPop.start_number_pops = 1000;
 
 exports.maxPop.max_pops = 20000;
 
@@ -101,7 +95,7 @@ exports.maxPop.max_pops = 20000;
  *
  * @type {Number}
  */
-exports.maxPop.max_payload = 5000;
+exports.maxPop.max_payload = 1000;
 
 /**
  *
