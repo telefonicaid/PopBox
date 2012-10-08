@@ -21,14 +21,14 @@ exports.logLevel = 'warning';
  * @type {Array} ex. [{host:'localhost'}, {host:'localhost', port:'6789'}]
  */
 //exports.redisServers = [{host:'localhost'}, {host:'localhost', port:'6789'}];
-exports.redisServers = [{host:'localhost', port: 1234}];
+exports.redisServers = [{host:'localhost', port: 6379}];
 
 /**
  *
  * @type {Object} ex. { host:'hostname', port: 'port'} 
  * 
  */
-exports.tranRedisServer = {host:'localhost', port: 1234};
+exports.tranRedisServer = {host:'localhost', port: 6379};
 
 /**
  *
@@ -174,7 +174,7 @@ exports.MAX_TIMESTAMP = 2147483647; // 32-bit, 19 January 2038
  *
  * @type {boolean}
  */
-exports.enableSecure= true;
+exports.enableSecure= false;
 
 /**
  *
