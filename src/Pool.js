@@ -20,37 +20,39 @@ exports.Pool = function Pool(poolIndex){
   };
   return pool;
 
-  function get(queueId, callback){
-    var con = connections.pop();
-    if (!con && currentConnections<max_elems){
-      //we will create a new connection
-      var port = config.redisServers[index].port || redisModule.DEFAULT_PORT;
-      con = redisModule.createClient(port,
-        config.redisServers[index].host);
-      con.select(config.selected_db);
-      con.isOwn = true;
-      con.pool = pool; //add pool reference
-      currentConnections++;
-      con.on('ready', function(){
-        if(con){
-          callback (null, con);
+    function get(queueId, callback) {
+        var con = connections.pop();
+        logger.info('get', connections.toString());
+        if (con) {
+            callback(null, con);
+
         }
-        else{
-          //no more connections
-          callback ("no more conections available", null);
+        else if (!con && currentConnections < max_elems) {
+            //we will create a new connection
+            var port = config.redisServers[index].port || redisModule.DEFAULT_PORT;
+            con = redisModule.createClient(port,
+                config.redisServers[index].host);
+            con.select(config.selected_db);
+            con.isOwn = true;
+            con.pool = pool; //add pool reference
+            currentConnections++;
+            con.on('ready', function () {
+                callback(null, con);
+            });
+
+            con.on('error', function (err) {
+                callback(err, null);
+            });
         }
-      });
+        else {
+            callback("no more conections available", null);
+        }
     }
-    else if(currentConnections>=max_elems){
-      callback ("no more conections available", null);
-    }
-    else{
-      callback (null, con);
-    }
-  }
 
   function free(con){
     //get back to the pool
-    connections.push(con);
+     
+      connections.push(con);
+      logger.info('free', connections.toString());
   }
 };
