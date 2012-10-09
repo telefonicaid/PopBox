@@ -106,6 +106,12 @@ exports.maxPop.max_payload = 1000;
  */
 exports.maxPop.payload_length_interval = 1000;
 
+/**
+ *
+ * @type {Number}
+ */
+exports.config.pool.max_elems = 100;
+
 
 //RANDOM TEST
 
