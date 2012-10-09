@@ -43,6 +43,12 @@ exports.Pool = function Pool(poolIndex){
         }
       });
     }
+    else if(currentConnections>=max_elems){
+      callback ("no more conections available", null);
+    }
+    else{
+      callback (null, con);
+    }
   }
 
   function free(con){
