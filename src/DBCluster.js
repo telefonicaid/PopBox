@@ -48,7 +48,7 @@ var getOwnDb = function (queueId, callback) {
   var hash = hashMe(queueId, config.redisServers.length);
   //get the pool
   var pool = poolArray[hash];
-  pool.get(callback);
+  pool.get(queueId, callback);
 };
 
 
