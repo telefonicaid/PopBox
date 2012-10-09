@@ -181,3 +181,9 @@ exports.enableSecure= false;
  * @type {String} absolute path for the certs and keys. Default will be chosen when empty.
  */
 exports.agent.crt_path = "";
+
+/**
+ *
+ * @type {Number}
+ */
+exports.config.pool.max_elems = 100;
