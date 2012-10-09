@@ -42,15 +42,15 @@ var getDb = function (queueId) {
   return dbArray[hash];
 };
 
-var getOwnDb = function (queueId) {
+var getOwnDb = function (queueId, callback) {
   'use strict';
   logger.debug('getOwnDb(queueId)', [queueId]);
   var hash = hashMe(queueId, config.redisServers.length);
   //get the pool
   var pool = poolArray[hash];
-  var rc = pool.get();
-  return rc;
+  pool.get(callback);
 };
+
 
 var getTransactionDb = function (transactionId) {
   'use strict';
