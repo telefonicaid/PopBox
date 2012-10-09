@@ -187,4 +187,4 @@ exports.pool = {};
  *
  * @type {Number}
  */
-exports.pool.max_elems = 100;
+exports.pool.max_elems = 10000;
