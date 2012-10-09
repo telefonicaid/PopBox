@@ -25,6 +25,7 @@ sender.createSocket(8090, function (socket) {
     webSocket = socket;
     exports.webSocket = webSocket;
     receiveMessage(webSocket, 'newTest', function (data) {
+        sendMessage(webSocket, 'init', {nAgents: config.agentsHosts.length, interval: 3});
         createAgents(function () {
             launchAgents(function () {
                 for (var i = 0; i < monitorSockets.length; i++) {
