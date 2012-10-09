@@ -4,15 +4,18 @@
  */
 exports.port = 3001;
 
+
+exports.launchWithDeployment = false;
+
 /**
  *
  * @type {String}
  */
-exports.agentsHosts = [{host:'192.168.1.84', port: 3001}, {host:'192.168.1.58', port : 3001}];
+exports.agentsHosts = [{host:'192.168.1.51', port: 3001}];
 
-exports.redisTrans= {host:'192.168.1.84', port: 6379};
+exports.redisTrans= {host:'192.168.1.51', port: 6379};
 
-exports.redisServers = [{host: '192.168.1.84', port: 6379}];
+exports.redisServers = [{host: '192.168.1.51', port: 6379}];
 /**
  *
  * @type {Number}

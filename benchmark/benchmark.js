@@ -36,13 +36,13 @@ sender.createSocket(8090, function (socket) {
                 }
                 switch (data.id) {
                     case 1:
-                        maxProvision.doNtimes(config.maxProvision.start_number_provisions, config.payload_length, function(data){
-                            sendMessage(webSocket, 'newPoint',data);
+                        maxProvision.doNtimes(config.maxProvision.start_number_provisions, config.payload_length, function (data) {
+                            sendMessage(webSocket, 'newPoint', data);
                         });
                         break;
                     case 2:
-                        maxPop.doNtimes(config.maxPop.start_number_pops, config.payload_length, function(data){
-                            sendMessage(webSocket, 'newPoint',data);
+                        maxPop.doNtimes(config.maxPop.start_number_pops, config.payload_length, function (data) {
+                            sendMessage(webSocket, 'newPoint', data);
                         });
                         break;
                 }
@@ -53,29 +53,49 @@ sender.createSocket(8090, function (socket) {
 
 var createAgents = function (callback) {
     'use strict';
+
+    if (!config.launchWithDeployment) {
+        callback();
+        return;
+    }
     var numResponses = 0;
-    for (var i = 0; i < config.agentsHosts.length; i++) {
+    var i = 0;
+
+    function connectWith(i) {
+        console.log(config.agentsHosts);
         var host = config.agentsHosts[i].host;
         var client = new net.Socket();
-        console.log(client);
         client = net.connect(8091, host, function () {
-            console.log('connected to');
+            monitorSockets.push(client);
+            console.log('connected to %s', client.remoteAddress);
             numResponses++;
             if (numResponses === config.agentsHosts.length) {
-                console.log('all monitors connected');
+                console.log('All monitors connected');
                 callback();
             }
         });
-        monitorSockets.push(client);
+        i++;
+        if (i < config.agentsHosts.length) {
+            connectWith(i);
+        }
+        else
+            return;
     }
+
+    connectWith(0);
 };
 
 var launchAgents = function (callback) {
     'use strict';
+
+    if (!config.launchWithDeployment) {
+        callback();
+        return;
+    }
+
     var i = 0;
     var numResponses = 0;
-
-    var redisServers = {trans : config.redisTrans, queues : config.redisQueues};
+    var redisServers = {trans: config.redisTrans, queues: config.redisQueues};
     var sendConfig = function (i) {
         monitorSockets[i].write(JSON.stringify(redisServers), function () {
             numResponses++;
