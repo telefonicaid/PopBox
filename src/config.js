@@ -182,8 +182,9 @@ exports.enableSecure= false;
  */
 exports.agent.crt_path = "";
 
+exports.pool = {};
 /**
  *
  * @type {Number}
  */
-exports.config.pool.max_elems = 100;
+exports.pool.max_elems = 100;

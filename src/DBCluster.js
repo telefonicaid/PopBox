@@ -7,7 +7,7 @@
 
 var redisModule = require('redis');
 var config = require('./config.js');
-var Pool = require('./Pool.js');
+var poolMod = require('./Pool.js');
 
 var path = require('path');
 var log = require('PDITCLogger');
@@ -31,7 +31,7 @@ for (var i = 0; i < config.redisServers.length; i++) {
 //Create the pool array - One pool for each server
 var poolArray = [];
 for (var i = 0; i < config.redisServers.length; i++) {
-   var pool = Pool(i);
+   var pool = poolMod.Pool(i);
    poolArray.push(pool);
 }
 
