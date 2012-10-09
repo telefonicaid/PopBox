@@ -12,15 +12,13 @@ exports.Pool = function Pool(poolIndex){
   var max_elems =  config.pool.max_elems || 1000;
   var connections = [];
   var currentConnections = 0;
-  var self = this;
   var index = poolIndex;
-  return {
-      //Public
-      //connections: connections,
-      //currentConnections: currentConnections,
-      get : get,
-      free: free
-   };
+
+  var pool = {
+    get : get,
+    free: free
+  };
+  return pool;
 
   function get(queueId, callback){
     var con = connections.pop();
@@ -31,7 +29,7 @@ exports.Pool = function Pool(poolIndex){
         config.redisServers[index].host);
       con.select(config.selected_db);
       con.isOwn = true;
-      con.pool = self; //add pool reference
+      con.pool = pool; //add pool reference
       currentConnections++;
       con.on('ready', function(){
         if(con){
