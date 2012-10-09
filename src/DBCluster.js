@@ -7,6 +7,7 @@
 
 var redisModule = require('redis');
 var config = require('./config.js');
+var Pool = require('./Pool.js');
 
 var path = require('path');
 var log = require('PDITCLogger');
@@ -27,6 +28,13 @@ for (var i = 0; i < config.redisServers.length; i++) {
   dbArray.push(cli);
 }
 
+//Create the pool array - One pool for each server
+var poolArray = [];
+for (var i = 0; i < config.redisServers.length; i++) {
+   var pool = Pool(i);
+   poolArray.push(pool);
+}
+
 var getDb = function (queueId) {
   'use strict';
   logger.debug('getDb(queueId)', [queueId]);
@@ -38,12 +46,9 @@ var getOwnDb = function (queueId) {
   'use strict';
   logger.debug('getOwnDb(queueId)', [queueId]);
   var hash = hashMe(queueId, config.redisServers.length);
-  var port = config.redisServers[hash].port || redisModule.DEFAULT_PORT;
-  var rc = redisModule.createClient(port,
-    config.redisServers[hash].host);
-  rc.select(config.selected_db);
-  rc.isOwn = true;
-  //returns a client from a cluster
+  //get the pool
+  var pool = poolArray[hash];
+  var rc = pool.get();
   return rc;
 };
 
@@ -78,7 +83,7 @@ var free = function (db) {
   //return to the pool TechDebt
   logger.debug('free(db)', [db]);
   if (db.isOwn) {
-    db.end();
+    db.pool.free(db);
   }
 };
 
