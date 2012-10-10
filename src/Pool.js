@@ -36,13 +36,9 @@ exports.Pool = function Pool(poolIndex){
             con.isOwn = true;
             con.pool = pool; //add pool reference
             currentConnections++;
-            con.on('ready', function () {
-                callback(null, con);
-            });
+            con.on('error', function(err) {console.log("error - redis", err)});
+            callback(null, con);
 
-            con.on('error', function (err) {
-                callback(err, null);
-            });
         }
         else {
             callback("no more conections available", null);
