@@ -1,69 +1,60 @@
-/**
- * Created with JetBrains WebStorm.
- * User: david
- * Date: 27/09/12
- * Time: 12:02
- * To change this template use File | Settings | File Templates.
- */
-
 var childProcess = require('child_process');
-var monitor = require('./cpu_memory_monitor.js');
+var monitor = require('./cpuMemoryMonitor.js');
 var config = require('../src/config.js')
 var net = require('net');
 var os = require('os');
 
-
-
-var server = new net.Server();
-
-server = net.createServer(function (c) { //'connection' listener
+server = net.createServer(function (connection) {
 
     var pid;
+    var monitorInterval;
 
     if (server.connections === 1) {
 
-        console.log('server connected');
+        console.log('Client open the connection...');
 
-        c.on('data', function(data){
+        connection.on('data', function(data){
 
             config.tranRedisServer = JSON.parse(data);
-            pid = execute();
-            msg(pid, c);
+            pid = createAgent();
+            console.log('A new agent has been created with PID: ' + pid);
+
+            //Monitoring an agent sending the client information about the usage of CPU and RAM
+            monitorInterval = setInterval(function () {
+                var res = monitor.monitor(pid, function (res) {
+                    console.log('CPU: ' + res.cpu + ' - Memory: ' + res.memory);
+                    connection.write(JSON.stringify({host: os.hostname(), cpu: {percentage: res.cpu}, memory: {value: res.memory}}));
+                });
+            }, 3000);
+
         });
 
-        c.on('end', function () {
-            console.log('Client closed connection');
+        connection.on('end', function () {
+
+            console.log('Client closed connection...');
+            clearInterval(monitorInterval);
             process.kill(pid);
-            c.end();
+            connection.end();
+
         });
 
-    }
-    else{
-        c.end();
+    } else {
+        connection.end();
     }
 }).listen(8091);
 
-
-var execute = function () {
+/**
+ * Creates an agent
+ * @return The PID of the agent
+ */
+var createAgent = function () {
     var child = childProcess.fork('../src/Agent.js');
     var pid = child.pid;
-    console.log(pid);
     return pid;
-}
-
-var msg = function (pid, c) {
-    console.log("A new Agent has been launched with pid: " + pid);
-    setInterval(function () {
-        var res = monitor.monitor(pid, function (res) {
-            console.log('Cpu: ' + res.cpu);
-            console.log('Memory ' + res.memory);
-
-            c.write(JSON.stringify({host: os.hostname(), cpu: {percentage: res.cpu}, memory: {value: res.memory}}));
-        });
-    }, 3000)
 }
 
 process.on('uncaughtException', function onUncaughtException (err) {
     'use strict';
-    logger.warning('onUncaughtException', err);
+    //logger.warning('onUncaughtException', err);
+    console.log(err.stack);
 });

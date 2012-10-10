@@ -1,5 +1,4 @@
 var fs = require('fs');
-//var sender = require('./sender.js');
 
 var getUserUsage = function (pid, cb) {
     fs.readFile('/proc/' + pid + '/stat', function (err, data) {
