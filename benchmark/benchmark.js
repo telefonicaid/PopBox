@@ -1,21 +1,10 @@
-/**
- * Created with JetBrains WebStorm.
- * User: fernando
- * Date: 20/09/12
- * Time: 13:35
- * To change this template use File | Settings | File Templates.
- */
-
-
 var maxProvision = require('./maxProvision.js');
 var maxPop = require('./maxPop.js');
 var sender = require('./sender.js');
 var config = require('./config.js');
-var cpu_mem = require('./cpu_memory_monitor.js');
 var net = require('net');
 
 var webSocket;
-var monitorSockets = [];
 
 var receiveMessage = sender.receiveMessage;
 var sendMessage = sender.sendMessage;
@@ -24,91 +13,64 @@ sender.createSocket(8090, function (socket) {
     'use strict';
     webSocket = socket;
     exports.webSocket = webSocket;
+
     receiveMessage(webSocket, 'newTest', function (data) {
+
         sendMessage(webSocket, 'init', {nAgents: config.agentsHosts.length, interval: 3});
-        createAgents(function () {
-            launchAgents(function () {
-                for (var i = 0; i < monitorSockets.length; i++) {
-                    monitorSockets[i].on('data', function (data) {
-                        var JSONdata = JSON.parse(data);
-                        sendMessage(webSocket, 'cpu', {host: JSONdata.host, time: 1, cpu: JSONdata.cpu.percentage});
-                        sendMessage(webSocket, 'memory', {host: JSONdata.host, time: 1, memory: JSONdata.memory.value});
+
+        createAndLaunchAgents(function () {
+            switch (data.id) {
+                case 1:
+                    maxProvision.doNtimes(config.maxProvision.start_number_provisions, config.payload_length, function (data) {
+                        sendMessage(webSocket, 'newPoint', data);
                     });
-                }
-                switch (data.id) {
-                    case 1:
-                        maxProvision.doNtimes(config.maxProvision.start_number_provisions, config.payload_length, function (data) {
-                            sendMessage(webSocket, 'newPoint', data);
-                        });
-                        break;
-                    case 2:
-                        maxPop.doNtimes(config.maxPop.start_number_pops, config.payload_length, function (data) {
-                            sendMessage(webSocket, 'newPoint', data);
-                        });
-                        break;
-                }
-            });
+                    break;
+                case 2:
+                    maxPop.doNtimes(config.maxPop.start_number_pops, config.payload_length, function (data) {
+                        sendMessage(webSocket, 'newPoint', data);
+                    });
+                    break;
+            }
         });
     });
 });
 
-var createAgents = function (callback) {
+var createAndLaunchAgents = function (callback) {
     'use strict';
+    var numConnected = 0, i = 0, host, client, redisServers;
 
     if (!config.launchWithDeployment) {
         callback();
-        return;
-    }
-    var numResponses = 0;
-    var i = 0;
 
-    function connectWith(i) {
-        console.log(config.agentsHosts);
-        var host = config.agentsHosts[i].host;
-        var client = new net.Socket();
-        client = net.connect(8091, host, function () {
-            monitorSockets.push(client);
-            console.log('connected to %s', client.remoteAddress);
-            numResponses++;
-            if (numResponses === config.agentsHosts.length) {
-                console.log('All monitors connected');
-                callback();
-            }
-        });
-        i++;
-        if (i < config.agentsHosts.length) {
-            connectWith(i);
+    } else {
+
+        for (i = 0; i < config.agentsHosts.length; i++) {
+            host = config.agentsHosts[i].host;
+
+            client = new net.Socket();
+            client.connect(8091, host, function(client) {
+
+                //Receive CPU and MEM information and send it to the client
+                client.on('data', function (data) {
+                    console.log(data.toString());
+                    var JSONdata = JSON.parse(data);
+                    sendMessage(webSocket, 'cpu', {host: JSONdata.host, time: 1, cpu: JSONdata.cpu.percentage});
+                    sendMessage(webSocket, 'memory', {host: JSONdata.host, time: 1, memory: JSONdata.memory.value});
+                });
+
+                //Send configuration
+                redisServers = {trans: config.redisTrans, queues: config.redisServers};
+                client.write(JSON.stringify(redisServers), function () {
+
+                    console.log('NUM CONNECTED = '+ numConnected);
+                    numConnected++;
+
+                    if (numConnected === config.agentsHosts.length) {
+                        //Wait 3s until agents can receive petitions
+                        setTimeout(callback, 3000);
+                    }
+                });
+            }.bind({}, client));
         }
-        else
-            return;
     }
-
-    connectWith(0);
-};
-
-var launchAgents = function (callback) {
-    'use strict';
-
-    if (!config.launchWithDeployment) {
-        callback();
-        return;
-    }
-
-    var i = 0;
-    var numResponses = 0;
-    var redisServers = {trans: config.redisTrans, queues: config.redisQueues};
-    var sendConfig = function (i) {
-        monitorSockets[i].write(JSON.stringify(redisServers), function () {
-            numResponses++;
-            if (numResponses === (monitorSockets.length)) {
-                setTimeout(callback, 3000);
-            }
-        });
-        if (i < monitorSockets.length - 1)
-            process.nextTick(function () {
-                sendConfig(++i);
-            });
-    };
-
-    sendConfig(i);
-};
+}
