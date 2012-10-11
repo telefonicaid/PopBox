@@ -14,18 +14,19 @@ sender.createSocket(8090, function (socket) {
     webSocket = socket;
     exports.webSocket = webSocket;
 
-    receiveMessage(webSocket, 'newTest', function (data) {
+    sendMessage(webSocket, 'init', {nAgents: config.agentsHosts.length, interval: 3});
+    createAndLaunchAgents(function() {
 
-        sendMessage(webSocket, 'init', {nAgents: config.agentsHosts.length, interval: 3});
+       //Once the agents are launched, the listener can be added to launch new tests...
+        receiveMessage(webSocket, 'newTest', function (data) {
 
-        createAndLaunchAgents(function () {
-            console.log('Callback has been called');
             switch (data.id) {
                 case 1:
                     maxProvision.doNtimes(config.maxProvision.start_number_provisions, config.payload_length, function (data) {
                         sendMessage(webSocket, 'newPoint', data);
                     });
                     break;
+
                 case 2:
                     maxPop.doNtimes(config.maxPop.start_number_pops, config.payload_length, function (data) {
                         sendMessage(webSocket, 'newPoint', data);
