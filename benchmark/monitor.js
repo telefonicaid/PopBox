@@ -13,21 +13,21 @@ server = net.createServer(function (connection) {
 
         console.log('Client open the connection...');
 
-        connection.on('data', function(data){
+        pid = createAgent();
+        console.log('A new agent has been created with PID: ' + pid);
+        connection.write(JSON.stringify({id: 1, host: os.hostname()}));
 
-            //config.tranRedisServer = JSON.parse(data);
-            pid = createAgent();
-            console.log('A new agent has been created with PID: ' + pid);
-            connection.write(JSON.stringify({id: 1, host: os.hostname()}));
+        //Monitoring an agent sending the client information about the usage of CPU and RAM
+        monitorInterval = setInterval(function () {
+            var res = monitor.monitor(pid, function (res) {
+            console.log('CPU: ' + res.cpu + ' - Memory: ' + res.memory);
+                connection.write(JSON.stringify({id: 2, host: os.hostname(), cpu: {percentage: res.cpu}, memory: {value: res.memory}}));
+            });
+        }, 3000);
 
-            //Monitoring an agent sending the client information about the usage of CPU and RAM
-            monitorInterval = setInterval(function () {
-                var res = monitor.monitor(pid, function (res) {
-                    console.log('CPU: ' + res.cpu + ' - Memory: ' + res.memory);
-                    connection.write(JSON.stringify({id: 2, host: os.hostname(), cpu: {percentage: res.cpu}, memory: {value: res.memory}}));
-                });
-            }, 3000);
-        });
+        /*connection.on('data', function(data){
+            config.tranRedisServer = JSON.parse(data);
+         });*/
 
         connection.on('end', function () {
 

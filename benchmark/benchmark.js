@@ -19,6 +19,7 @@ sender.createSocket(8090, function (socket) {
         sendMessage(webSocket, 'init', {nAgents: config.agentsHosts.length, interval: 3});
 
         createAndLaunchAgents(function () {
+            console.log('Callback has been called');
             switch (data.id) {
                 case 1:
                     maxProvision.doNtimes(config.maxProvision.start_number_provisions, config.payload_length, function (data) {
@@ -37,10 +38,10 @@ sender.createSocket(8090, function (socket) {
 
 var createAndLaunchAgents = function (callback) {
     'use strict';
-    var numConnected = 0, i = 0, host, client, redisServers, monitorHosts = [], hostsRec = 0;
+    var hostsRec = 0, i = 0, host, client, redisServers, monitorHosts = [];
+
     if (!config.launchWithDeployment) {
         callback();
-
     } else {
 
         for (i = 0; i < config.agentsHosts.length; i++) {
@@ -51,28 +52,28 @@ var createAndLaunchAgents = function (callback) {
 
                 //Receive CPU and MEM information and send it to the client
                 client.on('data', function (data) {
-                    console.log(data.toString());
+
                     var JSONdata = JSON.parse(data);
+
                     if (JSONdata.id === 1) {
                         monitorHosts.push(JSONdata.host);
                         hostsRec++;
+
                         if (hostsRec === config.agentsHosts.length) {
                             sendMessage(webSocket, 'hosts', {hosts: monitorHosts});
+                            setTimeout(callback,3000);
                         }
-                    }
-                    else if (JSONdata.id === 2) {
+
+                    } else if (JSONdata.id === 2) {
+
                         sendMessage(webSocket, 'cpu', {host: JSONdata.host, time: 1, cpu: JSONdata.cpu.percentage});
                         sendMessage(webSocket, 'memory', {host: JSONdata.host, time: 1, memory: JSONdata.memory.value});
                     }
                 });
 
-                client.write('ok', function () {
-                    numConnected++;
-                    if (numConnected === config.agentsHosts.length) {
-                        //Wait 3s until agents can receive petitions
-                        setTimeout(callback, 3000);
-                    }
-                });
+                //redisServers = {trans: config.redisTrans, queues: config.redisServers};
+                //client.write(JSON.stringify(redisServers));
+
             }.bind({}, client));
         }
     }
