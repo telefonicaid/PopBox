@@ -14,10 +14,43 @@ sender.createSocket(8090, function (socket) {
     webSocket = socket;
     exports.webSocket = webSocket;
 
-    sendMessage(webSocket, 'init', {nAgents: config.agentsHosts.length, interval: 3});
-    createAndLaunchAgents(function() {
+    var initOptions = {
+        agents : {
+            nAgents: config.agentsHosts.length,
+            interval: 3
+        },
+        tests : {
+            push : {
+                queues : {
+                    start : config.maxProvision.start_number_provisions,
+                    end : config.maxProvision.max_queues,
+                    interval: config.maxProvision.queues_inteval
+                },
+                payload: {
+                    start: config.payload_length,
+                    end: config.maxProvision.max_payload,
+                    interval: config.maxProvision.payload_length_interval
+                }
+            },
+            pop : {
+                queues : {
+                    start : config.maxPop.start_number_pops,
+                    end : config.maxPop.max_pops,
+                    interval: config.maxPop.queues_inteval
+                },
+                payload: {
+                    start: config.payload_length,
+                    end: config.maxPop.max_payload,
+                    interval: config.maxPop.payload_length_interval
+                }
+            }
+        }
+    };
 
-       //Once the agents are launched, the listener can be added to launch new tests...
+    sendMessage(webSocket, 'init', initOptions);
+    createAndLaunchAgents(function () {
+
+        //Once the agents are launched, the listener can be added to launch new tests...
         receiveMessage(webSocket, 'newTest', function (data) {
 
             switch (data.id) {
@@ -62,7 +95,7 @@ var createAndLaunchAgents = function (callback) {
 
                         if (hostsRec === config.agentsHosts.length) {
                             sendMessage(webSocket, 'hosts', {hosts: monitorHosts});
-                            setTimeout(callback,3000);
+                            setTimeout(callback, 3000);
                         }
 
                     } else if (JSONdata.id === 2) {

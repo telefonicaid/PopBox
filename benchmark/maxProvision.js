@@ -2,6 +2,7 @@ var rest = require('restler');
 var config = require('./config.js');
 var genProvision = require('./genProvision.js');
 var benchmark = require('./benchmark.js');
+var sender = require('./sender.js');
 
 var stopped = false;
 
@@ -28,13 +29,18 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                 var end = new Date().valueOf();
                 var time = end - init;
 
-                console.log(numQueues + ' inboxes have been provisioned with ' +
-                    payload_length + ' bytes of payload in ' + time + ' ms with no errors');
+                var now = new Date();
+                var message = numQueues + ' inboxes have been provisioned with ' +
+                    payload_length + ' bytes of payload in ' + time + ' ms with no errors';
+                var nowToString = now.getHours() + " : " + now.getMinutes() + " : " + now.getSeconds();
+
+                console.log(message);
+                sender.sendMessage(benchmark.webSocket, 'endLog', {time : nowToString, message : message});
 
                 var point = [numQueues, time];
 
-                if (messageEmit && typeof(messageEmit) === 'function') {
-                    messageEmit({id: 1, point: [numQueues, time, payload_length]});
+                if (messageEmit && typeof (messageEmit) === 'function') {
+                    messageEmit({time : nowToString, message : {id: 1, point: [numQueues, time, payload_length]}});
                 }
 
                 process.nextTick(function () {

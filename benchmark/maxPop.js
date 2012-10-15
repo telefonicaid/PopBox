@@ -6,6 +6,7 @@ var async = require('async');
 var benchmark = require('./benchmark.js');
 var http = require('http');
 var fs = require('fs');
+var sender = require('./sender.js');
 
 http.globalAgent.maxSockets = 500;
 
@@ -68,9 +69,16 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit) {
                             var end = new Date().valueOf();
                             var time = end - init;
 
+                            var now = new Date();
+                            var message = numPops + ' pops with a provision of ' + provision.payload.length +
+                                ' bytes in ' + time + ' milliseconds without errors';
+                            var nowToString = now.getHours() + " : " + now.getMinutes() + " : " + now.getSeconds();
+
+                            sender.sendMessage(benchmark.webSocket, 'endLog', {time : nowToString, message : message});
+
                             if (messageEmit && typeof (messageEmit) === 'function') {
-                                console.log(numPops + ' pops with a provision of ' + provision.payload.length + ' bytes in ' + time + ' milliseconds without errors')
-                                messageEmit({id: 1, Point: [numPops, time, provision.payload.length]});
+                                console.log(message);
+                                messageEmit({time : nowToString, message : {id: 1, Point: [numPops, time, provision.payload.length]}});
                             }
 
                             callback(null, {numPops: numPops, time: time});
