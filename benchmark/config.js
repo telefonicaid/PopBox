@@ -16,17 +16,17 @@ exports.launchWithDeployment = true;
 /**
  * @type {Array}
  */
-exports.agentsHosts = [{host:'192.168.1.51', port: 3001},{host:'192.168.1.84', port: 3001}];
+exports.agentsHosts = [{host:'localhost', port: 3001}];
 
 /**
  * @type {Object}
  */
-exports.redisTrans= {host:'192.168.1.51', port: 6379};
+exports.redisTrans= {host:'localhost', port: 6379};
 
 /**
  * @type {Array}
  */
-exports.redisServers = [{host: '192.168.1.51', port: 6379}];
+exports.redisServers = [{host: 'localhost', port: 6379}];
 
 /**
  * @type {Number}
@@ -66,12 +66,12 @@ exports.maxProvision = {};
 /**
  * @type {Number}
  */
-exports.maxProvision.start_number_provisions = 5000;
+exports.maxProvision.start_number_provisions = 1000;
 
 /**
  * @type {Number}
  */
-exports.maxProvision.max_queues = 50000;
+exports.maxProvision.max_queues = 20000;
 
 /**
  * @type {Number}
@@ -81,7 +81,7 @@ exports.maxProvision.max_payload = 5000;
 /**
  * @type {Number}
  */
-exports.maxProvision.queues_inteval = 2000;
+exports.maxProvision.queues_inteval = 1000;
 
 /**
  * @type {Number}

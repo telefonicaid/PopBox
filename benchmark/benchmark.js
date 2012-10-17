@@ -15,15 +15,15 @@ sender.createSocket(8090, function (socket) {
     exports.webSocket = webSocket;
 
     var initOptions = {
-        agents : {
+        agents: {
             nAgents: config.agentsHosts.length,
             interval: 3
         },
-        tests : {
-            push : {
-                queues : {
-                    start : config.maxProvision.start_number_provisions,
-                    end : config.maxProvision.max_queues,
+        tests: {
+            push: {
+                queues: {
+                    start: config.maxProvision.start_number_provisions,
+                    end: config.maxProvision.max_queues,
                     interval: config.maxProvision.queues_inteval
                 },
                 payload: {
@@ -32,10 +32,10 @@ sender.createSocket(8090, function (socket) {
                     interval: config.maxProvision.payload_length_interval
                 }
             },
-            pop : {
-                queues : {
-                    start : config.maxPop.start_number_pops,
-                    end : config.maxPop.max_pops,
+            pop: {
+                queues: {
+                    start: config.maxPop.start_number_pops,
+                    end: config.maxPop.max_pops,
                     interval: config.maxPop.queues_inteval
                 },
                 payload: {
@@ -46,21 +46,22 @@ sender.createSocket(8090, function (socket) {
             }
         }
     };
-
-    sendMessage(webSocket, 'init', initOptions);
+    webSocket.on('init', function () {
+        sendMessage(webSocket, 'init', initOptions);
+    });
     createAndLaunchAgents(function () {
 
         //Once the agents are launched, the listener can be added to launch new tests...
         receiveMessage(webSocket, 'newTest', function (data) {
-
+            webSocket.removeAllListeners('continueTest');
             switch (data.id) {
-                case 1:
+                case 0:
                     maxProvision.doNtimes(config.maxProvision.start_number_provisions, config.payload_length, function (data) {
                         sendMessage(webSocket, 'newPoint', data);
                     });
                     break;
 
-                case 2:
+                case 1:
                     maxPop.doNtimes(config.maxPop.start_number_pops, config.payload_length, function (data) {
                         sendMessage(webSocket, 'newPoint', data);
                     });
