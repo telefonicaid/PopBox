@@ -1,0 +1,32 @@
+
+/* Main Layout Components */
+
+#panel,
+#visual,
+#wrapper { height : 100%; }
+
+#panel { overflow : auto; }
+
+
+/* Grid Columns (12) */
+.columns {}
+.columns.two    { width : 16.66666666667%; }
+.columns.three  { width : 25%;  }
+.columns.four   { width : 33.33333333333%; }
+.columns.six    { width : 50%;  }
+.columns.eight  { width : 66.66666666666%; }
+.columns.nine   { width : 75%;  }
+.columns.ten    { width : 83.33333333333%; }
+.columns.eleven { width : 91.66666666666%; }
+.columns.twelve { width : 100%; }
+
+
+/* Layout Reusable Classes */
+
+.left   { float      : left;   }
+.right  { float      : right;  }
+.center { text-align : center; }
+.auto   { margin     : auto;   }
+
+.block  { display    : block;  }
+.inline { display    : inline; }

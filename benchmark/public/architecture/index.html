@@ -1,0 +1,216 @@
+<!doctype html>
+<html>
+
+<head>
+
+	<!-- Meta -->
+   	<meta charset="UTF-8" />
+
+   	<meta name='viewport'    content='initial-scale=1.0,width=device-width' />
+
+	<meta name="keywords"    content="" />
+	<meta name="description" content="" />
+	<meta name="robots"      content="noindex, nofollow" />
+
+	<meta property="og:type"        content="website" />
+	<meta property="og:title"       content="My title" />
+	<meta property="og:description" content="My description" />
+	<meta property="og:url"         content="URL" />
+	<meta property="og:image"       content="URL Image" />
+
+	<!-- Website Title -->
+	<title>PopBox Benchmark</title>
+
+	<!-- CSS -->
+	
+   	<link type="text/css" rel="stylesheet" media="all" href="css/styles.css" />
+
+
+	<!-- JavaScript file to provide an HTML5 Fallback in legacy browsers such as Internet Explorer -->
+	<!-- [if IE]>
+		<script type="text/javascript" src="app/base/fallback/html5shiv.min.js"></script>
+	<[endif] -->
+
+</head>
+
+
+<body>
+
+	<noscript>If you are reading this text is because your web browser does not allow JavaScript. In that case, the website will not be viewed perfect so please, try to enable it or just change to a better browser</noscript>
+
+
+	<div id="wrapper">
+		<!--header class="center dark header"-->
+
+		<section id="visual" class="columns eight left">
+			<header class="dark transparent header navbar navbar-inverse">
+				<hgroup>
+					<h1 class="title text-ellipsis">Telefonica Digital's PopBox Benchmarking displaying Node.js Performance using WebGL</h1>
+				</hgroup>
+			</header>
+
+			<div id="testing" class="total graph3D"></div>
+		</section>
+
+
+		<aside id="panel" class="dark transparent columns four left">
+
+			<div class="auto v-padding columns ten">
+
+				<section id="test" class="widget">
+					<h3 class="headline">Performance Test</h3>
+					
+					<div class="border">
+
+						<nav id="tabs" class="navbar">
+							<ul class="navbar-inner">
+								<li class="left tab blue columns three">
+									<div class="tab-inner"><p class="text-ellipsis">Test 1</p></div>
+								</li>
+
+								<li class="left tab columns three">
+									<div class="tab-inner"><p class="text-ellipsis">Test 2</p></div>
+								</li>
+
+								<li class="left tab columns three">
+									<div class="tab-inner"><p class="text-ellipsis">Test 3</p></div>
+								</li>
+
+								<li class="left tab columns three">
+									<div class="tab-inner"><p class="text-ellipsis">Test 4</p></div>
+								</li>
+
+								<li class="clear"></li>
+							</ul>
+						</nav>
+
+						<div class="test-info">
+							<h4 id="test-title"></h4>
+
+							<p id="test-description">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
+						</div>
+					</div>
+				</section>
+
+
+				<section id="cpu" class="graph2D widget">
+					<h3 class="headline">CPU Performance (%)</h3>
+
+					<div class="border">
+						<div class="graph"></div>
+
+						<div class="legend">
+						</div>
+					</div>
+				</section>
+
+
+				<section id="memory" class="graph2D widget">
+					<h3 class="headline">Memory Usage (MB)</h3>
+
+					<div class="border">
+						<div class="graph"></div>
+
+						<div class="legend">
+						</div>
+					</div>
+				</section>
+
+
+				<section id="logger" class="widget">
+
+					<header>
+						<h3 class="headline">Data logged</h3>
+					</header>
+
+					<div class="border scrollContainer">
+						<div>
+							<div class="inline">Timestamp</div>
+							<div class="inline th">Message</div>
+						</div>
+
+						<div class="scrollable">
+							<table class="table">
+								<tbody>
+									<tr class="log">
+										<td class="timestamp">13:57</td>
+										<td class="message">Point {x, y, z} has been received in test {id}</td>
+									</tr>
+
+									<tr class="log">
+										<td class="timestamp">13:57</td>
+										<td class="message">Point {x, y, z} has been received in test {id}</td>
+									</tr>
+
+									<tr class="log">
+										<td class="timestamp">13:57</td>
+										<td class="message">Point {x, y, z} has been received in test {id}</td>
+									</tr>
+
+									<tr class="log">
+										<td class="timestamp">13:57</td>
+										<td class="message">Point {x, y, z} has been received in test {id}</td>
+									</tr>
+
+									<tr class="log">
+										<td class="timestamp">13:57</td>
+										<td class="message">Point {x, y, z} has been received in test {id}</td>
+									</tr>
+								</tbody>
+							</table>
+					</div>
+
+				</section>
+
+
+				<section id="buttons" class="auto widget">
+					<div class="auto center">
+						<a href="#" id="start" class="button blue">Start</a>
+						<a href="#" id="pause" class="button blue">Pause</a>
+					</div>
+					<!--
+					<a href="#" id="start"><div class="big button left">Start</div></a>
+					<a href="#" id="pause"><div class="big button left">Pause</div></a>
+					<div class="clear"></div>
+					-->
+				</section>
+
+			</div>
+
+			<footer class="footer">
+				<p>&copy; Telefonica Digital and Open Innovation Lab (UPM), 2012</p>
+			</footer>
+
+		</aside>
+
+		<div class="clear"></div>
+	
+
+
+	</div>
+
+
+
+	<!-- JavaScript Loaded using AMD (Asynchronous Module Dependencies) via RequireJS -->
+	<script data-main="app/config.js" src="app/base/require.js"></script>
+
+	<!--
+	<script type="text/javascript" src="js/lib/jquery-1.8.1.min.js"></script>
+	<script type="text/javascript" src="js/lib/three.min.js"></script>
+	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+
+	<script type="text/javascript" src="js/Constants.js"></script>
+	<script type="text/javascript" src="js/Camera.js"></script>
+	<script type="text/javascript" src="js/Axis.js"></script>
+	<script type="text/javascript" src="js/Plane.js"></script>
+	<script type="text/javascript" src="js/Graph.js"></script>
+	<script type="text/javascript" src="js/Drawer.js"></script>
+	<script type="text/javascript" src="js/Organizer.js"></script>
+	<script type="text/javascript" src="js/Connector.js"></script>
+	<script type="text/javascript" src="js/ViewController.js"></script>
+	<script type="text/javascript" src="js/WebGL_Main.js"></script>
+	-->
+
+</body>
+
+</html>

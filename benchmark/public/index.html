@@ -19,10 +19,13 @@
 	<meta property="og:image"       content="URL Image" />
 
 	<!-- Website Title -->
-	<title>PopBox WebGL Graphics</title>
+	<title>PopBox Benchmark</title>
 
 	<!-- CSS -->
-   	<link type="text/css" rel="stylesheet" media="all" href="/css/styles.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/bootstrap.min.css" />
+	<!--link type="text/css" rel="stylesheet" media="all" href="css/bootstrap.responsive.min.css" /-->
+   	<link type="text/css" rel="stylesheet" media="all" href="css/styles.css" />
+
 
 	<!-- JavaScript file to provide an HTML5 Fallback in legacy browsers such as Internet Explorer -->
 	<!-- [if IE]>
@@ -36,30 +39,160 @@
 
 	<noscript>If you are reading this text is because your web browser does not allow JavaScript. In that case, the website will not be viewed perfect so please, try to enable it or just change to a better browser</noscript>
 
-	<hgroup>
-		<h1>Telefonica I+D's PopBox Benchmarking </h1>
-		<h2>Data Visualization about Node.js Performance using WebGL</h2>
-	</hgroup>
 
-	<!--
-		<p>bla bla bla...</p>
-		<p>bla bla bla...</p>
-	-->
+	<!--div class="modal" id="modal" tabindex="-1" role="dialog" aria-labelledby="WaitingModalBox" aria-hidden="true">
+		<article class="modal-body">
+    		<div class="meter red">
+			</div>
 
-	<canvas id="canvas" width="1024" height="768">
-			Your browser needs to support canvas for this to work!
-	</canvas>
+			<p id="description" class="center">The agents needs to be launched. Please wait...</p>
+
+			<div class="center">
+				<a href="#" id="modal-button" class="btn">Loading...</a>
+			</div>
+  		</article>
+	</div-->
+
+
+	<div id="wrapper">
+		<!--header class="center dark header"-->
+		<header class="dark transparent header navbar navbar-inverse">
+			<hgroup>
+				<h1 class="title">Telefonica Digital's PopBox Benchmarking displaying Node.js Performance using WebGL</h1>
+			</hgroup>
+		</header>
+			
+		<section id="visual" class="columns eight left">
+
+			
+			<div id="testing" class="total graph3D"></div>
+		</section>
+
+
+		<aside id="panel" class="dark transparent columns four left">
+
+			<div class="auto v-padding columns ten">
+
+				<section id="test" class="widget">
+					<h3 class="headline">Performance Test</h3>
+					
+					<div id="test-data" class="border">
+
+						<nav id="tabs" class="navbar">
+							<ul class="navbar-inner">
+								<li class="center left tab columns six">Provision</li>
+								<li class="center left tab columns six">Usage</li>
+								<!-- li class="center left tab columns three">Concurrency</li -->
+							</ul>
+						</nav>
+
+						<div class="text-padding">
+							<h4 id="test-title"></h4>
+							<p id="test-description"></p>
+						</div>
+					</div>
+				</section>
+
+
+				<section id="cpu" class="widget">
+					<h3 class="headline">CPU Performance (%)</h3>
+
+					<div class="graph-container">
+						<div id="cpu-graph" class="graph left"></div>
+
+						<div class="keys right">
+							<table class="table key">
+								<tbody></tbody>
+							</table>
+						</div>
+
+						<div class="clear"></div>
+					</div>
+				</section>
+
+
+				<section id="memory" class="widget">
+					<h3 class="headline">Memory Usage (MB)</h3>
+
+					<div class="graph-container">
+						<div id="memory-graph" class="graph left"></div>
+
+						<div class="keys right">
+							<table class="table key">
+								<tbody></tbody>
+							</table>
+						</div>
+					</div>
+				</section>
+
+
+				<section id="logger" class="widget">
+
+					<header>
+						<h3 class="headline">Data logged</h3>
+					</header>
+
+					<div class="border scrollContainer">
+						<div id="tableHeader">
+							<div id="timeStamp" class="inline titleTable">Timestamp</div>
+							<div id ="msg" class="inline th titleTable">Message</div>
+						</div>
+
+						<div class="scrollable white">
+							<table class="table">
+								<tbody id="logs"></tbody>
+							</table>
+					</div>
+
+				</section>
+
+
+				<section id="buttons" class="auto widget">
+					<div class="auto center">
+						<a href="#" id="start" class="btn btn-large btn-primary">Start</a>
+						<a href="#" id="pause" class="btn btn-large btn-primary">Pause</a>
+					</div>
+				</section>
+
+			</div>
+
+			<footer class="footer">
+				<p>&copy; Telefonica Digital and Open Innovation Lab (UPM), 2012</p>
+			</footer>
+
+		</aside>
+
+		<div class="clear"></div>
+	
+
+
+	</div>
+
+
 
 
 	<!-- JavaScript -->
-	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
-	<script type="text/javascript" src="js/lib/jquery-1.8.1.min.js"></script>
+	<div id="scripts" style="display : none;">
+		<script type="text/javascript" src="js/lib/jquery-1.8.1.min.js"></script>
+		<script type="text/javascript" src="js/lib/bootstrap.min.js"></script>
+		<script type="text/javascript" src="js/lib/three.min.js"></script>
+		<script type="text/javascript" src="js/lib/flotr2.min.js"></script>
+		<script type="text/javascript" src="/socket.io/socket.io.js"></script>
 
-	<script type="text/javascript" src="js/connector.js"></script>
-	<script type="text/javascript" src="js/dataParser.js"></script>
-	<script type="text/javascript" src="js/viewController.js"></script>
-	<script type="text/javascript" src="js/visualizator.js"></script>
-	<script type="text/javascript" src="js/main.js"></script>
+		<script type="text/javascript" src="js/Plot2D.js"></script>
+
+		<script type="text/javascript" src="js/Constants.js"></script>
+		<script type="text/javascript" src="js/Camera.js"></script>
+		<script type="text/javascript" src="js/Axis.js"></script>
+		<script type="text/javascript" src="js/Plane.js"></script>
+		<script type="text/javascript" src="js/Graph.js"></script>
+		<script type="text/javascript" src="js/Scene.js"></script>
+		<script type="text/javascript" src="js/Drawer.js"></script>
+		<script type="text/javascript" src="js/Organizer.js"></script>
+		<script type="text/javascript" src="js/Connector.js"></script>
+		<script type="text/javascript" src="js/ViewController.js"></script>
+		<script type="text/javascript" src="js/WebGL_Main.js"></script>
+	</div>
 
 </body>
 
