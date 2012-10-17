@@ -52,17 +52,20 @@ sender.createSocket(8090, function (socket) {
     createAndLaunchAgents(function () {
 
         //Once the agents are launched, the listener can be added to launch new tests...
-        receiveMessage(webSocket, 'newTest', function (data) {
+        receiveMessage(webSocket, 'newTest', function (req) {
             webSocket.removeAllListeners('continueTest');
-            switch (data.id) {
+            console.log(req);
+            switch (req.id) {
                 case 0:
                     maxProvision.doNtimes(config.maxProvision.start_number_provisions, config.payload_length, function (data) {
+                        data.version = req.version;
                         sendMessage(webSocket, 'newPoint', data);
                     });
                     break;
 
                 case 1:
                     maxPop.doNtimes(config.maxPop.start_number_pops, config.payload_length, function (data) {
+                        data.version = req.version;
                         sendMessage(webSocket, 'newPoint', data);
                     });
                     break;
