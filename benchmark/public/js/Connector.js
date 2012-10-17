@@ -12,7 +12,7 @@
 
 		var organizer = org;
 		var url = URL;
-
+		var currentVersion = 0;
 		var socket;
 		
 		var Constants = {
@@ -61,12 +61,13 @@
 
 
 			socket.on('newPoint', function (data) {
-				console.log(data);
+				//console.log(data);
 
 				if ( data.err ) {
 					console.error('Error: message received with no data points');
 
-				} else if ( data.message && data.message.point ) {
+				} else if ( data.message && data.message.point && 
+							data.message.version === currentVersion ) {
 					organizer.addData( data.message.id, data.message.point );
 				}
 
@@ -102,11 +103,12 @@
 
 		this.startTest = function(num) {
 			console.log('newTest ' + num);
-			socket.emit('newTest', { id : num });
+			socket.emit('newTest', { id : num, version : currentVersion++ });
 		}
 
 		this.restartTest = function(num) {
 			console.log('restartTest ' + num);
+
 			this.pauseTest(num);
 			this.startTest(num);
 		}

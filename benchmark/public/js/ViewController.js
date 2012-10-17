@@ -74,9 +74,13 @@
 			if ( !startButton.hasClass( CSS.STARTED ) ) {
 				startButton.addClass( CSS.STARTED );
 				startButton.text(Text.RESTART);
+				organizer.start();
+			
+			} else {
+				organizer.restart();
 			}
 
-			organizer.start();
+			
 		}
 
 		/* 'Pause/Continue' Button Event Handler */
@@ -115,7 +119,7 @@
 			currentTab.addClass( CSS.CURRENT );
 
 			// updateDescription(sceneNumber);
-			
+
 			console.log(state[sceneNumber]);
 
 			if ( state[sceneNumber]==="P" ) {

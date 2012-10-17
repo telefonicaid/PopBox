@@ -141,6 +141,8 @@
 
 			// 
 			setup(0);
+
+			console.log('restarting plane');
 		}
 
 		// Left for future implementation

@@ -95,6 +95,10 @@
 			plot.animate();
 		}
 
+		this.restart = function() {
+			plot.restart();
+		}
+
 		
 		this.init();
 

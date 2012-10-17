@@ -13,8 +13,8 @@
 		var arrayScenes,
 			arrayCameras,
 			threeRenderer,
-			canvas,
 
+			canvas = $('#testing'),
 			currentScene = 0,
 			started = false;
 
@@ -28,6 +28,12 @@
 				y : 3,
 				z : 3
 			};
+
+			/*
+			var cap = function( string ) {
+		    	return string.charAt(0).toUpperCase() + string.slice(1);
+			}
+			*/
 
 			var scene1 = new PBDV.Scene();
 			scene1.createGraph({
@@ -70,6 +76,7 @@
 
 		this.createCameras = function() {
 			arrayCameras = [];
+
 			for (var i = 0; i < arrayScenes.length; i++) {
 				var camera = new PBDV.Camera();
 				
@@ -80,6 +87,9 @@
 
 				arrayCameras.push( camera );
 			}
+
+			canvas.mouseenter(onMouseEnter);
+			canvas.mouseout(onMouseOut);
 		}
 
 
@@ -133,19 +143,10 @@
 			}
 		}
 
-		var getCanvasPosition = function() {
-			canvas = $('#testing');
-			canvas.mouseenter(onMouseEnter);
-			canvas.mouseout(onMouseOut);
-		}
-
 
 		// Public API
 
 		this.init = function() {
-
-			//
-			getCanvasPosition();
 
 			//
 			this.createRenderer();
@@ -225,6 +226,11 @@
 			//
 			this.animate();
 
+		}
+
+		this.restart = function( testNumber ) {
+			var scene = arrayScenes[testNumber];
+			scene.restart();
 		}
 
 		this.init();

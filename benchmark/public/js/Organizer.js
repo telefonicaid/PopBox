@@ -37,7 +37,7 @@
 			drawer.restart( currentTest );
 
 			//
-			this.conn.startTest( currentTest );
+			this.conn.restartTest( currentTest );
 		}
 
 		this.pause = function() {
@@ -52,7 +52,7 @@
 		this.continue = function() {
 
 			//
-			drawer.continue();
+			// drawer.continue();
 
 			// 
 			this.conn.continueTest( currentTest );
@@ -65,7 +65,6 @@
 
 
 		this.getDOMElement = function() {
-			console.log(drawer);
 			return drawer.getCanvas();
 		}
 
