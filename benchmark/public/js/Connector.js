@@ -12,7 +12,9 @@
 
 		var organizer = org;
 		var url = URL;
-		var currentVersion = 0;
+
+		var versions = [];
+
 		var socket;
 		
 		var Constants = {
@@ -33,44 +35,53 @@
 
 		var setupEvents = function() {
 
-			var interval, hosts;
-			//var nagents, tests;
+			//var nagents, tests, hosts, interval;
 
 			// Events
 
 			socket.on('init', function (data) {
 				console.log(data);
-				//nagents  = data.agents.nAgents;
-				interval = data.agents.interval * 1000;
-				
+				// var nagents  = data.agents.nAgents;
+				var interval = data.agents.interval * 1000;
+			
+				// Updating the versions because agents could be launched before
+
+				for (var t in data.tests) {
+					var v = data.tests[t].version;
+					versions.push( v );
+				}
+
+				console.log("versions");
+				console.log(versions);
+
 				organizer.initTest( data.tests );
 
 				// Initializing 2D Plots Axis
-				organizer.initPlots( hosts, interval );
-			});
+				organizer.initPlots( data.hosts, interval );
 
 
-			socket.on('hosts', function (data) {
-				hosts = data.hosts;
+				socket.on('newPoint', function (data) {
+					// console.log( data );
+					console.log( data.version );
+					
+					if ( data.err ) {
+						console.error('Error: message received with no data points');
+
+					} else if ( data.message ) {
+						var id = data.message.id;
+
+						if ( data.version === versions[id] ) {
+							organizer.addData( id, data.message.point );
+						}
+					}
+
+				});
+
 			});
 
 
 			socket.on('endLog', function (data) {
 				organizer.log( data.time, data.message );
-			});
-
-
-			socket.on('newPoint', function (data) {
-				//console.log(data);
-
-				if ( data.err ) {
-					console.error('Error: message received with no data points');
-
-				} else if ( data.message && data.message.point && 
-							data.message.version === currentVersion ) {
-					organizer.addData( data.message.id, data.message.point );
-				}
-
 			});
 
 
@@ -103,11 +114,13 @@
 
 		this.startTest = function(num) {
 			console.log('newTest ' + num);
-			socket.emit('newTest', { id : num, version : currentVersion++ });
+			socket.emit('newTest', { id : num });
 		}
 
 		this.restartTest = function(num) {
 			console.log('restartTest ' + num);
+			
+			versions[num]++;
 
 			this.pauseTest(num);
 			this.startTest(num);

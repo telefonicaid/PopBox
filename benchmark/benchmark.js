@@ -25,8 +25,8 @@ var initOptions = {
                 start: config.payload_length,
                 end: config.maxProvision.max_payload,
                 interval: config.maxProvision.payload_length_interval
-            },
-            version : maxProvision.version
+            }
+            
         },
         pop: {
             queues: {
@@ -38,8 +38,7 @@ var initOptions = {
                 start: config.payload_length,
                 end: config.maxPop.max_payload,
                 interval: config.maxPop.payload_length_interval
-            },
-            version : maxPop.version
+            }
         }
     }
 };
@@ -53,9 +52,12 @@ sender.createSocket(8090, function (socket) {
         createAndLaunchAgents(waitForTests);
     });
     var waitForTests = function () {
+        initOptions.tests.push.version = maxProvision.version;
+        initOptions.tests.pop.version = maxPop.version;
         sendMessage(webSocket, 'init', initOptions);
         //Once the agents are launched, the listener can be added to launch new tests...
         receiveMessage(webSocket, 'newTest', function (req) {
+            console.log('version exportada:' + maxProvision.version);
             webSocket.removeAllListeners('continueTest');
             switch (req.id) {
                 case 0:

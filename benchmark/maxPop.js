@@ -10,7 +10,7 @@ var sender = require('./sender.js');
 
 http.globalAgent.maxSockets = 500;
 
-var version;
+var version = 0;
 exports.version = version;
 
 var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, messageEmit) {
@@ -102,7 +102,7 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                                 var now = new Date();
                                 var message = numQueues + ' pops with a provision of ' + provision.payload.length +
                                     ' bytes in ' + time + ' milliseconds without errors';
-                                var nowToString = now.toTimeString();
+                                var nowToString = now.toTimeString().slice(0,8);
 
                                 sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: message});
 

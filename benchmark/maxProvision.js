@@ -4,10 +4,11 @@ var genProvision = require('./genProvision.js');
 var benchmark = require('./benchmark.js');
 var sender = require('./sender.js');
 
-var version;
+var version = 0
 exports.version = version;
 
-var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, messageEmit) {
+
+var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, messageEmit, version) {
 
     var stopped = false;
     var times = timesCall;
@@ -63,7 +64,7 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                     var now = new Date();
                     var message = numQueues + ' inboxes have been provisioned with ' +
                         payload_length + ' bytes of payload in ' + time + ' ms with no errors';
-                    var nowToString = now.toTimeString();
+                    var nowToString = now.toTimeString().slice(0,8);
 
                     console.log(message);
                     sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: message});
@@ -106,8 +107,8 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
  * @param messageEmit The function that will process the generated data (times, ...). This function
  * can store this data in a data base or send it through a socket.
  */
-var doNtimes = function (numQueues, payloadLength, messageEmit) {
-
+var doNtimes = function (numQueues, payloadLength, messageEmit, version) {
+    console.log('version: '+ version);
     doNtimes_queues(numQueues, payloadLength, 0, function () {
 
         //Increase the payload of the messages to be provisioned.
@@ -115,16 +116,16 @@ var doNtimes = function (numQueues, payloadLength, messageEmit) {
 
             payloadLength += config.maxProvision.payload_length_interval;
             process.nextTick(function () {
-                doNtimes(numQueues, payloadLength, messageEmit);
+                doNtimes(numQueues, payloadLength, messageEmit, version);
             });
         }
 
-    }, messageEmit);
+    }, messageEmit, version);
 };
 
 var launchTest = function (numQueues, payloadLength, messageEmit) {
-    doNtimes(numQueues, payloadLength, messageEmit);
-    version++;
+    doNtimes(numQueues, payloadLength, messageEmit, version);
+    exports.version = ++version;
 };
 
 
