@@ -66,9 +66,10 @@
 			// Rename
 			var Text = PBDV.Constants.Text;
 			var CSS = PBDV.Constants.CSS;
-			var current = tabs.find('.current').prevAll().length;
+			var current = tabs.filter('.current').prevAll().length;
 			state[current]="S";
-			
+			console.log("current");
+			console.log(current);
 			// TODO Subscribe to organizer
 
 			if ( !startButton.hasClass( CSS.STARTED ) ) {
@@ -89,7 +90,7 @@
 			// Renames
 			var Text = PBDV.Constants.Text;
 			var CSS  = PBDV.Constants.CSS;
-			var current = tabs.find('.current').prevAll().length;
+			var current = tabs.filter('.current').prevAll().length;
 			state[current]="P";
 
 			pauseButton.toggleClass( CSS.PAUSED );
