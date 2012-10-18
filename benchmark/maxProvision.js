@@ -4,14 +4,15 @@ var genProvision = require('./genProvision.js');
 var benchmark = require('./benchmark.js');
 var sender = require('./sender.js');
 
-
+var version;
+exports.version = version;
 
 var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, messageEmit) {
 
     var stopped = false;
     var times = timesCall;
 
-    var continueTest = function() {
+    var continueTest = function () {
         console.log('numero de colas: ' + numQueues);
         _doNtimes_queues(payload_length, callback, messageEmit);
     }
@@ -35,7 +36,6 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
             });
         }
     });
-
 
 
     var _doNtimes_queues = function (payload_length, callback, messageEmit) {
@@ -71,7 +71,7 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                     var point = [numQueues, time];
 
                     if (messageEmit && typeof (messageEmit) === 'function') {
-                        messageEmit({time: nowToString, message: {id: 0, point: [numQueues, time, payload_length]}});
+                        messageEmit({time: nowToString, message: {id: 0, point: [numQueues, time, payload_length]}, version: version});
                     }
 
                     // Increase the number of queues to be provisioned until the maximum is reached.
@@ -122,4 +122,10 @@ var doNtimes = function (numQueues, payloadLength, messageEmit) {
     }, messageEmit);
 };
 
-exports.doNtimes = doNtimes;
+var launchTest = function (numQueues, payloadLength, messageEmit) {
+    doNtimes(numQueues, payloadLength, messageEmit);
+    version++;
+};
+
+
+exports.launchTest = launchTest;
