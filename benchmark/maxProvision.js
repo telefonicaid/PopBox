@@ -4,7 +4,7 @@ var genProvision = require('./genProvision.js');
 var benchmark = require('./benchmark.js');
 var sender = require('./sender.js');
 
-var version = 0
+var version = 0;
 exports.version = version;
 
 
@@ -44,7 +44,6 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
         'use strict';
         var provision = genProvision.genProvision(numQueues, payload_length),
             init = new Date().valueOf();
-
         var agentIndex = Math.floor(times / config.slice) % config.agentsHosts.length;
         var host = config.agentsHosts[agentIndex].host;
         var port = config.agentsHosts[agentIndex].port;
@@ -125,7 +124,7 @@ var doNtimes = function (numQueues, payloadLength, messageEmit, version) {
 
 var launchTest = function (numQueues, payloadLength, messageEmit) {
     doNtimes(numQueues, payloadLength, messageEmit, version);
-    exports.version = ++version;
+    exports.version = version++;
 };
 
 

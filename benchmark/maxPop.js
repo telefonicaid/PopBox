@@ -13,13 +13,12 @@ http.globalAgent.maxSockets = 500;
 var version = 0;
 exports.version = version;
 
-var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, messageEmit) {
+var doNtimes_queues = function (numQueues, provision, callback, messageEmit, version) {
 
     var stopped = false;
-    var times = timesCall;
 
     var continueTest = function () {
-        _doNtimes_queues(payload_length, callback, messageEmit);
+        _doNtimes_queues(callback, messageEmit);
     }
 
     var pauseExecution = function (callback) {
@@ -41,7 +40,8 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
         }
     });
 
-    var _doNtimes_queues = function (provision, callback, messageEmit) {
+
+    var _doNtimes_queues = function (callback, messageEmit) {
 
         async.series([
 
@@ -108,7 +108,7 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
 
                                 if (messageEmit && typeof (messageEmit) === 'function') {
                                     console.log(message);
-                                    messageEmit({time: nowToString, message: {id: 1, Point: [numQueues, time, provision.payload.length]}, version : version});
+                                    messageEmit({time: nowToString, message: {id: 1, point: [numQueues, time, provision.payload.length]}, version : version});
                                 }
 
                                 callback(null, {numPops: numQueues, time: time});
@@ -158,8 +158,8 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                         if (!stopped) {
                             setTimeout(function () {
                                 //console.log('Trying with %d queues', numPops);
-                                _doNtimes_queues(provision, callback, messageEmit);
-                            }, 10000);
+                                _doNtimes_queues(callback, messageEmit);
+                            }, 5000);
                         }
                     } else {
                         benchmark.webSocket.removeAllListeners('pauseTest');
@@ -170,7 +170,7 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
         );
     };
 
-    _doNtimes_queues(provision, callback, messageEmit);
+    _doNtimes_queues(callback, messageEmit);
 };
 
 /**
@@ -182,9 +182,10 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
  * @param messageEmit The function that will process the generated data (times, ...). This function
  * can store this data in a data base or send it through a socket.
  */
-var doNtimes = function (numPops, payloadLength, messageEmit) {
+var doNtimes = function (numQueues, payloadLength, messageEmit, version) {
 
     var provision = genProvision.genProvision(1, payloadLength);
+    console.log('Version actual' + version);
 
     doNtimes_queues(numQueues, provision, function () {
 
@@ -192,19 +193,19 @@ var doNtimes = function (numPops, payloadLength, messageEmit) {
         if (payloadLength < config.maxPop.max_payload) {
 
             payloadLength += config.maxPop.payload_length_interval;
-            doNtimes(numQueues, payloadLength, messageEmit);
+            doNtimes(numQueues, payloadLength, messageEmit, version);
 
         } else {
 
             dbPusher.closeDBConnections();
             console.log('all tests finished');
         }
-    }, messageEmit);
+    }, messageEmit, version);
 };
 
-var launchTest = function(numPops, payloadLength, messageEmit){
-    doNtimes(numQueues, payloadLength, messageEmit);
-    version++;
+var launchTest = function(numQueues, payloadLength, messageEmit){
+    doNtimes(numQueues, payloadLength, messageEmit, version);
+    exports.version = ++version;
 };
 
 
