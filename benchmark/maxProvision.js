@@ -63,7 +63,7 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                     var now = new Date();
                     var message = numQueues + ' inboxes have been provisioned with ' +
                         payload_length + ' bytes of payload in ' + time + ' ms with no errors';
-                    var nowToString = now.toTimeString();
+                    var nowToString = now.toTimeString().slice(0,8);
 
                     console.log(message);
                     sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: message});
