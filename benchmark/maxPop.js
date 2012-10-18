@@ -100,7 +100,7 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                                 var now = new Date();
                                 var message = numPops + ' pops with a provision of ' + provision.payload.length +
                                     ' bytes in ' + time + ' milliseconds without errors';
-                                var nowToString = now.getHours() + " : " + now.getMinutes() + " : " + now.getSeconds();
+                                var nowToString = now.toTimeString();
 
                                 sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: message});
 
