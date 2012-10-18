@@ -10,6 +10,8 @@ var sender = require('./sender.js');
 
 http.globalAgent.maxSockets = 500;
 
+var version;
+exports.version = version;
 
 var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, messageEmit) {
 
@@ -55,13 +57,13 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                     dbPusher.pushTransaction('UNSEC:', provision, function (err, res) {
                         contResponse++;
 
-                        if (contResponse === numPops) {
+                        if (contResponse === numQueues) {
                             callback();
                         }
                     });
                 };
 
-                for (var i = 0; i < numPops; i++) {
+                for (var i = 0; i < numQueues; i++) {
                     setTimeout(function () {
                         fillQueue();
                     }, 0);
@@ -93,23 +95,23 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                                 callback('Error, empty queue: ' + data, null);
                             }
 
-                            if (contResponse === numPops) {
+                            if (contResponse === numQueues) {
                                 var end = new Date().valueOf();
                                 var time = end - init;
 
                                 var now = new Date();
-                                var message = numPops + ' pops with a provision of ' + provision.payload.length +
+                                var message = numQueues + ' pops with a provision of ' + provision.payload.length +
                                     ' bytes in ' + time + ' milliseconds without errors';
-                                var nowToString = now.toTimeString().slice(0,8);
+                                var nowToString = now.toTimeString();
 
                                 sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: message});
 
                                 if (messageEmit && typeof (messageEmit) === 'function') {
                                     console.log(message);
-                                    messageEmit({time: nowToString, message: {id: 1, Point: [numPops, time, provision.payload.length]}});
+                                    messageEmit({time: nowToString, message: {id: 1, Point: [numQueues, time, provision.payload.length]}, version : version});
                                 }
 
-                                callback(null, {numPops: numPops, time: time});
+                                callback(null, {numPops: numQueues, time: time});
                             }
                         });
                 };
@@ -125,7 +127,7 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                     host = config.agentsHosts[agentIndex].host;
                     port = config.agentsHosts[agentIndex].port;
 
-                    if (numTimes < numPops) {
+                    if (numTimes < numQueues) {
                         setTimeout(function () {
                             pop(host, port);
                             doPop(++numTimes);
@@ -150,9 +152,9 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                     dbPusher.flushBBDD();
 
                     //Increase the number of pops until it reaches the maximum number of pops defined in the config file,
-                    if (numPops < config.maxPop.max_pops) {
+                    if (numQueues < config.maxPop.max_pops) {
 
-                        numPops += config.maxPop.queues_inteval;
+                        numQueues += config.maxPop.queues_inteval;
                         if (!stopped) {
                             setTimeout(function () {
                                 //console.log('Trying with %d queues', numPops);
@@ -184,13 +186,13 @@ var doNtimes = function (numPops, payloadLength, messageEmit) {
 
     var provision = genProvision.genProvision(1, payloadLength);
 
-    doNtimes_queues(numPops, provision, function () {
+    doNtimes_queues(numQueues, provision, function () {
 
         //Increase the payload until it reaches the maximum payload size defined in the config file.
         if (payloadLength < config.maxPop.max_payload) {
 
             payloadLength += config.maxPop.payload_length_interval;
-            doNtimes(numPops, payloadLength, messageEmit);
+            doNtimes(numQueues, payloadLength, messageEmit);
 
         } else {
 
@@ -200,5 +202,10 @@ var doNtimes = function (numPops, payloadLength, messageEmit) {
     }, messageEmit);
 };
 
+var launchTest = function(numPops, payloadLength, messageEmit){
+    doNtimes(numQueues, payloadLength, messageEmit);
+    version++;
+};
 
-exports.doNtimes = doNtimes;
+
+exports.launchTest = launchTest;

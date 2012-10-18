@@ -25,7 +25,8 @@ var initOptions = {
                 start: config.payload_length,
                 end: config.maxProvision.max_payload,
                 interval: config.maxProvision.payload_length_interval
-            }
+            },
+            version : maxProvision.version
         },
         pop: {
             queues: {
@@ -37,7 +38,8 @@ var initOptions = {
                 start: config.payload_length,
                 end: config.maxPop.max_payload,
                 interval: config.maxPop.payload_length_interval
-            }
+            },
+            version : maxPop.version
         }
     }
 };
@@ -55,18 +57,15 @@ sender.createSocket(8090, function (socket) {
         //Once the agents are launched, the listener can be added to launch new tests...
         receiveMessage(webSocket, 'newTest', function (req) {
             webSocket.removeAllListeners('continueTest');
-            console.log(req);
             switch (req.id) {
                 case 0:
-                    maxProvision.doNtimes(config.maxProvision.start_number_provisions, config.payload_length, function (data) {
-                        data.version = req.version;
+                    maxProvision.launchTest(config.maxProvision.start_number_provisions, config.payload_length, function (data) {
                         sendMessage(webSocket, 'newPoint', data);
                     });
                     break;
 
                 case 1:
-                    maxPop.doNtimes(config.maxPop.start_number_pops, config.payload_length, function (data) {
-                        data.version = req.version;
+                    maxPop.launchTest(config.maxPop.start_number_pops, config.payload_length, function (data) {
                         sendMessage(webSocket, 'newPoint', data);
                     });
                     break;
