@@ -18,7 +18,9 @@
 		
 		var testing, cpu, memory,		// DOM Canvas
 			tabs, 						// Test Tab Buttons
-			startButton, pauseButton,	// Buttons
+			startButton,				// Buttons
+			pauseButton,
+			modalButton,
 			logs;						// Logs Display
 
 
@@ -27,6 +29,7 @@
 		var queryUIElements = function() {
 			startButton = $('#start');
 			pauseButton = $('#pause');
+			modalButton = $('#modal-button');
 
 			tabs        = $('.tab');
 
@@ -50,12 +53,48 @@
 			$('#test-description').text( Test[number] );
 		}
 
+
+
+		this.increaseBar = function( interval ){
+            var meter = $('.meter');
+           var span = meter.children();
+           var max = meter.width();
+           var wid = span.width();
+           var actual = wid/max * 100;
+           var add = 10;
+           var set = (actual+add).toString() + '%';
+           span.css({'width': set});
+
+           if (span.width() === max) {
+                meter.removeClass('red').addClass('green');
+                clearInterval( interval );
+                $('#modal-description').slideUp();
+                 modalButton.on('click', this.hideModalBox)
+                 			.addClass('btn-primary')
+                 			.removeClass('disabled')
+                			.text('Ready!');
+                
+           };
+        }
+
+        this.hideModalBox = function() {
+        	 $('#modal').removeClass('in');
+        	 var backdrop = 'modal-backdrop';
+        	 $('.' + backdrop).removeClass(backdrop);
+        }
+
 		// Public API
 
 		this.init = function () {
 			queryUIElements();
 			setupEventHandlers();
 			
+			var self = this;
+			var interval = setInterval(function() {
+				self.increaseBar(interval);
+			}, 300);
+
+			//
 			updateDescription(0);
 		}
 
@@ -75,12 +114,12 @@
 			if ( !startButton.hasClass( CSS.STARTED ) ) {
 				startButton.addClass( CSS.STARTED );
 				startButton.text(Text.RESTART);
+				pauseButton.removeClass('disabled');
 				organizer.start();
 			
 			} else {
 				organizer.restart();
 			}
-
 			
 		}
 
@@ -126,16 +165,18 @@
 			if ( state[sceneNumber]==="P" ) {
 				startButton.text( Text.RESTART );
 				pauseButton.text( Text.CONTINUE );
+				pauseButton.removeClass( 'disabled' );
 
 			} else if ( state[sceneNumber]==="S" ) {
 				pauseButton.removeClass( CSS.PAUSED );
 				startButton.text( Text.RESTART );
 				pauseButton.text( Text.PAUSE );
+				pauseButton.removeClass( 'disabled' );
 
 			} else {
 				startButton.removeClass( CSS.STARTED );
 				pauseButton.removeClass( CSS.PAUSED );
-
+				pauseButton.addClass( 'disabled' )
 				startButton.text( Text.START );
 				pauseButton.text( Text.PAUSE );
 			}
@@ -156,7 +197,6 @@
 		// Init
 
 		this.init();
-
 	}
 
 
