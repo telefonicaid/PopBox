@@ -124,7 +124,9 @@ var doNtimes = function (numQueues, payloadLength, messageEmit, version) {
 
 var launchTest = function (numQueues, payloadLength, messageEmit) {
     doNtimes(numQueues, payloadLength, messageEmit, version);
-    exports.version = version++;
+    version++;
+    exports.version = version;
+
 };
 
 
