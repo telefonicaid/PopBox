@@ -8,7 +8,8 @@
 	var Plane = function( test, size ) {
 
 		var plane,
-			sizeMap = {};
+			sizeMap = {},
+			ratio   = 1;
 
 
 		// Private Methods
@@ -115,13 +116,13 @@
 		}
 
 
-		this.addPoint = function( point ) {
+		this.addPoint = function( point, maxPoint ) {
 
 			for (var p in plane.children) {
 
 				var queue    = coord( point[0], test.queues.start, test.queues.interval );
 				var payload  = coord( point[2], test.payload.start, test.payload.interval ) * sizeMap.x;
-				var time    = (point[0] / (point[1]/1000)) * size.y /20000;
+				var time    = (point[0] / (point[1]/1000)) * size.y / maxPoint;
 				console.log(point[0] / (point[1]/1000));
 
 				var vertices = plane.children[p].geometry.vertices;
@@ -133,17 +134,38 @@
 
 
 		this.restart = function() {
+			this.rescale(0);
+			//ratio = 1;
+		}
+
+
+		this.rescale = function( newRatio ) {
+	
+			//console.debug("reescaling with ratio " + newRatio);
+
+			var end = false;
 			var vertices = plane.children[0].geometry.vertices;
 
-			for (var i = 0; i < vertices.length; i++) {
-				vertices[i].z = 0;
+			for (var i = 0; !end && i < vertices.length; i++) {
+
+				if ( vertices[i].z === 0) {
+					end = true;
+
+				} else if ( newRatio === 0 ) {
+					vertices[i].z = 0;
+
+				} else {
+					vertices[i].z /= 2;
+				}
+
 			}
+
+			// ratio = newRatio;
 
 			// 
 			setup(0);
-
-			console.log('restarting plane');
 		}
+
 
 		// Left for future implementation
 		this.animate = function() {

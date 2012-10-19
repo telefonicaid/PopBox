@@ -41,6 +41,7 @@
 			logs        = $('#logs');
 		}
 
+
 		var setupEventHandlers = function() {
 			startButton.on('click', self.start);
 			pauseButton.on('click', self.pause);
@@ -48,40 +49,55 @@
 			tabs.on('click', self.changeTest);
 		}
 
+
 		var updateDescription = function( number ) {
 			var Test = PBDV.Constants.Test;
 			$('#test-description').text( Test[number] );
 		}
 
 
+        var hideModalBox = function() {
+
+        	$('#modal').removeClass('in');
+
+        	var backdrop = 'modal-backdrop';
+        	$('.' + backdrop).removeClass(backdrop);
+        }
+
 
 		this.increaseBar = function( interval ){
-            var meter = $('.meter');
-           var span = meter.children();
-           var max = meter.width();
-           var wid = span.width();
-           var actual = wid/max * 100;
-           var add = 10;
-           var set = (actual+add).toString() + '%';
-           span.css({'width': set});
 
-           if (span.width() === max) {
-                meter.removeClass('red').addClass('green');
-                clearInterval( interval );
-                $('#modal-description').slideUp();
-                 modalButton.on('click', this.hideModalBox)
-                 			.addClass('btn-primary')
-                 			.removeClass('disabled')
-                			.text('Ready!');
-                
-           };
-        }
+			// 
+			var meter = $('.meter');
+			var span  = meter.children();
 
-        this.hideModalBox = function() {
-        	 $('#modal').removeClass('in');
-        	 var backdrop = 'modal-backdrop';
-        	 $('.' + backdrop).removeClass(backdrop);
-        }
+			// 
+			var max    = meter.width();
+			var actual = span.width() / max * 100;
+			var add    = 10;
+
+			// 
+			var set    = (actual + add).toString() + '%';
+			span.css({'width': set});
+
+			// 
+			if (span.width() === max) {
+
+			    clearInterval( interval );
+
+			    meter.removeClass('red').addClass('green');
+
+				$('#modal-description').slideUp();
+			    
+			    modalButton.on('click', hideModalBox)
+			    			.addClass('btn-primary')
+			     			.removeClass('disabled')
+			    			.text('Ready!');
+			    
+			}
+		}
+
+
 
 		// Public API
 
@@ -105,16 +121,16 @@
 			// Rename
 			var Text = PBDV.Constants.Text;
 			var CSS = PBDV.Constants.CSS;
+
 			var current = tabs.filter('.current').prevAll().length;
 			state[current]="S";
-			console.log("current");
-			console.log(current);
-			// TODO Subscribe to organizer
 
+			// TODO Subscribe to organizer
 			if ( !startButton.hasClass( CSS.STARTED ) ) {
 				startButton.addClass( CSS.STARTED );
 				startButton.text(Text.RESTART);
 				pauseButton.removeClass('disabled');
+
 				organizer.start();
 			
 			} else {
@@ -129,6 +145,7 @@
 			// Renames
 			var Text = PBDV.Constants.Text;
 			var CSS  = PBDV.Constants.CSS;
+			
 			var current = tabs.filter('.current').prevAll().length;
 			state[current]="P";
 

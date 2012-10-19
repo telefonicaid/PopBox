@@ -21,7 +21,6 @@
 
 		// Methods invoked by ViewController
 
-
 		this.start = function() {
 
 			// Throw event to 'connect'
@@ -30,6 +29,7 @@
 			//
 			this.conn.startTest( currentTest );
 		}
+
 
 		this.restart = function() {
 
@@ -40,23 +40,22 @@
 			this.conn.restartTest( currentTest );
 		}
 
+
 		this.pause = function() {
 
 			// 
-			// drawer.pause();
-
-			// 
 			this.conn.pauseTest( currentTest );
+
 		}
+
 
 		this.continue = function() {
 
-			//
-			// drawer.continue();
-
 			// 
 			this.conn.continueTest( currentTest );
+
 		}
+
 
 		this.changeToTest = function( testNumber ) {
 			currentTest = testNumber;
@@ -68,7 +67,9 @@
 			return drawer.getCanvas();
 		}
 
-		// Methods invoked by Connector
+
+
+		// Methods invoked by Connector after receiving determined events
 
 		this.initTest = function( tests ) {
 			drawer.configTest( tests );
@@ -84,7 +85,7 @@
 		}
 
 		this.addDataMemory = function( host, time, memoryData ) {
-			var mem = parseInt(memoryData)/1000;
+			var mem = parseInt(memoryData) / 1000;
 			this.memory.update( host, time, mem );
 		}
 
@@ -99,7 +100,7 @@
 		}
 
 
-		// TODO !!!!!
+		// TODO Remove 'vc' dependencies!!!!!
 		this.setVC = function(vc) {
 			this.vc = vc;
 		}

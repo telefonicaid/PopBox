@@ -86,8 +86,24 @@
 			threeGraph.add(plot.threePlot);
 		}
 
-		this.addPoint = function( point, lastPoint ) {
-			plot.addPoint( point, lastPoint );
+		var maxPoint = 1000;
+
+		this.addPoint = function( point ) {
+
+			var z = (point[0] / (point[1]/1000));
+			
+			if ( z > maxPoint ) {
+				console.log("maxPoint " + maxPoint);
+				console.log("z " + z);
+
+				maxPoint *= 2;
+
+				axis.rescale();
+				plot.rescale();
+			}
+
+			plot.addPoint( point, maxPoint );
+			
 		}
 
 		this.animate = function( threeCamera ) {

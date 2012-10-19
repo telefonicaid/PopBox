@@ -222,8 +222,8 @@
 			};
 		}
 
-		this.reescale = function ( ratio ) {
-			maxHeigth = ratio*maxHeigth;
+		this.rescale = function ( ratio ) {
+			maxHeigth *= 2;
 			setPart('z');
 		}
 

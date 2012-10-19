@@ -48,7 +48,7 @@
 
 				for (var t in data.tests) {
 					var v = data.tests[t].version;
-					versions.push( v );
+					versions.push( 0 ); // TODO
 				}
 
 				console.log("versions");
@@ -69,10 +69,12 @@
 
 					} else if ( data.message ) {
 						var id = data.message.id;
-
+						organizer.addData( id, data.message.point );
+						/*
 						if ( data.version === versions[id] ) {
 							organizer.addData( id, data.message.point );
 						}
+						*/
 					}
 
 				});
