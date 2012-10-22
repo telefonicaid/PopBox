@@ -21,7 +21,8 @@
 			startButton,				// Buttons
 			pauseButton,
 			modalButton,
-			logs;						// Logs Display
+			logs,						// Logs Display
+			meter;						// Modal Progress Bar
 
 
 		// Private Methods
@@ -37,8 +38,9 @@
 			cpu         = $('#cpu');
 			memory      = $('#memory');
 
-
 			logs        = $('#logs');
+
+			meter       = $('.meter');
 		}
 
 
@@ -65,29 +67,25 @@
         }
 
 
-		this.increaseBar = function(end){
-
-			// 
-			var meter = $('.meter');
+		this.increaseBar = function( end ){
+			
 			var span  = meter.children();
 
 			// 
-			var max    = meter.width();
-			var actual = span.width() / max * 100;
-			var add    = 1;
+			var max        = meter.width();
+			var current    = span.width() / max * 100;
+			var increment  = 1;
 
 			// 
-			var amount = actual + add;
-			var set    = (amount).toString() + '%';
-			span.css({'width': set});
+			var amount = current + increment;
+			var set    = amount  + '%';
+			span.css({ 'width' : set });
 
 			// 
-			if ( end && amount === 60 ) {
+			if ( !end && amount === 60 ) {
 				clearInterval( barInterval );
-			}
-
-			if (span.width() >= max) {
-
+			
+			} else if ( end && span.width() >= max ) {
 			    clearInterval( barInterval );
 
 			    meter.removeClass('red').addClass('green');
@@ -98,24 +96,23 @@
 			    			.addClass('btn-primary')
 			     			.removeClass('disabled')
 			    			.text('Ready!');
-			    
+				    
 			}
 		}
 
+
 		var barInterval;
 
-		var setBarInterval = function( time ) {
-
+		var setBarInterval = function( time, end ) {
 			barInterval = setInterval(function() {
-				self.increaseBar();
+				self.increaseBar( end );
 			}, time);
-
 		}
 
 
 		this.endModalBar = function() {
 			clearInterval( barInterval );
-			setBarInterval(2);
+			setBarInterval(2, true);
 		}
 
 
@@ -125,7 +122,7 @@
 			queryUIElements();
 			setupEventHandlers();
 			
-			setBarInterval(30);
+			setBarInterval(30, false);
 
 			//
 			updateDescription(0);

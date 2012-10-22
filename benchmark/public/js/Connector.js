@@ -80,11 +80,11 @@
 
 			});
 
-/*
+
 			socket.on('endLog', function (data) {
 				organizer.log( data.time, data.message );
 			});
-*/
+
 
 			socket.on('cpu', function (data) {
 				organizer.addDataCPU(data.host, data.time, data.cpu);
