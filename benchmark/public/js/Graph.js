@@ -86,23 +86,29 @@
 			threeGraph.add(plot.threePlot);
 		}
 
-		var maxPoint = 1000;
+		var maxPoint = 10000;
+		var ratio = 1;
 
 		this.addPoint = function( point ) {
 
 			var z = (point[0] / (point[1]/1000));
-			
-			if ( z > maxPoint ) {
+			var cota = maxPoint * 3/4;
+			if ( z > cota ) {
+
+				ratio = cota / z;
+
+				maxPoint *= 5/4;
 				console.log("maxPoint " + maxPoint);
-				console.log("z " + z);
+				console.log("cota " + cota);
+				console.log("newRatio " + ratio);
 
-				maxPoint *= 2;
 
-				axis.rescale();
-				plot.rescale();
+				axis.rescale( ratio );
+				plot.rescale( ratio );
 			}
 
 			plot.addPoint( point, maxPoint );
+			
 			
 		}
 

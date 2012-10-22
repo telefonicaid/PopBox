@@ -120,13 +120,15 @@
 
 			for (var p in plane.children) {
 
-				var queue    = coord( point[0], test.queues.start, test.queues.interval );
-				var payload  = coord( point[2], test.payload.start, test.payload.interval ) * sizeMap.x;
-				var time    = (point[0] / (point[1]/1000)) * size.y / maxPoint;
-				console.log(point[0] / (point[1]/1000));
+				var queue   = coord( point[0], test.queues.start, test.queues.interval );
+				var payload = coord( point[2], test.payload.start, test.payload.interval ) * sizeMap.x;
+				var time    = point[0] / (point[1]/1000) * size.y / maxPoint;
+				console.log("Queue: " +  point[0]);
+				console.log("Payload: " +  point[2]);
+				console.log("TPS : " + point[0] / (point[1]/1000));
 
 				var vertices = plane.children[p].geometry.vertices;
-				vertices[payload + queue].z = time;
+				vertices[payload + queue].z = time * ratio;
 
 				setup(p);
 			}
@@ -135,7 +137,7 @@
 
 		this.restart = function() {
 			this.rescale(0);
-			//ratio = 1;
+			ratio = 1;
 		}
 
 
@@ -155,12 +157,12 @@
 					vertices[i].z = 0;
 
 				} else {
-					vertices[i].z /= 2;
+					vertices[i].z *= newRatio;
 				}
 
 			}
 
-			// ratio = newRatio;
+			ratio = newRatio;
 
 			// 
 			setup(0);

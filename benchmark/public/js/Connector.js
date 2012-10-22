@@ -48,7 +48,7 @@
 
 				for (var t in data.tests) {
 					var v = data.tests[t].version;
-					versions.push( 0 ); // TODO
+					versions.push( v );
 				}
 
 				console.log("versions");
@@ -63,18 +63,17 @@
 				socket.on('newPoint', function (data) {
 					// console.log( data );
 					console.log( data.version );
-					
+
 					if ( data.err ) {
 						console.error('Error: message received with no data points');
 
 					} else if ( data.message ) {
 						var id = data.message.id;
-						organizer.addData( id, data.message.point );
-						/*
+						
 						if ( data.version === versions[id] ) {
 							organizer.addData( id, data.message.point );
 						}
-						*/
+						
 					}
 
 				});
