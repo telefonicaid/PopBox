@@ -58,9 +58,42 @@ box-shadow : -1px -1px 3px 0px #333;}
 
 .navbar { margin-bottom : 0; }
 .navbar-inner {
-   background : #EFEFEF;
+   background : #266399;
    padding          : 0;
    border-radius    : 0;
+   border-top: none;
+   border-bottom: #2E2E2E; 
+  color: #E5E5E5;
+  /*text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);*/
+  background-color: #363636;
+  background-image: -moz-linear-gradient(top, #325473, #0C3A63);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#325473), to(#0C3A63));
+  background-image: -webkit-linear-gradient(top, #325473, #0C3A63);
+  background-image: -o-linear-gradient(top, #325473, #0C3A63);
+  background-image: linear-gradient(to bottom, #325473, #0C3A63);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff325473', endColorstr='#ff0C3A63', GradientType=0);
+  *background-color: #0C3A63;
+  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
+
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+}
+
+.active {
+	background : #006DCC;
+	color : #FFFFFF;
+	background-image: -moz-linear-gradient(top, #0044cc, #69B8E0);
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#0044cc), to(#69B8E0));
+	background-image: -webkit-linear-gradient(top, #0044cc, #69B8E0);
+	background-image: -o-linear-gradient(top, #0044cc, #69B8E0);
+	background-image: linear-gradient(to bottom, #0044cc, #69B8E0);
+	background-repeat: repeat-x;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0044cc', endColorstr='#ff69B8E0', GradientType=0);
+	/*border-color: #0044cc #0044cc #002a80;
+	border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);*/
+	border-bottom: none;
+
+	 
 }
 
 .header {
@@ -165,9 +198,9 @@ box-shadow : -1px -1px 3px 0px #333;}
    padding      : 10px 0;
 
    border-right : 1px solid #AAA;
-   color        : #333;
+/*   color        : #C5C6C9;*/
    font-size    : 1.125em;
-   text-shadow  : 0 1px 0 white;
+   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
 }
 
 .tab:last-child { border-right : 0; }
@@ -176,8 +209,12 @@ box-shadow : -1px -1px 3px 0px #333;}
    padding  : 1em 1em 0.2em;
    height   : 80px;
    overflow : auto;
+   background: #EFEFEF;
 }
 
+#test-description{
+	color : #2E2E2E;
+}
 
 /* Logger Widget */
 
