@@ -66,12 +66,12 @@ exports.maxProvision = {};
 /**
  * @type {Number}
  */
-exports.maxProvision.start_number_provisions = 5000;
+exports.maxProvision.start_number_provisions = 1000;
 
 /**
  * @type {Number}
  */
-exports.maxProvision.max_queues = 50000;
+exports.maxProvision.max_queues = 20000;
 
 /**
  * @type {Number}
@@ -81,7 +81,7 @@ exports.maxProvision.max_payload = 5000;
 /**
  * @type {Number}
  */
-exports.maxProvision.queues_inteval = 2000;
+exports.maxProvision.queues_inteval = 1000;
 
 /**
  * @type {Number}
@@ -107,11 +107,6 @@ exports.maxPop.max_pops = 20000;
  * @type {Number}
  */
 exports.maxPop.queues_inteval = 1000;
-
-/**
- * @type {Number}
- */
-exports.maxPop.max_pops = 20000;
 
 /**
  * @type {Number}
