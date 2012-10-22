@@ -21,7 +21,7 @@
 
 
 		var maxPoint = options.size.y * 2/3;
-		var cota = maxPoint * 2/3;
+		var cota  = maxPoint * 2/3;
 		var ratio = maxPoint / cota;
 
 
@@ -93,32 +93,10 @@
 
 
 		this.addPoint = function( point ) {
-/*
-			var z = (point[0] / (point[1]/1000));
-			var cota = maxPoint * 3/4;
-			console.log("cota " + cota + " - TPS " + z);
-
-			if ( z > cota ) {
-				ratio = cota / z;
-				console.error("rescaling");
-				console.log("newRatio " + ratio);
-				console.log("maxPoint " + maxPoint);
-				//maxPoint *= 5/4;
-				maxPoint/=ratio;
-				console.log("new maxPoint" + maxPoint);
-
-
-				axis.rescale( ratio );
-				plot.rescale( ratio );
-			}
-*/
 
 			var z = (point[0] / (point[1]/1000));
 
-			console.log("cota " + cota + " - TPS " + z);
-
 			if ( z > cota ) {
-				console.error("rescaling");
 				cota = z;
 				
 				var ratio = maxPoint / cota;
@@ -127,10 +105,6 @@
 			}
 			
 			plot.addPoint( point, maxPoint );
-
-			
-			
-			
 		}
 
 		this.animate = function( threeCamera ) {
@@ -140,6 +114,8 @@
 
 		this.restart = function() {
 			plot.restart();
+			cota = maxPoint * 2/3;
+			ratio = maxPoint / cota;
 		}
 
 		

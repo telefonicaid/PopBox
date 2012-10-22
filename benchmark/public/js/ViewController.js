@@ -65,7 +65,7 @@
         }
 
 
-		this.increaseBar = function( interval ){
+		this.increaseBar = function(end){
 
 			// 
 			var meter = $('.meter');
@@ -74,16 +74,21 @@
 			// 
 			var max    = meter.width();
 			var actual = span.width() / max * 100;
-			var add    = 10;
+			var add    = 1;
 
 			// 
-			var set    = (actual + add).toString() + '%';
+			var amount = actual + add;
+			var set    = (amount).toString() + '%';
 			span.css({'width': set});
 
 			// 
-			if (span.width() === max) {
+			if ( end && amount === 60 ) {
+				clearInterval( barInterval );
+			}
 
-			    clearInterval( interval );
+			if (span.width() >= max) {
+
+			    clearInterval( barInterval );
 
 			    meter.removeClass('red').addClass('green');
 
@@ -97,6 +102,21 @@
 			}
 		}
 
+		var barInterval;
+
+		var setBarInterval = function( time ) {
+
+			barInterval = setInterval(function() {
+				self.increaseBar();
+			}, time);
+
+		}
+
+
+		this.endModalBar = function() {
+			clearInterval( barInterval );
+			setBarInterval(2);
+		}
 
 
 		// Public API
@@ -105,10 +125,7 @@
 			queryUIElements();
 			setupEventHandlers();
 			
-			var self = this;
-			var interval = setInterval(function() {
-				self.increaseBar(interval);
-			}, 300);
+			setBarInterval(30);
 
 			//
 			updateDescription(0);
