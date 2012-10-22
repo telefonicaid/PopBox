@@ -1,0 +1,29 @@
+
+/* Logger Widget */
+
+.scrollContainer {
+   overflow : hidden;
+   height   : 130px;
+   width    : 100%;
+}
+
+   .scrollable {
+      overflow : auto;
+      height   : 110px;
+      width    : 100%;
+   }
+
+      .log                 { color : black; }
+      .log:nth-child(even) { background : #CCC; }
+      .log:nth-child(odd)  { background : #FFF; }
+
+         .timestamp {
+            border-right : 1px solid #999;
+            width : 4em;
+         }
+
+         .message { padding-left : 1em; }
+
+         /* TODO */
+         .th,
+         .timestamp { text-align: center; }
