@@ -5,11 +5,11 @@
 
 	"use strict";
 
-	var Plane = function( test, size ) {
+	var Plane = function( test, size, _ratio ) {
 
 		var plane,
 			sizeMap = {},
-			ratio   = 1;
+			ratio   = _ratio;
 
 
 		// Private Methods
@@ -115,6 +115,7 @@
 
 		}
 
+		var points = [];
 
 		this.addPoint = function( point, maxPoint ) {
 
@@ -122,13 +123,15 @@
 
 				var queue   = coord( point[0], test.queues.start, test.queues.interval );
 				var payload = coord( point[2], test.payload.start, test.payload.interval ) * sizeMap.x;
-				var time    = point[0] / (point[1]/1000) * size.y / maxPoint;
+				var time    = point[0] / (point[1]/1000);
 				console.log("Queue: " +  point[0]);
 				console.log("Payload: " +  point[2]);
-				console.log("TPS : " + point[0] / (point[1]/1000));
+				//console.log("TPS : " + point[0] / (point[1]/1000));
 
 				var vertices = plane.children[p].geometry.vertices;
 				vertices[payload + queue].z = time * ratio;
+
+				points.push( time );
 
 				setup(p);
 			}
@@ -137,29 +140,42 @@
 
 		this.restart = function() {
 			this.rescale(0);
-			ratio = 1;
+			// ratio = 1;
+			points = [];
 		}
 
 
 		this.rescale = function( newRatio ) {
 	
 			//console.debug("reescaling with ratio " + newRatio);
-
+/*
 			var end = false;
 			var vertices = plane.children[0].geometry.vertices;
 
 			for (var i = 0; !end && i < vertices.length; i++) {
 
-				if ( vertices[i].z === 0) {
-					end = true;
-
-				} else if ( newRatio === 0 ) {
+				if ( newRatio === 0 ) {
 					vertices[i].z = 0;
 
 				} else {
 					vertices[i].z *= newRatio;
 				}
 
+			}
+
+			ratio *= newRatio;
+*/
+			var vertices = plane.children[0].geometry.vertices;
+
+			for (var i = 0; i < points.length; i++) {
+
+				if ( newRatio === 0) {
+					vertices[i].z = 0;
+				
+				} else {
+					vertices[i].z = points[i] * newRatio;
+				}
+				
 			}
 
 			ratio = newRatio;

@@ -149,7 +149,6 @@
 			    				c = v(0, i, size.z);
 			    				value = Math.round(i*maxHeigth/10/amount);
 			    				position.y = i;
-			    				console.log(i);
 								break;
 
 					case 'z' :  a = v(0, 0, i);
@@ -224,7 +223,7 @@
 
 		this.rescale = function ( ratio ) {
 			maxHeigth *= 2;
-			setPart('z');
+			setPart('y');
 		}
 
 		// Init

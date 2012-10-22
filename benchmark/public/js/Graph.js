@@ -20,6 +20,11 @@
 			center;
 
 
+		var maxPoint = options.size.y * 2/3;
+		var cota = maxPoint * 2/3;
+		var ratio = maxPoint / cota;
+
+
 		// Private Methods
 
 		var createTextCanvas = function( text, size, color, font ) {
@@ -68,7 +73,7 @@
 		}
 
 		this.createPlot = function( options ) {
-			return new PBDV.Plane( options.test, options.size );
+			return new PBDV.Plane( options.test, options.size, ratio );
 		}
 
 		this.init = function() {
@@ -86,28 +91,44 @@
 			threeGraph.add(plot.threePlot);
 		}
 
-		var maxPoint = 10000;
-		var ratio = 1;
 
 		this.addPoint = function( point ) {
-
+/*
 			var z = (point[0] / (point[1]/1000));
 			var cota = maxPoint * 3/4;
+			console.log("cota " + cota + " - TPS " + z);
+
 			if ( z > cota ) {
-
 				ratio = cota / z;
-
-				maxPoint *= 5/4;
-				console.log("maxPoint " + maxPoint);
-				console.log("cota " + cota);
+				console.error("rescaling");
 				console.log("newRatio " + ratio);
+				console.log("maxPoint " + maxPoint);
+				//maxPoint *= 5/4;
+				maxPoint/=ratio;
+				console.log("new maxPoint" + maxPoint);
 
 
 				axis.rescale( ratio );
 				plot.rescale( ratio );
 			}
+*/
 
+			var z = (point[0] / (point[1]/1000));
+
+			console.log("cota " + cota + " - TPS " + z);
+
+			if ( z > cota ) {
+				console.error("rescaling");
+				cota = z;
+				
+				var ratio = maxPoint / cota;
+				axis.rescale( ratio );
+				plot.rescale( ratio );
+			}
+			
 			plot.addPoint( point, maxPoint );
+
+			
 			
 			
 		}
