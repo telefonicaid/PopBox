@@ -12,11 +12,16 @@
 
 		var arrayScenes,
 			arrayCameras,
+			arrayRays,
+
 			threeRenderer,
 
 			canvas = $('#testing'),
 			currentScene = 0,
-			started = false;
+			mouse = { 
+				x : 0,
+				y : 0
+			};
 
 
 		// Private Methods
@@ -92,6 +97,28 @@
 			canvas.mouseout(onMouseOut);
 		}
 
+		var onMouseMove = function( event ) {
+			// update sprite position
+			// sprite1.position.set( event.clientX, event.clientY, 0 );
+			
+			// update the mouse variable
+			mouse.x = ( event.clientX / canvas.width() ) * 2 - 1;
+			mouse.y = - ( event.clientY / canvas.height() ) * 2 + 1;
+		}
+
+
+		this.createRays = function() {
+			arrayRays = [];
+			for (var i = 0; i < arrayScenes.length; i++) {
+				var camera = arrayCameras[i];
+				var mouseVector = new THREE.Vector3( mouse.x, mouse.y, 1 );
+				var mouseNorm = mouseVector.subSelf( camera.position ).normalize();
+
+				var ray = new THREE.Ray(camera.position, mouseNorm);
+				arrayRays.push(ray);
+			}
+		}
+
 
 		this.createRenderer = function() {
 			// Rename
@@ -152,24 +179,8 @@
 			this.createRenderer();
 
 			// 
-			window.addEventListener('resize', onWindowResize, false);
-		}
-
-
-		this.start = function() {
-			if ( !started ) {
-				started = true;
-			}
-		}
-
-
-		this.pause = function() {
-			started = false;
-		}
-
-
-		this.continue = function() {
-			this.start();
+			window.addEventListener( 'resize', onWindowResize, false);
+			window.addEventListener( 'mousemove', onMouseMove, false );
 		}
 
 
@@ -185,24 +196,21 @@
 
 		this.animate = function() {
 
-			//if ( started ) {
+			var self = this;
 
-				var self = this;
+			var raf = requestAnimationFrame();
+			raf(function() {
+				self.animate();
+			});	
 
-				var raf = requestAnimationFrame();
-				raf(function() {
-					self.animate();
-				});	
+			var scene  = arrayScenes[ currentScene ];
+			var camera = arrayCameras[ currentScene ];
 
-				var scene  = arrayScenes[ currentScene ];
-				var camera = arrayCameras[ currentScene ];
+			camera.animate();
 
-				camera.animate();
+			scene.animate( camera.threeCamera );
 
-				scene.animate( camera.threeCamera );
-
-				this.render();
-			//}
+			this.render();
 
 		}
 
@@ -213,6 +221,7 @@
 
 		this.changeToTest = function( testNumber ) {
 			currentScene = testNumber;
+			onWindowResize();
 		}
 
 		this.configTest = function( tests ) {

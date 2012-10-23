@@ -11,9 +11,9 @@
     // Private State
 
     var WIDGET_NAME = _HTMLelement,
-        widget    = $( '#' + _HTMLelement ),
-        container = $( '#' + _HTMLelement + '-graph' ),
-        legend    = widget.find('.legend').find('tbody'),
+        widget      = $( '#' + _HTMLelement ),
+        container   = $( '#' + _HTMLelement + '-graph' ),
+        keys        = widget.find('.keys').find('tbody'),
 
         template  = '<tr class="agent">                         \
                         <td>                                    \
@@ -65,7 +65,7 @@
     }
 
 
-    var setupLegendHTML = function( agents ) {
+    var setupKeysHTML = function() {
 
         for (var i = 0; i < agents.length; i++) {
             var hostname = agents[i];
@@ -74,7 +74,7 @@
             var html = $(template).attr({ 'id' : hostID });
             html.find('.host').text( hostname );
 
-            legend.append( html );
+            keys.append( html );
         }
 
     }
@@ -105,11 +105,11 @@
     }
 
 
-    var updateLegend = function( host, value ) {
+    var updateKeys = function( host, value ) {
         var hostID = '#' + WIDGET_NAME + '-' + host;
-        var agent = legend.find(hostID);
+        var agent = keys.find(hostID);
         
-        var newValue = value;
+        var newValue = value.toFixed(2);
 
         switch ( WIDGET_NAME ) {
             case 'cpu'    : newValue += "%";    break;
@@ -123,24 +123,29 @@
 
     // Public API
 
-    this.init = function( agentsName, interval ) {
+    this.init = function( interval, nagents, hostnames ) {
 
         // Rename
         var SECONDS = Constants.SECONDS,
             SECOND  = Constants.SECOND;
 
-        agents = agentsName;
+        agents = hostnames;
 
         console.log(agents);
-        for (var i = 0; i < agents.length; i++){
+        for (var i = 0; i < nagents; i++) {
             var aux = [];
+
             for (var j = 0; j <= SECONDS/interval; j++) {
-                aux.push( [j*interval/SECOND, 0] );
+                var d = j*interval/SECOND;
+                aux.push( [d, 0] );
             }
+
             data.push({data : aux});
         }
 
-        setupLegendHTML( agents );
+        if ( agents.length ) {
+            setupKeysHTML();
+        }
 
         // 
         draw();
@@ -152,8 +157,10 @@
         // 
         updateAgentData(agent, time, value);
 
-        // 
-        updateLegend( agent, value );
+        //
+        if ( agents.length ) {
+            updateKeys( agent, value );
+        }
 
         // 
         draw();
