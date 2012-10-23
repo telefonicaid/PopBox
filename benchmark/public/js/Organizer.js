@@ -23,21 +23,8 @@
 
 		this.start = function() {
 
-			// Throw event to 'connect'
-			drawer.start();
-
 			//
 			this.conn.startTest( currentTest );
-		}
-
-
-		this.restart = function() {
-
-			// 
-			drawer.restart( currentTest );
-
-			//
-			this.conn.restartTest( currentTest );
 		}
 
 
@@ -54,6 +41,16 @@
 			// 
 			this.conn.continueTest( currentTest );
 
+		}
+
+
+		this.restart = function() {
+
+			// 
+			drawer.restart( currentTest );
+
+			//
+			this.conn.restartTest( currentTest );
 		}
 
 
@@ -76,9 +73,9 @@
 			this.vc.endModalBar();
 		}
 
-		this.initPlots = function( agents, interval ) {
-			this.cpu.init( agents, interval );
-			this.memory.init( agents, interval );
+		this.initPlots = function( interval, nagents, hostnames ) {
+			this.cpu.init( interval, nagents, hostnames );
+			this.memory.init( interval, nagents, hostnames );
 		}
 
 		this.addDataCPU = function( host, time, cpuData ) {
