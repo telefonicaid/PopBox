@@ -175,14 +175,6 @@ box-shadow : -1px -1px 3px 0px #333;}
 }
 
 
-/* Graphs */
-
-.graph2D {}
-
-.graph3D {}
-
-
-
 /* Test Widget */
 
 .tabs {
@@ -290,7 +282,7 @@ box-shadow : -1px -1px 3px 0px #333;}
 	}
 
    .graph {
-      width : 400px;
+      width : 360px;
       height: 110px;
       margin: 12px auto;
    }

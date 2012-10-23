@@ -42,7 +42,7 @@
 			socket.on('init', function (data) {
 				console.log(data);
 				
-				// var nagents  = data.agents.nAgents;
+				var nagents  = data.agents.nAgents;
 				var interval = data.agents.interval * 1000;
 			
 				// Updating the versions because agents could be launched before
@@ -59,7 +59,7 @@
 
 				// Initializing 2D Plots Axis
 				
-				organizer.initPlots( data.hosts, interval );
+				organizer.initPlots( interval, nagents, data.hosts );
 
 
 				socket.on('newPoint', function (data) {

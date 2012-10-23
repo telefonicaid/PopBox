@@ -11,18 +11,20 @@
 
 		var self = this;
 
-		var $ = domLibrary,		// It could be any jQuery-like library (with '#' and '.' syntax)
+		var $ = domLibrary,				// It could be any jQuery-like library (with '#' and '.' syntax)
 			organizer = org,
-			state=["i","i"];
+			state = ['i', 'i'];
 			
 		
 		var testing, cpu, memory,		// DOM Canvas
 			tabs, 						// Test Tab Buttons
 			startButton,				// Buttons
 			pauseButton,
+			clearButton,
 			modalButton,
 			logs,						// Logs Display
 			meter;						// Modal Progress Bar
+
 
 		var barInterval,
 			barTimeout;
@@ -33,6 +35,8 @@
 		var queryUIElements = function() {
 			startButton = $('#start');
 			pauseButton = $('#pause');
+			clearButton = $('#clear-log');
+
 			modalButton = $('#modal-button');
 
 			tabs        = $('.tab');
@@ -71,6 +75,11 @@
 
         var reloadWebsite = function() {
         	window.location.reload();
+        }
+
+        var clearLogger = function () {
+        	logs.empty();
+        	clearButton.addClass('disabled');
         }
 
 		this.increaseBar = function( end ){
@@ -237,6 +246,8 @@
 						</tr>';
 
 			logs.prepend(log);
+			clearButton.removeClass( 'disabled' )
+						.on('click', clearLogger);
 		}
 
 
