@@ -8,7 +8,7 @@ var http = require('http');
 var fs = require('fs');
 var sender = require('./sender.js');
 
-http.globalAgent.maxSockets = 500;
+http.globalAgent.maxSockets = 5000;
 
 var version = 0;
 exports.version = version;
@@ -147,6 +147,9 @@ var doNtimes_queues = function (numQueues, provision, callback, messageEmit, ver
                 function (err, results) {
                 if (err) {
                     console.log(err);
+                    var now = new Date();
+                    var nowToString = now.toTimeString().slice(0,8);
+                    sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: err});
                 } else {
 
                     dbPusher.flushBBDD();
@@ -159,7 +162,7 @@ var doNtimes_queues = function (numQueues, provision, callback, messageEmit, ver
                             setTimeout(function () {
                                 //console.log('Trying with %d queues', numPops);
                                 _doNtimes_queues(callback, messageEmit);
-                            }, 5000);
+                            }, 60000);
                         }
                     } else {
                         benchmark.webSocket.removeAllListeners('pauseTest');

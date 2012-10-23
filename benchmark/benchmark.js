@@ -10,6 +10,7 @@ var receiveMessage = sender.receiveMessage;
 var sendMessage = sender.sendMessage;
 
 var initOptions = {
+    hosts : [],
     agents: {
         nAgents: config.agentsHosts.length,
         interval: 3
