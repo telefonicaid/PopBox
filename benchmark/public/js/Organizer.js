@@ -73,6 +73,7 @@
 
 		this.initTest = function( tests ) {
 			drawer.configTest( tests );
+			this.vc.endModalBar();
 		}
 
 		this.initPlots = function( agents, interval ) {

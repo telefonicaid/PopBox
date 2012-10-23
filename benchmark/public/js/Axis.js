@@ -17,8 +17,8 @@
 		var maxHeigth = 10000;
 		var divisions = {
 			x : (options.queues.end - options.queues.start)/options.queues.interval,
-			y : 10,
-			z : (options.payload.end - options.queues.start)/options.payload.interval
+			y : 25,
+			z : (options.payload.end - options.payload.start)/options.payload.interval
 		};
 
 
@@ -65,15 +65,15 @@
 
 		    if (size.z >= 0) {
 		    	lineGeo.vertices.push(
-		    		v(0,0,0),				v(0,0,size.z),
-		    		v(size.x,0,0),			v(size.x,0,size.z),
-		    		v(0,size.y,0),			v(0,size.y,size.z),
-		    		v(size.x,size.y,0),		v(size.x,size.y,size.z),
+		    		v(0,0,0),					v(0,0,size.z),
+		    		v(size.x,0,0),				v(size.x,0,size.z),
+		    		v(0,size.y,0),				v(0,size.y,size.z),
+		    		v(size.x,size.y,0),			v(size.x,size.y,size.z),
 
-		    		v(0,0,size.z),			v(0,size.y,size.z),
-		    		v(0,size.y,size.z),		v(size.x,size.y,size.z),
+		    		v(0,0,size.z),				v(0,size.y,size.z),
+		    		v(0,size.y,size.z),			v(size.x,size.y,size.z),
 		    		v(size.x,size.y,size.z),	v(size.x,0,size.z),
-		    		v(size.x,0,size.z),		v(0,0,size.z)
+		    		v(size.x,0,size.z),			v(0,0,size.z)
 
 		    	);
 		    }

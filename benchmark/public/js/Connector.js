@@ -41,6 +41,7 @@
 
 			socket.on('init', function (data) {
 				console.log(data);
+				
 				// var nagents  = data.agents.nAgents;
 				var interval = data.agents.interval * 1000;
 			
@@ -57,19 +58,18 @@
 				organizer.initTest( data.tests );
 
 				// Initializing 2D Plots Axis
+				
 				organizer.initPlots( data.hosts, interval );
 
 
 				socket.on('newPoint', function (data) {
-					// console.log( data );
-					console.log( data.version );
-
+					
 					if ( data.err ) {
 						console.error('Error: message received with no data points');
 
 					} else if ( data.message ) {
 						var id = data.message.id;
-						
+						console.log( 'newPoint - v' + data.version + ' - cv' + versions[id]);
 						if ( data.version === versions[id] ) {
 							organizer.addData( id, data.message.point );
 						}
@@ -102,7 +102,9 @@
 
 		this.connect = function (url) {
 			// Connecting to the server
-			socket = io.connect( URL );
+			socket = io.connect( URL, {
+				'connect timeout' : 10000
+			});
 
 			socket.emit('init');
 			console.log('init');

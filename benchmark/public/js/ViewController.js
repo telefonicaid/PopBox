@@ -21,7 +21,11 @@
 			startButton,				// Buttons
 			pauseButton,
 			modalButton,
-			logs;						// Logs Display
+			logs,						// Logs Display
+			meter;						// Modal Progress Bar
+
+		var barInterval,
+			barTimeout;
 
 
 		// Private Methods
@@ -37,8 +41,9 @@
 			cpu         = $('#cpu');
 			memory      = $('#memory');
 
-
 			logs        = $('#logs');
+
+			meter       = $('.meter');
 		}
 
 
@@ -64,39 +69,71 @@
         	$('.' + backdrop).removeClass(backdrop);
         }
 
+        var reloadWebsite = function() {
+        	window.location.reload();
+        }
 
-		this.increaseBar = function( interval ){
-
-			// 
-			var meter = $('.meter');
+		this.increaseBar = function( end ){
+			
 			var span  = meter.children();
 
 			// 
-			var max    = meter.width();
-			var actual = span.width() / max * 100;
-			var add    = 10;
+			var max        = meter.width();
+			var current    = span.width() / max * 100;
+			var increment  = 1;
 
 			// 
-			var set    = (actual + add).toString() + '%';
-			span.css({'width': set});
+			var amount = current + increment;
+			var set    = amount  + '%';
+			span.css({ 'width' : set });
 
-			// 
-			if (span.width() === max) {
+			var description = $('#modal-description');
 
-			    clearInterval( interval );
+			console.log(amount);
+			console.log(end);
+			if ( !end && amount >= 60 ) {
+				clearInterval( barInterval );
+
+				barTimeout = setTimeout(function() {
+					span.css({ 'width' : '100%' });
+
+					description.css({ 'font-weight' : 'bold' })
+								.text('The agents haven\'t been launched successfully');
+
+					modalButton.on('click', reloadWebsite)
+			    			.addClass('btn-primary')
+			     			.removeClass('disabled')
+			    			.text('Reload');
+				}, 3000);
+			
+			} else if ( end && span.width() >= max ) {
+			    clearInterval( barInterval );
+			    clearTimeout(barTimeout);
 
 			    meter.removeClass('red').addClass('green');
 
-				$('#modal-description').slideUp();
+				description.slideUp();
 			    
 			    modalButton.on('click', hideModalBox)
 			    			.addClass('btn-primary')
 			     			.removeClass('disabled')
 			    			.text('Ready!');
-			    
+				    
 			}
 		}
 
+		var setBarInterval = function( time, end ) {
+			barInterval = setInterval(function() {
+				self.increaseBar( end );
+				console.log("setBarInterval " + end);
+			}, time);
+		}
+
+
+		this.endModalBar = function() {
+			clearInterval( barInterval );
+			setBarInterval(2, true);
+		}
 
 
 		// Public API
@@ -105,10 +142,7 @@
 			queryUIElements();
 			setupEventHandlers();
 			
-			var self = this;
-			var interval = setInterval(function() {
-				self.increaseBar(interval);
-			}, 300);
+			setBarInterval(30, false);
 
 			//
 			updateDescription(0);
@@ -175,9 +209,7 @@
 			tabs.removeClass( CSS.CURRENT );
 			currentTab.addClass( CSS.CURRENT );
 
-			// updateDescription(sceneNumber);
-
-			console.log(state[sceneNumber]);
+			updateDescription(sceneNumber);
 
 			if ( state[sceneNumber]==="P" ) {
 				startButton.text( Text.RESTART );

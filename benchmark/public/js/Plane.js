@@ -35,7 +35,6 @@
 				point = plane.geometry.vertices[ i ];
 				color = new THREE.Color( 0x0000ff );
 				color.setHSV( 0.7 * (zMax - point.z) / zRange, 1, 0.9 );
-				// console.log(point.z);
 				plane.geometry.colors[i] = color; // use this array for convenience
 			}
 			
@@ -88,6 +87,7 @@
 			var q = test.queues;
 			var p = test.payload;
 
+			
 			sizeMap.x = coord(q.end, q.start, q.interval) + 1;
 			sizeMap.y = coord(p.end, p.start, p.interval) + 1;
 
@@ -124,8 +124,8 @@
 				var queue   = coord( point[0], test.queues.start, test.queues.interval );
 				var payload = coord( point[2], test.payload.start, test.payload.interval ) * sizeMap.x;
 				var time    = point[0] / (point[1]/1000);
-				console.log("Queue: " +  point[0]);
-				console.log("Payload: " +  point[2]);
+				// console.log("Queue: " +  point[0]);
+				// console.log("Payload: " +  point[2]);
 				//console.log("TPS : " + point[0] / (point[1]/1000));
 
 				var vertices = plane.children[p].geometry.vertices;

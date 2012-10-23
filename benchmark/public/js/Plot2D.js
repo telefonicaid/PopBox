@@ -130,7 +130,7 @@
             SECOND  = Constants.SECOND;
 
         agents = agentsName;
-        console.log("INIT Agents");
+
         console.log(agents);
         for (var i = 0; i < agents.length; i++){
             var aux = [];

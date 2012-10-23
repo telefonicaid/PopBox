@@ -185,24 +185,21 @@
 
 		this.animate = function() {
 
-			//if ( started ) {
+			var self = this;
 
-				var self = this;
+			var raf = requestAnimationFrame();
+			raf(function() {
+				self.animate();
+			});	
 
-				var raf = requestAnimationFrame();
-				raf(function() {
-					self.animate();
-				});	
+			var scene  = arrayScenes[ currentScene ];
+			var camera = arrayCameras[ currentScene ];
 
-				var scene  = arrayScenes[ currentScene ];
-				var camera = arrayCameras[ currentScene ];
+			camera.animate();
 
-				camera.animate();
+			scene.animate( camera.threeCamera );
 
-				scene.animate( camera.threeCamera );
-
-				this.render();
-			//}
+			this.render();
 
 		}
 
@@ -213,6 +210,7 @@
 
 		this.changeToTest = function( testNumber ) {
 			currentScene = testNumber;
+			onWindowResize();
 		}
 
 		this.configTest = function( tests ) {
