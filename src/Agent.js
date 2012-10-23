@@ -5,16 +5,18 @@
 
 
 var config = require('./config.js');
+
+var path = require('path');
+var log = require('PDITCLogger');
+config.logger.File.filename = 'popbox.log';
+log.setConfig(config.logger);
+var logger = log.newLogger();
+logger.prefix = path.basename(module.filename,'.js');
+
 var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
 var jade = require('jade');
 var crypto = require('crypto');
-
-var path = require('path');
-var log = require('PDITCLogger');
-var logger = log.newLogger();
-logger.prefix = path.basename(module.filename, '.js');
-logger.setLevel(config.logLevel);
 
 var dirModule = path.dirname(module.filename);
 

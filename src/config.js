@@ -12,7 +12,17 @@
  *
  * @type {String}
  */
-exports.logLevel = 'warning';
+exports.logger = {};
+exports.logger.logLevel = 'debug';
+exports.logger.inspectDepth = 1 ;
+exports.logger.Console = {
+    level: 'debug', timestamp:true
+};
+exports.logger.File ={
+    level:'debug', filename:'pditclogger.log', timestamp:true, json:false ,
+    maxsize: 100,
+    maxFiles: 3
+};
 
 
 
@@ -181,3 +191,10 @@ exports.enableSecure= false;
  * @type {String} absolute path for the certs and keys. Default will be chosen when empty.
  */
 exports.agent.crt_path = "";
+
+exports.pool = {};
+/**
+ *
+ * @type {Number}
+ */
+exports.pool.max_elems = 10000;

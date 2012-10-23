@@ -14,7 +14,6 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
     var times = timesCall;
 
     var continueTest = function () {
-        console.log('numero de colas: ' + numQueues);
         _doNtimes_queues(payload_length, callback, messageEmit);
     }
 
@@ -51,8 +50,6 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
         rest.postJson(config.protocol + '://' + host + ':' + port + '/trans', provision).
             on('complete', function (data, response) {
 
-                console.log(data);
-
                 if (response && response.statusCode === 200) {
 
                     console.log('Finished with status 200');
@@ -88,6 +85,7 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
 
 
                 } else {
+                    sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: JSON.stringify(data)});
                     messageEmit({id: 0, err: true});
                 }
             });
