@@ -11,9 +11,9 @@
     // Private State
 
     var WIDGET_NAME = _HTMLelement,
-        widget    = $( '#' + _HTMLelement ),
-        container = $( '#' + _HTMLelement + '-graph' ),
-        legend    = widget.find('.legend').find('tbody'),
+        widget      = $( '#' + _HTMLelement ),
+        container   = $( '#' + _HTMLelement + '-graph' ),
+        keys        = widget.find('.keys').find('tbody'),
 
         template  = '<tr class="agent">                         \
                         <td>                                    \
@@ -74,7 +74,7 @@
             var html = $(template).attr({ 'id' : hostID });
             html.find('.host').text( hostname );
 
-            legend.append( html );
+            keys.append( html );
         }
 
     }
@@ -107,7 +107,7 @@
 
     var updateLegend = function( host, value ) {
         var hostID = '#' + WIDGET_NAME + '-' + host;
-        var agent = legend.find(hostID);
+        var agent = keys.find(hostID);
         
         var newValue = value;
 
