@@ -85,7 +85,7 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
 
 
                 } else {
-                    sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: JSON().stringify(data)});
+                    sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: JSON.stringify(data)});
                     messageEmit({id: 0, err: true});
                 }
             });
