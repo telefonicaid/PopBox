@@ -12,8 +12,8 @@
 
 		var parentGraph = graph;
 		var axis;
+		var grid;
 		var center;
-		var gridParts = {};
 		var texts = [];
 		var maxHeigth = 10000;
 		var divisions = {
@@ -34,7 +34,7 @@
 			axis.add( frame );
 		    setTitles( frame, size, titles );
 
-		    var grid = new THREE.Object3D();
+		    grid = new THREE.Object3D();
 		    var coords = [ 'x', 'y', 'z' ];
 		    for (var i = 0; i < coords.length; i++) {
 		    	var part = setPart( coords[i] );
@@ -113,19 +113,19 @@
 			    	case 'x' : 	aux = options.queues;
 			    				position.y = -size.y/50;
 			    				position.z = size.z + size.z/50;
-			    				gridParts.x = part;
+			    				part.name = 'gridX';
 			    				break;
 
 			    	case 'y' :  aux = {start : 0, end : maxHeigth}
 			    				position.x = -size.x/50;
 			    				position.z = size.z + size.z/50;
-			    				gridParts.y = part;
+			    				part.name = 'gridY';
 								break;
 
 					case 'z' :  aux = options.payload;
 								position.x = size.x + size.x/50;
 			    				position.y = -size.y/50;
-			    				gridParts.z = part;
+			    				part.name = 'gridZ';
 			    				break;
 			    }
 
@@ -158,7 +158,7 @@
 			    	case 'y' :  a = v(0, i, 0);
 			    				b = v(size.x, i, 0);
 			    				c = v(0, i, size.z);
-			    				value = Math.round(i*maxHeigth/10/amount);
+			    				value = Math.round((maxHeigth/divisions.y)*i/amount);
 			    				position.y = i;
 								break;
 
@@ -191,7 +191,7 @@
 		    titleX.position.z = line.position.z + size.z + size.z/10;
 
 		    texts.push(titleX);
-		    axis.add(titleX);
+		    line.add(titleX);
 
 			var titleY;
 		    titleY = parentGraph.createText2D( titles.y );
@@ -200,7 +200,7 @@
 			titleY.position.z = line.position.z + size.z +  size.z/10;
 		    
 		    texts.push(titleY);
-		    axis.add(titleY);
+		    line.add(titleY);
 
 		    var titleZ;
 		    titleZ = parentGraph.createText2D( titles.z );
@@ -209,7 +209,7 @@
 		    titleZ.position.z = line.position.z + size.z/2;
 		    
 		    texts.push(titleZ);
-		    axis.add(titleZ);
+		    line.add(titleZ);
 		}
 
 		var setValue = function ( value, position, part, title ) {
@@ -231,11 +231,10 @@
 			};
 		}
 
-		this.rescale = function ( ratio ) {
-			maxHeigth *= 2;
-			axis.remove(gridParts.y);
-			gridParts.y = setPart('y');
-			axis.add(gridParts.y);
+		this.rescale = function ( newHeigth ) {
+			maxHeigth = newHeigth;
+			grid.remove(grid.getChildByName('gridY', true));
+			grid.add(setPart('y'));
 		}
 
 		// Init

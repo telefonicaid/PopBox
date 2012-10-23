@@ -21,7 +21,7 @@
 
 
 		var maxPoint = options.size.y * 2/3;
-		var cota  = maxPoint * 2/3;
+		var cota=0  ;//= maxPoint * 2/3;
 		var ratio = maxPoint / cota;
 
 
@@ -100,11 +100,11 @@
 				cota = z;
 				
 				var ratio = maxPoint / cota;
-				axis.rescale( ratio );
+				axis.rescale( Math.round(cota * 3/2) );
 				plot.rescale( ratio );
 			}
 			
-			plot.addPoint( point, maxPoint );
+			plot.addPoint( point );
 		}
 
 		this.animate = function( threeCamera ) {
@@ -114,7 +114,7 @@
 
 		this.restart = function() {
 			plot.restart();
-			cota = maxPoint * 2/3;
+			//cota = maxPoint * 2/3;
 			ratio = maxPoint / cota;
 		}
 
