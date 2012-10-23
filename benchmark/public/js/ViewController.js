@@ -24,6 +24,9 @@
 			logs,						// Logs Display
 			meter;						// Modal Progress Bar
 
+		var barInterval,
+			barTimeout;
+
 
 		// Private Methods
 
@@ -66,6 +69,9 @@
         	$('.' + backdrop).removeClass(backdrop);
         }
 
+        var reloadWebsite = function() {
+        	window.location.reload();
+        }
 
 		this.increaseBar = function( end ){
 			
@@ -81,16 +87,32 @@
 			var set    = amount  + '%';
 			span.css({ 'width' : set });
 
-			// 
-			if ( !end && amount === 60 ) {
+			var description = $('#modal-description');
+
+			console.log(amount);
+			console.log(end);
+			if ( !end && amount >= 60 ) {
 				clearInterval( barInterval );
+
+				barTimeout = setTimeout(function() {
+					span.css({ 'width' : '100%' });
+
+					description.css({ 'font-weight' : 'bold' })
+								.text('The agents haven\'t been launched successfully');
+
+					modalButton.on('click', reloadWebsite)
+			    			.addClass('btn-primary')
+			     			.removeClass('disabled')
+			    			.text('Reload');
+				}, 3000);
 			
 			} else if ( end && span.width() >= max ) {
 			    clearInterval( barInterval );
+			    clearTimeout(barTimeout);
 
 			    meter.removeClass('red').addClass('green');
 
-				$('#modal-description').slideUp();
+				description.slideUp();
 			    
 			    modalButton.on('click', hideModalBox)
 			    			.addClass('btn-primary')
@@ -100,12 +122,10 @@
 			}
 		}
 
-
-		var barInterval;
-
 		var setBarInterval = function( time, end ) {
 			barInterval = setInterval(function() {
 				self.increaseBar( end );
+				console.log("setBarInterval " + end);
 			}, time);
 		}
 
@@ -189,9 +209,7 @@
 			tabs.removeClass( CSS.CURRENT );
 			currentTab.addClass( CSS.CURRENT );
 
-			// updateDescription(sceneNumber);
-
-			console.log(state[sceneNumber]);
+			updateDescription(sceneNumber);
 
 			if ( state[sceneNumber]==="P" ) {
 				startButton.text( Text.RESTART );
