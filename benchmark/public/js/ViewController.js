@@ -89,8 +89,6 @@
 
 			var description = $('#modal-description');
 
-			console.log(amount);
-			console.log(end);
 			if ( !end && amount >= 60 ) {
 				clearInterval( barInterval );
 
@@ -125,7 +123,6 @@
 		var setBarInterval = function( time, end ) {
 			barInterval = setInterval(function() {
 				self.increaseBar( end );
-				console.log("setBarInterval " + end);
 			}, time);
 		}
 
