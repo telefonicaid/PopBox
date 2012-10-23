@@ -13,6 +13,7 @@
 		var parentGraph = graph;
 		var axis;
 		var center;
+		var gridParts = {};
 		var texts = [];
 		var maxHeigth = 10000;
 		var divisions = {
@@ -29,9 +30,9 @@
 		    axis = new THREE.Object3D();
 		    
 		    // Setting some Axis properties
-			var line = setLine( size );
-			axis.add( line );
-		    setTitles( line, size, titles );
+			var frame = setFrame( size );
+			axis.add( frame );
+		    setTitles( frame, size, titles );
 
 		    var grid = new THREE.Object3D();
 		    var coords = [ 'x', 'y', 'z' ];
@@ -47,7 +48,7 @@
 		    return new THREE.Vector3(x, y, z);
 		}
 
-		var setLine = function() {
+		var setFrame = function() {
 		    var lineMat = new THREE.LineBasicMaterial({
 		    	color     : 0x424242,
 		    	linewidth : 2
@@ -78,13 +79,17 @@
 		    	);
 		    }
 
+		    var frame = new THREE.Object3D();
 		    var line = new THREE.Line(lineGeo,lineMat);
 		    line.type = THREE.LinePieces;
+		    frame.add(line);
 
-		    return line;
+		    return frame;
 		}
 
 		var setPart = function ( coord ) {
+		    var part = new THREE.Object3D();
+
 			var lineMat = new THREE.LineBasicMaterial({
 		    	color     : 0x808080,
 		    	linewidth : 1
@@ -92,6 +97,9 @@
 
 		    var lineGeo = new THREE.Geometry();
 			
+			var line = new THREE.Line(lineGeo,lineMat);
+		    line.type = THREE.LinePieces;
+
 		    var a, b, c, value, aux;
 
 		    var position = {
@@ -105,30 +113,33 @@
 			    	case 'x' : 	aux = options.queues;
 			    				position.y = -size.y/50;
 			    				position.z = size.z + size.z/50;
+			    				gridParts.x = part;
 			    				break;
 
 			    	case 'y' :  aux = {start : 0, end : maxHeigth}
 			    				position.x = -size.x/50;
 			    				position.z = size.z + size.z/50;
+			    				gridParts.y = part;
 								break;
 
 					case 'z' :  aux = options.payload;
 								position.x = size.x + size.x/50;
 			    				position.y = -size.y/50;
+			    				gridParts.z = part;
 			    				break;
 			    }
 
 			value = aux.start;
 			position[coord] = 0;
-			setValue(value,position);
+			setValue(value, position, line);
 
 			value = aux.end;
 			position[coord] = size[coord];
-			setValue(value,position);
+			setValue(value, position, line);
 
 		    var amount = size[coord] / divisions[coord];
-		    amount = amount + 0.000000000005 //quickfix for precision as javaScript sucks
-		    amount = amount.toFixed(12); 
+		    amount = amount + 0.0000000000000005 //quickfix for precision
+		    amount = amount.toFixed(16); 
 		    amount = parseFloat(amount);
 
 		    if (divisions[coord] == 0) amount = size[coord];
@@ -163,11 +174,10 @@
 		    		a, 	b,
 		    		a, 	c
 		    	);
-		    	setValue(value,position);
+		    	setValue(value,position, line);
 		    }
 
-		    var part = new THREE.Line(lineGeo,lineMat);
-		    part.type = THREE.LinePieces;
+		    part.add(line);
 
 		    return part;
 
@@ -202,13 +212,13 @@
 		    axis.add(titleZ);
 		}
 
-		var setValue = function ( value, position, title ) {
+		var setValue = function ( value, position, part, title ) {
 			var text = parentGraph.createText2D( value, 50 );
 		    text.position.x = position.x;
 		    text.position.y = position.y;
 		    text.position.z = position.z;
 		    texts.push(text);
-   		    axis.add(text);
+   		    part.add(text);
 		}
 
 
@@ -223,7 +233,9 @@
 
 		this.rescale = function ( ratio ) {
 			maxHeigth *= 2;
-			setPart('y');
+			axis.remove(gridParts.y);
+			gridParts.y = setPart('y');
+			axis.add(gridParts.y);
 		}
 
 		// Init
