@@ -15,79 +15,85 @@
 			organizer = org,
 			state = ['i', 'i'];
 			
-		
-		var testing, cpu, memory,		// DOM Canvas
-			tabs, 						// Test Tab Buttons
-			startButton,				// Buttons
-			pauseButton,
-			clearButton,
-			modalButton,
-			logs,						// Logs Display
-			meter;						// Modal Progress Bar
-
+		var DOM = {
+			testing         : $('#testing'),			// WebGL Container
+			cpu             : $('#cpu'),				// 2D Plots
+			memory          : $('#memory'),
+			tabs            : $('.tab'),				// Tab Buttons
+			testDescription : $('#test-description'),
+			startButton     : $('#start'),				// Buttons
+			pauseButton     : $('#pause'),
+			clearButton     : $('#clear-log'),
+			modalButton     : $('#modal-button'),
+			logs            : $('#logs'),				// Logs Display
+			meter           : $('.meter'),				// Modal Progress Bar
+			backdrop        : $('#backdrop'),			// Modal Backdrop
+			waitingModal    : $('#waiting-modal')
+		};
 
 		var barInterval,
 			barTimeout;
 
+		// Rename
+		var CSS  = PBDV.Constants.CSS,
+			Text = PBDV.Constants.Text;
+
+
 
 		// Private Methods
 
-		var queryUIElements = function() {
-			startButton = $('#start');
-			pauseButton = $('#pause');
-			clearButton = $('#clear-log');
-
-			modalButton = $('#modal-button');
-
-			tabs        = $('.tab');
-
-			testing     = $('#testing');
-			cpu         = $('#cpu');
-			memory      = $('#memory');
-
-			logs        = $('#logs');
-
-			meter       = $('.meter');
-		}
-
-
 		var setupEventHandlers = function() {
-			startButton.on('click', self.start);
-			pauseButton.on('click', self.pause);
+			DOM.startButton.on('click', self.start);
+			DOM.pauseButton.on('click', self.pause);
 
-			tabs.on('click', self.changeTest);
+			DOM.tabs.on('click', self.changeTest);
 		}
 
 
 		var updateDescription = function( number ) {
 			var Test = PBDV.Constants.Test;
-			$('#test-description').text( Test[number] );
+			DOM.testDescription.text( Test[number] );
+		}
+
+		var handler = function(event, callback) {
+			// Renames
+			var LEFT_CLICK = 1;
+        	var ENTER = 13;
+
+        	if ( event.type === 'click'    && event.which === LEFT_CLICK ||
+        		 event.type === 'keypress' && event.which === ENTER ) {
+
+        		callback();
+			}
 		}
 
 
-        var hideModalBox = function() {
-
-        	$('#modal').removeClass('in');
-
-        	var backdrop = 'modal-backdrop';
-        	$('.' + backdrop).removeClass(backdrop);
+        var hideModalBox = function(event) {
+    		handler(event, function() {
+    			$(window).off('keypress', hideModalBox);
+				DOM.waitingModal.removeClass('in');
+    			DOM.backdrop.removeClass('modal-backdrop');
+    		});
         }
 
-        var reloadWebsite = function() {
-        	window.location.reload();
+        var reloadWebsite = function(event) {
+        	handler(event, function() {
+				$(window).off('keypress', reloadWebsite);
+        		window.location.reload();
+        	});
         }
 
         var clearLogger = function () {
-        	logs.empty();
-        	clearButton.addClass('disabled');
+        	DOM.logs.empty();
+        	DOM.clearButton.addClass( CSS.DISABLED );
         }
 
 		this.increaseBar = function( end ){
-			
-			var span  = meter.children();
+
+			var span  = DOM.meter.children();
 
 			// 
-			var max        = meter.width();
+			var max        = DOM.meter.width();
 			var current    = span.width() / max * 100;
 			var increment  = 1;
 
@@ -107,24 +113,28 @@
 					description.css({ 'font-weight' : 'bold' })
 								.text('The agents haven\'t been launched successfully');
 
-					modalButton.on('click', reloadWebsite)
-			    			.addClass('btn-primary')
-			     			.removeClass('disabled')
-			    			.text('Reload');
+					$(window).on('keypress', reloadWebsite);
+
+					DOM.modalButton.on('click', reloadWebsite)
+			    					.addClass('btn-primary')
+			     					.removeClass( CSS.DISABLED )
+			    					.text('Reload');
 				}, 3000);
 			
 			} else if ( end && span.width() >= max ) {
 			    clearInterval( barInterval );
-			    clearTimeout(barTimeout);
+			    clearTimeout( barTimeout );
 
-			    meter.removeClass('red').addClass('green');
+			    DOM.meter.removeClass('red').addClass('green');
 
 				description.slideUp();
 			    
-			    modalButton.on('click', hideModalBox)
-			    			.addClass('btn-primary')
-			     			.removeClass('disabled')
-			    			.text('Ready!');
+				$(window).on('keypress', hideModalBox);
+
+			    DOM.modalButton.on('click', hideModalBox)
+			    				.addClass('btn-primary')
+			     				.removeClass( CSS.DISABLED )
+			    				.text('Ready!');
 				    
 			}
 		}
@@ -145,7 +155,7 @@
 		// Public API
 
 		this.init = function () {
-			queryUIElements();
+
 			setupEventHandlers();
 			
 			setBarInterval(30, false);
@@ -158,18 +168,13 @@
 		/* 'Start/Restart' Button Event Handler */
 		this.start = function() {
 
-			// Rename
-			var Text = PBDV.Constants.Text;
-			var CSS = PBDV.Constants.CSS;
-
-			var current = tabs.filter('.current').prevAll().length;
+			var current = DOM.tabs.filter('.current').prevAll().length;
 			state[current]="S";
 
 			// TODO Subscribe to organizer
-			if ( !startButton.hasClass( CSS.STARTED ) ) {
-				startButton.addClass( CSS.STARTED );
-				startButton.text(Text.RESTART);
-				pauseButton.removeClass('disabled');
+			if ( !DOM.startButton.hasClass( CSS.STARTED ) ) {
+				DOM.startButton.addClass( CSS.STARTED ).text( Text.RESTART );
+				DOM.pauseButton.removeClass( CSS.DISABLED );
 
 				organizer.start();
 			
@@ -181,73 +186,64 @@
 
 		/* 'Pause/Continue' Button Event Handler */
 		this.pause = function() {
-
-			// Renames
-			var Text = PBDV.Constants.Text;
-			var CSS  = PBDV.Constants.CSS;
 			
-			var current = tabs.filter('.current').prevAll().length;
+			var current = DOM.tabs.filter('.current').prevAll().length;
 			state[current]="P";
 
-			pauseButton.toggleClass( CSS.PAUSED );
+			DOM.pauseButton.toggleClass( CSS.PAUSED );
 
-			if ( pauseButton.hasClass( CSS.PAUSED ) ) {
+			if ( DOM.pauseButton.hasClass( CSS.PAUSED ) ) {
+				DOM.pauseButton.text( Text.CONTINUE );
 				organizer.pause();
-				pauseButton.text( Text.CONTINUE );
 
 			} else {
+				DOM.pauseButton.text( Text.PAUSE );
 				organizer.continue();
-				pauseButton.text( Text.PAUSE );
 			}
 
 		}
 
 		/* Tab Buttons Event Handler */
-		this.changeTest = function() {
-			
-			// Rename
-			var Text = PBDV.Constants.Text;
-			var CSS  = PBDV.Constants.CSS;
-			
+		this.changeTest = function() {	
 
 			var currentTab  = $(this);
 			var sceneNumber = currentTab.prevAll().length;
-			tabs.removeClass( CSS.CURRENT );
+			DOM.tabs.removeClass( CSS.CURRENT );
 			currentTab.addClass( CSS.CURRENT );
 
 			updateDescription(sceneNumber);
 
 			if ( state[sceneNumber]==="P" ) {
-				startButton.text( Text.RESTART );
-				pauseButton.text( Text.CONTINUE );
-				pauseButton.removeClass( 'disabled' );
+				DOM.startButton.text( Text.RESTART );
+				DOM.pauseButton.removeClass( CSS.DISABLED ).text( Text.CONTINUE );
 
 			} else if ( state[sceneNumber]==="S" ) {
-				pauseButton.removeClass( CSS.PAUSED );
-				startButton.text( Text.RESTART );
-				pauseButton.text( Text.PAUSE );
-				pauseButton.removeClass( 'disabled' );
+				var PD = CSS.PAUSED + ' ' + CSS.DISABLED;
+				DOM.pauseButton.removeClass( PD ).text( Text.PAUSE );
+				DOM.startButton.text( Text.RESTART );
 
 			} else {
-				startButton.removeClass( CSS.STARTED );
-				pauseButton.removeClass( CSS.PAUSED );
-				pauseButton.addClass( 'disabled' )
-				startButton.text( Text.START );
-				pauseButton.text( Text.PAUSE );
+				DOM.startButton.removeClass( CSS.STARTED )
+								.text( Text.START );
+
+				DOM.pauseButton.removeClass( CSS.PAUSED )
+								.addClass( CSS.DISABLED )
+								.text( Text.PAUSE );
 			}
 
 			organizer.changeToTest( sceneNumber );
 		}
 
 		this.logData = function( timestamp, message ) {
+
 			var log =  '<tr class="log">									\
 							<td class="timestamp">' + timestamp + '</td>	\
 							<td class="message">'   + message   + '</td>	\
 						</tr>';
 
-			logs.prepend(log);
-			clearButton.removeClass( 'disabled' )
-						.on('click', clearLogger);
+			DOM.logs.prepend(log);
+			DOM.clearButton.removeClass( CSS.DISABLED )
+							.on('click', clearLogger);
 		}
 
 

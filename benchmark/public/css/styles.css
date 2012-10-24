@@ -288,25 +288,28 @@ box-shadow : -1px -1px 3px 0px #333;}
    }
 
    .keys {
+      text-align: left;
       height : 90%;
       width  : 100px;
       padding-left : 15px;
       padding-top  : 10px;
    }
 
-      .keys td { padding : 0px; }
-
-      .keys.blue   { color : #00A8F0; }
-      .keys.yellow { color : #C0D800; }
-      .keys.red    { color : #CB4B4B; }
-      .keys.green  { color : #4DA74D; }
-      .keys.violet { color : #9440ED; }
+      .keys td { 
+        text-align: left;
+        padding : 0px; }
 
         .agent {
           text-align : left;
           line-height: 15px;
           font-size  : 1.1em;
         }
+        
+        .agent.blue   { color : #00A8F0; }
+        .agent.yellow { color : #C0D800; }
+        .agent.red    { color : #CB4B4B; }
+        .agent.green  { color : #4DA74D; }
+        .agent.violet { color : #9440ED; }
 
             .usage {
                 margin-left: 4px;

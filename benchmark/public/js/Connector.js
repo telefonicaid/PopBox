@@ -63,9 +63,11 @@
 
 
 				socket.on('newPoint', function (data) {
-					
+
 					if ( data.err ) {
-						console.error('Error: message received with no data points');
+						var time = new Date().toTimeString().slice(0,8);
+						var msg = 'Error: message received with no data points';
+						organizer.log( time, msg);
 
 					} else if ( data.message ) {
 						var id = data.message.id;
@@ -82,6 +84,11 @@
 
 
 			socket.on('endLog', function (data) {
+
+				if ( data.err ) {
+
+				}
+
 				organizer.log( data.time, data.message );
 			});
 

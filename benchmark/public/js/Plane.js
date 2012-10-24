@@ -69,13 +69,13 @@
 			var geo = child.geometry;
 			geo.computeFaceNormals();
 			geo.computeVertexNormals();
-			geo.verticesNeedUpdate = true;
-			geo.elementsNeedUpdate = true;
+			geo.verticesNeedUpdate     = true;
+			geo.elementsNeedUpdate     = true;
 			geo.morphTargetsNeedUpdate = true;
-			geo.uvsNeedUpdate = true;
-			geo.normalsNeedUpdate = true;
-			geo.colorsNeedUpdate = true;
-			geo.tangentsNeedUpdate = true;
+			geo.uvsNeedUpdate          = true;
+			geo.normalsNeedUpdate      = true;
+			geo.colorsNeedUpdate       = true;
+			geo.tangentsNeedUpdate     = true;
 
 			// 
 			setColors(child);

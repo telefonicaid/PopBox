@@ -27,10 +27,13 @@
 		},
 
 		CSS : {
-			CURRENT : 'current',
-			PAUSED  : 'paused',
-			STARTED : 'started'
+			CURRENT  : 'current',
+			PAUSED   : 'paused',
+			STARTED  : 'started',
+			DISABLED : 'disabled'
 		},
+
+		KeyColors : [ 'blue', 'yellow', 'red', 'green', 'violet' ],
 
 		Text : {
 			CONTINUE : 'Continue',

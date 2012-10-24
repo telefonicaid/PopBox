@@ -16,13 +16,9 @@
         keys        = widget.find('.keys').find('tbody'),
 
         template  = '<tr class="agent">                         \
-                        <td>                                    \
-                            <span class="square blue"></span>   \
-                            <p class="host"></p>                \
-                        </td>                                   \
+                        <td class="host"></td>                  \
                         <td class="usage"></td>                 \
                     </tr>',
-
         
         max       = _maxY || null,
         data      = [],
@@ -66,14 +62,21 @@
 
 
     var setupKeysHTML = function() {
+        // Rename
+        var COLORS = PBDV.Constants.KeyColors;
 
         for (var i = 0; i < agents.length; i++) {
             var hostname = agents[i];
             var hostID   = WIDGET_NAME + '-' + hostname;
 
             var html = $(template).attr({ 'id' : hostID });
-            html.find('.host').text( hostname );
+            html.find('.host')
+                .text( hostname );
 
+            if ( i < COLORS.length ) {
+                html.addClass( COLORS[i] );
+            }
+            
             keys.append( html );
         }
 
@@ -107,7 +110,7 @@
 
     var updateKeys = function( host, value ) {
         var hostID = '#' + WIDGET_NAME + '-' + host;
-        var agent = keys.find(hostID);
+        var agent  = keys.find(hostID);
         
         var newValue = value.toFixed(2);
 
