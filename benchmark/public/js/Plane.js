@@ -7,6 +7,7 @@
 
 	var Plane = function( test, size, _ratio ) {
 
+		var oldAverage = 0;
 		var plane,
 			sizeMap = {},
 			ratio   = _ratio;
@@ -115,6 +116,25 @@
 
 		}
 
+		var stabilize = function( vertices ) {
+
+			var average = 0;
+			var length = 0;
+			for (var i = 0; i < vertices.length; i++) {
+				if (vertices[i].z != oldAverage) {
+					average += vertices[i].z;
+					length++;
+				}
+			};
+			if(length>0) average = average/length;
+			for (var i = 0; i < vertices.length; i++) {
+				if (vertices[i].z == oldAverage) {
+					vertices[i].z = average;
+				}
+			}
+			oldAverage = average;
+		}
+
 		var points = [];
 
 		this.addPoint = function( point ) {
@@ -135,6 +155,7 @@
 
 				setup(p);
 			}
+			stabilize(vertices);
 		}
 
 
@@ -142,6 +163,7 @@
 			this.rescale(0);
 			// ratio = 1;
 			points = [];
+			oldAverage = 0;
 		}
 
 
@@ -168,22 +190,20 @@
 			var vertices = plane.children[0].geometry.vertices;
 
 			for (var i = 0; i < points.length; i++) {
-
 				if ( newRatio === 0) {
 					vertices[i].z = 0;
 				
-				} else {
+				} 
+				else {
 					vertices[i].z = points[i] * newRatio;
 				}
 				
 			}
-
 			ratio = newRatio;
 
 			// 
 			setup(0);
 		}
-
 
 		// Left for future implementation
 		this.animate = function() {
