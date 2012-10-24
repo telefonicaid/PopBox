@@ -117,16 +117,16 @@
 
 		var points = [];
 
-		this.addPoint = function( point, maxPoint ) {
+		this.addPoint = function( point ) {
 
 			for (var p in plane.children) {
 
 				var queue   = coord( point[0], test.queues.start, test.queues.interval );
 				var payload = coord( point[2], test.payload.start, test.payload.interval ) * sizeMap.x;
 				var time    = point[0] / (point[1]/1000);
-				// console.log("Queue: " +  point[0]);
-				// console.log("Payload: " +  point[2]);
-				//console.log("TPS : " + point[0] / (point[1]/1000));
+				console.log("Queue: " +  point[0]);
+				console.log("Payload: " +  point[2]);
+				console.log("TPS : " + point[0] / (point[1]/1000));
 
 				var vertices = plane.children[p].geometry.vertices;
 				vertices[payload + queue].z = time * ratio;
