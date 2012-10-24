@@ -85,6 +85,8 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
 
 
                 } else {
+                    var now = new Date();
+                    var nowToString = now.toTimeString().slice(0,8);
                     sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: JSON.stringify(data)});
                     messageEmit({id: 0, err: true});
                 }

@@ -14,19 +14,22 @@ describe('Inbox', function () {
     afterEach(function (done) {
         this.timeout(8000); //Mocha timeout
         var urlQ1 = protocol + '://localhost:' + port +
-            '/queue/q1/Pop';
+            '/queue/q1/Pop?timeout=0';
         var urlQ2 = protocol + '://localhost:' + port +
-            '/queue/q2/Pop';
+            '/queue/q2/Pop?timeout=0';
         var completed = 0;
 
         rest.post(urlQ1).on('complete', function () {
-            completed++;
-            if (completed == 2) done();
+            eachDone();
         });
         rest.post(urlQ2).on('complete', function () {
+            eachDone();
+        });
+        function eachDone(){
             completed++;
             if (completed == 2) done();
-        });
+            return;
+        }
     });
 
 
@@ -125,13 +128,12 @@ describe('Inbox', function () {
         this.timeout(8000); //Mocha timeout
 
         var trans5 = {
-            'payload': 'Prueba timeout',
+            'payload': 'Test timeout',
             'priority': 'L',
             'callback': protocol + '://foo.bar',
             'queue': [
                 { 'id': 'q1' }
-            ],
-            'expirationDate': Math.round(new Date().getTime() / 1000 + 60)
+            ]
         };
 
 
@@ -152,7 +154,7 @@ describe('Inbox', function () {
                         trans5).on('complete', function (data, response) {
                             cb();
                         });
-                }, 6000);
+                }, 2000);
 
             }
         ];
@@ -167,23 +169,22 @@ describe('Inbox', function () {
     it('Should not return empty data (timeout)', function (done) {
         this.timeout(8000); //Mocha timeout
         var trans6 = {
-            'payload': 'Prueba timeout',
+            'payload': 'Test timeout',
             'priority': 'L',
             'callback': protocol + '://foo.bar',
             'queue': [
                 { 'id': 'q1' }
-            ],
-            'expirationDate': Math.round(new Date().getTime() / 1000 + 60)
+            ]
         };
 
 
         var funcs = [
             function (cb) {
-                rest.post(protocol + '://' + host + ':' + port + '/queue/q1/pop?timeout=7',
+                rest.post(protocol + '://' + host + ':' + port + '/queue/q1/pop?timeout=3',
                     {headers: {'Accept': 'application/json'}})
                     .on('complete', function (data, response) {
                         data.data.length.should.be.equal(1);
-                        data.data.should.include('Prueba timeout');
+                        data.data.should.include('Test timeout');
                         cb();
                     });
             },
@@ -193,7 +194,7 @@ describe('Inbox', function () {
                         trans6).on('complete', function (data, response) {
                             cb();
                         });
-                }, 3000);
+                }, 1000);
 
             }
         ];
