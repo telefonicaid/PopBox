@@ -32,6 +32,27 @@ describe('Inbox', function () {
         }
     });
 
+    beforeEach(function (done) {
+        this.timeout(8000); //Mocha timeout
+        var urlQ1 = protocol + '://localhost:' + port +
+            '/queue/q1/Pop?timeout=0';
+        var urlQ2 = protocol + '://localhost:' + port +
+            '/queue/q2/Pop?timeout=0';
+        var completed = 0;
+
+        rest.post(urlQ1).on('complete', function () {
+            eachDone();
+        });
+        rest.post(urlQ2).on('complete', function () {
+            eachDone();
+        });
+        function eachDone(){
+            completed++;
+            if (completed == 2) done();
+            return;
+        }
+    });
+
 
     it('Should return all the transactions', function (done) {
         this.timeout(8000); //Mocha timeout
