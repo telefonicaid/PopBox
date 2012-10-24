@@ -47,29 +47,36 @@ describe('Inbox', function () {
 
         async.series([
             function (callback) {
+
                 rest.postJson(protocol + '://' + host + ':' + port + '/trans',
                     trans).on('complete', function (data, response) {
                         callback();
                     });
+
             },
             function (callback) {
 
-                rest.post(protocol + '://' + host + ':' + port + '/queue/q1/pop')
-                    .on('complete', function (data, response) {
-                        data.data.length.should.be.equal(1);
-                        data.data.should.include('Test');
+                trans.payload='Test 2'
+                rest.postJson(protocol + '://' + host + ':' + port + '/trans',
+                    trans).on('complete', function (data, response) {
                         callback();
                     });
+
             },
             function (callback) {
 
-                rest.post(protocol + '://' + host + ':' + port + '/queue/q2/pop')
-                    .on('complete', function (data, response) {
-                        data.should.have.property('data');
-                        data.data.length.should.be.equal(1);
-                        data.data.should.include('Test');
-                        callback();
-                    });
+                var checkQueue = function (queue, callback) {
+                    rest.post(protocol + '://' + host + ':' + port + '/queue/' + queue + '/pop')
+                        .on('complete', function (data, response) {
+                            data.should.have.property('data');
+                            data.data.length.should.be.equal(2);
+                            data.data.should.include('Test');
+                            data.data.should.include('Test 2');
+                            callback();
+                        });
+                }
+
+                checkQueue('q1', checkQueue.bind({}, 'q2', callback));
             }
         ], function () {
             done();
