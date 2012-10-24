@@ -288,12 +288,10 @@ box-shadow : -1px -1px 3px 0px #333;}
    }
 
    .keys {
-   	  overflow : auto;
-      margin : 0px 4px;
       height : 90%;
-      width : 100px;
-      padding: 3px;
-      padding-top: 8px;
+      width  : 100px;
+      padding-left : 15px;
+      padding-top  : 10px;
    }
 
       .keys td { padding : 0px; }
@@ -304,11 +302,10 @@ box-shadow : -1px -1px 3px 0px #333;}
       .keys.green  { color : #4DA74D; }
       .keys.violet { color : #9440ED; }
 
-        .key td {
-          padding    : 0px;
+        .agent {
           text-align : left;
           line-height: 15px;
-          font-size  : 0.85em;
+          font-size  : 1.1em;
         }
 
             .usage {
