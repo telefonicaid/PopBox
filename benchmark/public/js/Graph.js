@@ -21,8 +21,8 @@
 
 
 		var maxPoint = options.size.y * 2/3;
-		var cota=0  ;//= maxPoint * 2/3;
-		var ratio = maxPoint / cota;
+		var cota = 0;//= maxPoint * 2/3;
+		var ratio; //= maxPoint / cota;
 
 
 		// Private Methods
@@ -114,8 +114,8 @@
 
 		this.restart = function() {
 			plot.restart();
-			//cota = maxPoint * 2/3;
-			ratio = maxPoint / cota;
+			cota = 0;
+			//ratio = maxPoint / cota;
 		}
 
 		
