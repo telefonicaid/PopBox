@@ -5,12 +5,12 @@
 
 	"use strict";
 
-	var Plane = function( test, size, _ratio ) {
+	var Plane = function( test, size ) {
 
 		var oldAverage = 0;
 		var plane,
 			sizeMap = {},
-			ratio   = _ratio;
+			ratio;
 
 
 		// Private Methods
@@ -155,7 +155,7 @@
 
 				setup(p);
 			}
-			stabilize(vertices);
+			//stabilize(vertices);
 		}
 
 
@@ -168,25 +168,7 @@
 
 
 		this.rescale = function( newRatio ) {
-	
-			//console.debug("reescaling with ratio " + newRatio);
-/*
-			var end = false;
-			var vertices = plane.children[0].geometry.vertices;
 
-			for (var i = 0; !end && i < vertices.length; i++) {
-
-				if ( newRatio === 0 ) {
-					vertices[i].z = 0;
-
-				} else {
-					vertices[i].z *= newRatio;
-				}
-
-			}
-
-			ratio *= newRatio;
-*/
 			var vertices = plane.children[0].geometry.vertices;
 
 			for (var i = 0; i < points.length; i++) {
