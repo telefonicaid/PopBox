@@ -129,6 +129,8 @@
 			//return position;
 			return threeGraph.position;
 		}
+		
+		this.plot = plot;
 
 		return this;
 	}

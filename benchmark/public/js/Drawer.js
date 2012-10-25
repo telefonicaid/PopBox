@@ -107,19 +107,6 @@
 		}
 
 
-		this.createRays = function() {
-			arrayRays = [];
-			for (var i = 0; i < arrayScenes.length; i++) {
-				var camera = arrayCameras[i];
-				var mouseVector = new THREE.Vector3( mouse.x, mouse.y, 1 );
-				var mouseNorm = mouseVector.subSelf( camera.position ).normalize();
-
-				var ray = new THREE.Ray(camera.position, mouseNorm);
-				arrayRays.push(ray);
-			}
-		}
-
-
 		this.createRenderer = function() {
 			// Rename
 			var Rend = PBDV.Constants.Renderer;
@@ -181,6 +168,24 @@
 			// 
 			window.addEventListener( 'resize', onWindowResize, false);
 			window.addEventListener( 'mousemove', onMouseMove, false );
+		}
+
+		//var projector;
+
+		var detectCollision = function() {
+			var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
+			var projector = new THREE.Projector();
+			var camera = arrayCameras[currentScene];
+			projector.unprojectVector( vector, camera );
+			var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
+
+			// create an array containing all objects in the scene with which the ray intersects
+			var plot = arrayScenes[currentScene].graph.plot.threePlot;
+			var intersects = ray.intersectObject( plot );
+			if (intersects.length > 0) {
+				console.error("interseca");
+				console.log(intersects[0].point);
+			}
 		}
 
 
