@@ -6,7 +6,6 @@
 	"use strict";
 
 
-	//var Graph = function( sizeX, sizeY, sizeZ, divisions, titleX, titleY, titleZ ) {
 	var Graph = function(_options) {
 
 		// Private State 
@@ -67,13 +66,11 @@
 		}
 
 		this.createAxis = function( options ) {
-			
-			//return new PBDV.Axis(this, options.size, options.test, options.titles);
 			return new PBDV.Axis( this, options.size, options.titles, options.test );
 		}
 
 		this.createPlot = function( options ) {
-			return new PBDV.Plane( options.test, options.size, ratio );
+			return new PBDV.Plane( options.test, options.size );
 		}
 
 		this.init = function() {
@@ -132,6 +129,8 @@
 			//return position;
 			return threeGraph.position;
 		}
+		
+		this.plot = plot;
 
 		return this;
 	}

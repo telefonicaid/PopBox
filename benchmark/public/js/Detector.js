@@ -34,42 +34,21 @@ var Detector = {
 		// element.style.margin = '5em auto 0';
 
 		var element = document.getElementById('error-description');
-		document.getElementById('noWebGl').style.display = '';
-		document.getElementById('modal').style.display = 'none';
+		document.getElementById('no-webgl').style.display = '';
 		if ( ! this.webgl ) {
-
+			console.log(element);
 			element.innerHTML = window.WebGLRenderingContext ? [
-				'Your graphics card does not seem to support WebGL.<br />'
+				'Your graphics card does not seem to support WebGL<br />'
 			].join( '\n' ) : [
-				'Your browser does not seem to support WebGL.<br/>'
+				'Your browser does not seem to support WebGL<br/>'
 			].join( '\n' );
 
 		}
-
-		return element;
-
-	},
-
-	addGetWebGLMessage: function ( parameters ) {
-
-		var parent, id, element;
-
-		parameters = parameters || {};
-
-		parent = parameters.parent !== undefined ? parameters.parent : document.body;
-		id = parameters.id !== undefined ? parameters.id : 'oldie';
-
-		element = Detector.getWebGLErrorMessage();
-		element.id = id;
-
-		parent.appendChild( element );
-
 	}
-
 };
 	
 	// Exported to the namespace
-	PBDV.Axis = Axis;
+	PBDV.Detector = Detector;
 
 
 })( window.PBDV = window.PBDV || {},	// Namespace

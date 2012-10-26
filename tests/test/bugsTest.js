@@ -2,6 +2,7 @@ var should = require('should');
 var rest = require('restler');
 var async = require('async');
 var config = require('./config.js');
+var redis = require("redis"),rc = redis.createClient(6379,'localhost');
 
 var host = config.hostname;
 var port = config.port;
@@ -10,7 +11,18 @@ var protocol = config.protocol;
 var trans, trans1 = {};
 
 describe('Bugs', function() {
-    describe('Bug#5', function() {
+
+    after(function (done) {
+        this.timeout(8000);
+        rc.flushall();
+        rc.end();
+        done();
+    });
+    beforeEach(function (done) {
+        this.timeout(8000);
+        rc.flushall();
+        done();
+    });
         it('should return empty data', function(done) {
 
             var datos_PUT = {
@@ -46,9 +58,7 @@ describe('Bugs', function() {
                 });
 
         });
-    });
 
-    describe('Bug#6', function() {
         it('should not modify the expirationDate (out of range)', function(done) {
 
             var datos_PUT = {
@@ -107,10 +117,7 @@ describe('Bugs', function() {
                 });
 
         });
-    });
 
-
-    describe('Bug#7', function() {
         it('should return errors (does not exist [id])', function(done) {
             async.series([
                 function(callback) {
@@ -158,5 +165,4 @@ describe('Bugs', function() {
                 });
 
         });
-    });
 });
