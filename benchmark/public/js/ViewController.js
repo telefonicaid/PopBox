@@ -155,6 +155,8 @@
 		// Public API
 
 		this.init = function () {
+			
+			document.getElementById('waiting-modal').style.display = '';
 
 			setupEventHandlers();
 			

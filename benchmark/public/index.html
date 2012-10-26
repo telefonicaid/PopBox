@@ -38,24 +38,18 @@
 
 	<noscript>If you are reading this text is because your web browser does not allow JavaScript. In that case, the website will not be viewed perfect so please, try to enable it or just change to a better browser</noscript>
 
-	<script>			
-		if ( !Detector.webgl ) {
-			Detector.addGetWebGLMessage();
-		}
-	</script>
-
 
 	<div id="backdrop" class="modal-backdrop"></div>
 
 
-	<div id="no-webgl" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="WaitingModalBox" aria-hiddel="true">
+	<div id="no-webgl" class="modal fade in" tabindex="-1" role="dialog" aria-labelledby="ErrorWebGLModalBox" aria-hidden="false" style="display: none;">
 		<article class="modal-body">
 			<p id="error-description" class="center"></p>
 		</article>
 	</div>
 
 
-	<div id="waiting-modal" class="modal fade in" tabindex="-1" role="dialog" aria-labelledby="WaitingModalBox" aria-hidden="true">
+	<div id="waiting-modal" class="modal fade in" tabindex="-1" role="dialog" aria-labelledby="WaitingModalBox" aria-hidden="true" style="display: none;">
 		<article class="modal-body">
     		<div class="meter red">
     			<span></span>

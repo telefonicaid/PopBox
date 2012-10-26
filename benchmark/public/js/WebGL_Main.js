@@ -3,7 +3,12 @@
 
 	"use strict";
 
-
+	if ( ! PBDV.Detector.webgl ) {
+		PBDV.Detector.getWebGLErrorMessage();
+	} else {
+		
+	
+	
 	// Getting the current URL
 	var URL = window.location.href;
 
@@ -20,5 +25,6 @@
 	org.setVC(vc);
 	org.setCPU(cpu);
 	org.setMemory(memory);
+	}
 
 })(window, jQuery);
