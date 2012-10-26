@@ -17,6 +17,8 @@ var validate = require('./validate');
 var emitter = require('./emitter_module').getEmitter();
 var config = require('./config.js');
 var crypto = require('crypto');
+var helper = require('./DataHelper.js');
+var async = require('async');
 
 var path = require('path');
 var log = require('PDITCLogger');
@@ -303,12 +305,18 @@ function getQueue(req, res) {
             res.sendCond({errors: [String(err)]}, 500);
         } else {
             var mapTrans = function (v) {
+
                 var id = v.split("|")[1];
                 return {
                     id: id,
                     href: 'http://' + req.headers.host + '/trans/' + id + "?queues=All"
                 };
             };
+            var filterTrans = function(item, callback, errback){
+                helper.deleteOnExpired(queueId, item + ":meta", callback);
+            };
+            hQ = async.filter(hQ,filterTrans);
+            lQ = async.filter(lQ,filterTrans);
             hQ = hQ.map(mapTrans);
             lQ = lQ.map(mapTrans);
             res.send({ok: true, host: req.headers.host, lastPop: lastPop,
