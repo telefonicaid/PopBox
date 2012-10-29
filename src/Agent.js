@@ -125,7 +125,6 @@ if (cluster.isMaster && numCPUs !== 0) {
         server.post('/trans', logic.postTrans);
         server.get('/queue/:id', logic.getQueue);
         server.post('/queue/:id/pop', logic.popQueue);
-        server.get('/queue/:id/peek', logic.peekQueue);
     });
 
 

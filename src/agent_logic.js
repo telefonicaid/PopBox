@@ -403,42 +403,6 @@ function popQueue(req, res) {
   });
 }
 
-function peekQueue(req, res) {
-  'use strict';
-  logger.debug('peekQueue(req, res)', [req, res]);
-  var queueId = req.param('id');
-  var maxMsgs = req.param('max', config.agent.max_messages);
-  var appPrefix = req.prefix;
-
-  maxMsgs = parseInt(maxMsgs, 10);
-  if (isNaN(maxMsgs)) {
-    maxMsgs = config.agent.max_messages;
-  }
-
-  logger.debug('Peek: queueId, maxMsgs', [queueId, maxMsgs]);
-
-  dataSrv.peek(appPrefix, {id:queueId}, maxMsgs, function onPeek(err, notifList) {
-    logger.debug('onBlockingPop(err, notifList)', [err, notifList]);
-    var messageList = [];
-    var ev = {};
-    //stablish the timeout depending on blocking time
-
-    if (err) {
-      res.send({errors:[String(err)]}, 500);
-
-    } else {
-
-      if (notifList) {
-        messageList = notifList.map(function (notif) {
-          return notif.payload;
-        });
-      }
-
-      res.send({ok:true, data:messageList});
-    }
-  });
-}
-
 function checkPerm(req, res, cb) {
   'use strict';
   logger.debug('checkPerm(req, res, cb)', [req, res, cb]);
@@ -536,7 +500,6 @@ function transMeta(req, res) {
 
 exports.getQueue = getQueue;
 exports.popQueue = popQueue;
-exports.peekQueue = peekQueue;
 exports.transState = transState;
 exports.postTrans = postTrans;
 exports.deleteTrans = deleteTrans;
