@@ -21,32 +21,24 @@
 			mouse = { 
 				x : 0,
 				y : 0
-			};
+			},
+
+			size = {
+				x : 3,
+				y : 3,
+				z : 3
+			},
+
+			intersectedVertix;
 
 
 		// Private Methods
 
 		this.createScenes = function( tests ) {
-			// TODO use this var for the next objects
-			var size = {
-				x : 3,
-				y : 3,
-				z : 3
-			};
-
-			/*
-			var cap = function( string ) {
-		    	return string.charAt(0).toUpperCase() + string.slice(1);
-			}
-			*/
 
 			var scene1 = new PBDV.Scene();
 			scene1.createGraph({
-				size : {
-					x : 3,
-					y : 3,
-					z : 3
-				},
+				size : size,
 
 				titles : {
 					x : 'Queues',
@@ -59,11 +51,7 @@
 
 			var scene2 = new PBDV.Scene();
 			scene2.createGraph({
-				size : {
-					x : 3,
-					y : 3,
-					z : 3
-				},
+				size : size,
 
 				titles : {
 					x : 'Clients',
@@ -100,10 +88,11 @@
 		var onMouseMove = function( event ) {
 			// update sprite position
 			// sprite1.position.set( event.clientX, event.clientY, 0 );
-			
+			event.preventDefault();
 			// update the mouse variable
-			mouse.x = ( event.clientX / canvas.width() ) * 2 - 1;
-			mouse.y = - ( event.clientY / canvas.height() ) * 2 + 1;
+			var y = event.clientY - canvas[0].getBoundingClientRect().top;
+			mouse.x = ( event.clientX / canvas[0].offsetWidth ) * 2 - 1;
+			mouse.y = - ( y / canvas[0].offsetHeight ) * 2 + 1;
 		}
 
 
@@ -159,32 +148,88 @@
 
 
 		// Public API
-
+		var projector;
 		this.init = function() {
 
 			//
 			this.createRenderer();
-
+			projector = new THREE.Projector();
 			// 
 			window.addEventListener( 'resize', onWindowResize, false);
-			window.addEventListener( 'mousemove', onMouseMove, false );
+			canvas[0].addEventListener( 'click', onClick, false);
+			canvas[0].addEventListener( 'mousemove', onMouseMove, false );
 		}
 
 		//var projector;
 
+		var onClick = function(event) {
+			detectCollision();
+		}
+
 		var detectCollision = function() {
-			var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
-			var projector = new THREE.Projector();
-			var camera = arrayCameras[currentScene];
+			var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5);
+			var vector2 = new THREE.Vector3( mouse.x, mouse.y, 0.5);
+
+			var camera = arrayCameras[currentScene].threeCamera;
 			projector.unprojectVector( vector, camera );
-			var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
+			var direction = vector.subSelf(camera.position).normalize();
+
+			// Debug
+			
+			var direction2 = new THREE.Vector3();
+			direction2.copy(direction);
+			direction2.multiplyScalar(100);
+			//projector.unprojectVector( vector2, camera );
+			vector2.add(camera.position, direction2);
+
+			var geo = new THREE.Geometry();
+			geo.vertices.push(camera.position);
+			geo.vertices.push(vector2);
+			var mat = new THREE.LineBasicMaterial({
+		    	color     : 0xff0000,
+		    	linewidth : 1
+		    });
+			var line = new THREE.Line(geo,mat);
+			arrayScenes[currentScene].threeScene.add(line);
+
+/*
+			var cubeGeometry = new THREE.CubeGeometry( 0.1, 0.1, 0.1 );
+			var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0x000088 } );
+			var cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
+			cube.position = camera.position;
+			cube.name = "CubeCamera";
+			//arrayScenes[currentScene].threeScene.add(cube);
+
+			cubeGeometry = new THREE.CubeGeometry( 0.1, 0.1, 0.1 );
+			cubeMaterial = new THREE.MeshBasicMaterial( { color: 0x008800 } );
+			var cube2 = new THREE.Mesh( cubeGeometry, cubeMaterial );
+			cube2.position = vector;
+			cube2.name = "CubeVector";
+			arrayScenes[currentScene].threeScene.add(cube2);
+*/
+
+			// Debug end
+			var ray = new THREE.Ray( camera.position, direction);
 
 			// create an array containing all objects in the scene with which the ray intersects
-			var plot = arrayScenes[currentScene].graph.plot.threePlot;
+			var graph = arrayScenes[currentScene].graph;
+			
+			var plot  = graph.plot.threePlot.children[0];
+			console.log(plot);
 			var intersects = ray.intersectObject( plot );
+
 			if (intersects.length > 0) {
-				console.error("interseca");
-				console.log(intersects[0].point);
+				var inter = intersects[0].point;
+				console.log('intersects');
+				console.log(inter);
+
+				var ratio  = graph.ratio;
+				
+				if ( intersectedVertix != inter && ratio ) {
+					var height = (inter.y) / ratio;
+					intersectedVertix = inter;
+					console.log(height);
+				}
 			}
 		}
 
@@ -215,8 +260,8 @@
 
 			scene.animate( camera.threeCamera );
 
-			this.render();
 
+			this.render();
 		}
 
 		this.addDataTo = function( testNumber, point, lastPoint ) {
