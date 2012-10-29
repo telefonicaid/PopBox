@@ -4,6 +4,10 @@ var config = require('../src/config.js')
 var net = require('net');
 var os = require('os');
 var cluster = require('cluster');
+var path = require('path');
+
+var dirAgent = path.dirname(module.filename);
+
 
 server = net.createServer(function (connection) {
 
@@ -17,24 +21,26 @@ server = net.createServer(function (connection) {
 
         pid = createAgent();
         console.log('A new agent has been created with PID: ' + pid);
-        connection.write(JSON.stringify({id: 1, host: os.hostname()}));
+        connection.write(JSON.stringify({id:1, host:os.hostname()}));
 
-        if(config.cluster.numcpus != 0){
-            pids = utils.getchildProcesses(pid);
-        }else{
-            pids.push(pid);
-        }
+        setTimeout(function () {
+            if (config.cluster.numcpus != 0) {
+                pids = utils.getchildProcesses(pid);
+            } else {
+                pids.push(pid);
+            }
+        }, 1000);
 
         //Monitoring an agent sending the client information about the usage of CPU and RAM
         monitorInterval = setInterval(function () {
             var res = utils.monitor(pids, function (res) {
-            console.log('CPU: ' + res.cpu + ' - Memory: ' + res.memory);
-                connection.write(JSON.stringify({id: 2, host: os.hostname(), cpu: {percentage: res.cpu}, memory: {value: res.memory}}));
+                console.log('CPU: ' + res.cpu + ' - Memory: ' + res.memory);
+                connection.write(JSON.stringify({id:2, host:os.hostname(), cpu:{percentage:res.cpu}, memory:{value:res.memory}}));
             });
         }, 3000);
 
         /*connection.on('data', function(data){
-            config.tranRedisServer = JSON.parse(data);
+         config.tranRedisServer = JSON.parse(data);
          });*/
 
         connection.on('end', function () {
@@ -56,12 +62,13 @@ server = net.createServer(function (connection) {
  * @return The PID of the agent
  */
 var createAgent = function () {
-    var child = childProcess.fork('../src/Agent.js');
+    dirAgent = path.resolve(dirAgent, '../src/Agent.js')
+    var child = childProcess.fork(dirAgent);
     var pid = child.pid;
     return pid;
 }
 
-process.on('uncaughtException', function onUncaughtException (err) {
+process.on('uncaughtException', function onUncaughtException(err) {
     'use strict';
     //logger.warning('onUncaughtException', err);
     console.log(err.stack);
