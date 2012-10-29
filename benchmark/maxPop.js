@@ -89,11 +89,13 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit, versi
                                 contResponse++;
                             } else {
                                 auxHost = (host === 'localhost') ? '127.0.0.1' : host;
-                                for(var i=0; i < data.errors.length; i++){
-                                    now = new Date();
-                                    nowToString = now.toTimeString().slice(0, 8);
-                                    sender.sendMessage(benchmark.webSocket, 'endLog', {host : benchmark.nameHost[auxHost], time: nowToString, message: "Error: " + data.errors[i]});
-                                    messageEmit({id: 1, err: true});
+                                if (data.errors) {
+                                    for(var i=0; i < data.errors.length; i++){
+                                        now = new Date();
+                                        nowToString = now.toTimeString().slice(0, 8);
+                                        sender.sendMessage(benchmark.webSocket, 'endLog', {host : benchmark.nameHost[auxHost], time: nowToString, message: "Error: " + data.errors[i]});
+                                        messageEmit({id: 1, err: true});
+                                    }
                                 }
                                 callback('Error, no response: ' + data, null);
                             }
