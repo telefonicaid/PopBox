@@ -2,6 +2,7 @@ var should = require('should');
 var rest = require('restler');
 var async = require('async');
 var config = require('./config.js');
+var redis = require("redis"),rc = redis.createClient(6379,'localhost');
 
 var host = config.hostname;
 var port = config.port;
@@ -11,46 +12,17 @@ var trans, trans1 = {};
 
 describe('Inbox', function () {
 
-    afterEach(function (done) {
-        this.timeout(8000); //Mocha timeout
-        var urlQ1 = protocol + '://localhost:' + port +
-            '/queue/q1/Pop?timeout=0';
-        var urlQ2 = protocol + '://localhost:' + port +
-            '/queue/q2/Pop?timeout=0';
-        var completed = 0;
 
-        rest.post(urlQ1).on('complete', function () {
-            eachDone();
-        });
-        rest.post(urlQ2).on('complete', function () {
-            eachDone();
-        });
-        function eachDone(){
-            completed++;
-            if (completed == 2) done();
-            return;
-        }
+    after(function (done) {
+        this.timeout(8000);
+        rc.flushall();
+        rc.end();
+        done();
     });
-
     beforeEach(function (done) {
-        this.timeout(8000); //Mocha timeout
-        var urlQ1 = protocol + '://localhost:' + port +
-            '/queue/q1/Pop?timeout=0';
-        var urlQ2 = protocol + '://localhost:' + port +
-            '/queue/q2/Pop?timeout=0';
-        var completed = 0;
-
-        rest.post(urlQ1).on('complete', function () {
-            eachDone();
-        });
-        rest.post(urlQ2).on('complete', function () {
-            eachDone();
-        });
-        function eachDone(){
-            completed++;
-            if (completed == 2) done();
-            return;
-        }
+        this.timeout(8000);
+        rc.flushall();
+        done();
     });
 
 

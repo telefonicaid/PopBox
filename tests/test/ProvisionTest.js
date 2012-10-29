@@ -2,6 +2,8 @@ var should = require('should');
 var rest = require('restler');
 var async = require('async');
 var config = require('./config.js');
+var redis = require("redis"),rc = redis.createClient(6379,'localhost');
+
 
 var host = config.hostname;
 var port = config.port;
@@ -29,24 +31,18 @@ describe('Provision', function() {
                 done();
             });
     });
-    afterEach(function(done) {
-        this.timeout(8000); //Mocha timeout
-        var urlQ1 = protocol + '://' + host + ':' + port +
-            '/queue/q1/Pop';
-        var urlQ2 = protocol + '://' + host + ':' + port +
-            '/queue/q2/Pop';
-        var completed = 0;
-
-        rest.post(urlQ1).on('complete', function() {
-            completed++;
-            if (completed == 2) done();
-        });
-        rest.post(urlQ1).on('complete', function() {
-            completed++;
-            if (completed == 2) done();
-        });
+    afterEach(function (done) {
+        this.timeout(8000);
+        rc.flushall();
+        rc.end();
+        done();
     });
-
+    after(function (done) {
+        this.timeout(8000);
+        rc.flushall();
+        rc.end();
+        done();
+    });
     describe('Expiration times:', function() {
 
         it('Should return an empty responses ' +

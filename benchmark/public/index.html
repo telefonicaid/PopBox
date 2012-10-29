@@ -37,18 +37,19 @@
 <body>
 
 	<noscript>If you are reading this text is because your web browser does not allow JavaScript. In that case, the website will not be viewed perfect so please, try to enable it or just change to a better browser</noscript>
-	<script>			
-		if ( ! Detector.webgl ) {
-			Detector.addGetWebGLMessage();
-		}
-	</script>
-	<div class="modal-backdrop"></div>
-	<div class="modal" id="noWebGl" tabindex="-1" role="dialog" aria-labelledby="WaitingModalBox" aria-hiddel="true" style="display: none">
+
+
+	<div id="backdrop" class="modal-backdrop"></div>
+
+
+	<div id="no-webgl" class="modal fade in" tabindex="-1" role="dialog" aria-labelledby="ErrorWebGLModalBox" aria-hidden="false" style="display: none;">
 		<article class="modal-body">
 			<p id="error-description" class="center"></p>
 		</article>
 	</div>
-	<div class="modal fade in" id="modal" tabindex="-1" role="dialog" aria-labelledby="WaitingModalBox" aria-hidden="true">
+
+
+	<div id="waiting-modal" class="modal fade in" tabindex="-1" role="dialog" aria-labelledby="WaitingModalBox" aria-hidden="true" style="display: none;">
 		<article class="modal-body">
     		<div class="meter red">
     			<span></span>
@@ -60,7 +61,6 @@
 				<a href="#" id="modal-button" class="btn disabled">Loading...</a>
 			</div>
   		</article>
-
 	</div>
 
 
@@ -109,8 +109,8 @@
 					<div class="graph-container">
 						<div id="cpu-graph" class="graph left"></div>
 
-						<div class="keys right">
-							<table class="table key">
+						<div class="keys left">
+							<table class="table">
 								<tbody></tbody>
 							</table>
 						</div>
@@ -126,8 +126,8 @@
 					<div class="graph-container">
 						<div id="memory-graph" class="graph left"></div>
 
-						<div class="keys right">
-							<table class="table key">
+						<div class="keys left">
+							<table class="table">
 								<tbody></tbody>
 							</table>
 						</div>
@@ -200,6 +200,7 @@
 		<script type="text/javascript" src="js/Organizer.js"></script>
 		<script type="text/javascript" src="js/Connector.js"></script>
 		<script type="text/javascript" src="js/ViewController.js"></script>
+		<script type="text/javascript" src="js/Detector.js"></script>
 		
 		<script type="text/javascript" src="js/WebGL_Main.js"></script>
 	</div>
