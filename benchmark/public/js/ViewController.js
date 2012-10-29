@@ -236,11 +236,11 @@
 			organizer.changeToTest( sceneNumber );
 		}
 
-		this.logData = function( timestamp, message ) {
+		this.logData = function( timestamp, message, host ) {
 
-			var log =  '<tr class="log">									\
-							<td class="timestamp">' + timestamp + '</td>	\
-							<td class="message">'   + message   + '</td>	\
+			var log =  '<tr class="log">														\
+							<td class="timestamp">' + timestamp + '<br />' + host + '</td>		\
+							<td class="message">'   + message   + '</td>						\
 						</tr>';
 
 			DOM.logs.prepend(log);

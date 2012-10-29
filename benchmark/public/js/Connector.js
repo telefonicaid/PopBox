@@ -89,7 +89,7 @@
 
 				}
 
-				organizer.log( data.time, data.message );
+				organizer.log( data.time, data.message, data.host );
 			});
 
 

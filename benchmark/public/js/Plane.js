@@ -68,15 +68,19 @@
 			
 			// 
 			var geo = child.geometry;
+			geo.computeCentroids();
 			geo.computeFaceNormals();
 			geo.computeVertexNormals();
+			geo.computeTangents();
+			geo.computeBoundingSphere();
 			geo.verticesNeedUpdate     = true;
 			geo.elementsNeedUpdate     = true;
 			geo.morphTargetsNeedUpdate = true;
 			geo.uvsNeedUpdate          = true;
 			geo.normalsNeedUpdate      = true;
 			geo.colorsNeedUpdate       = true;
-			geo.tangentsNeedUpdate     = true;
+			geo.tangentsNeedUpdate     = false;
+			child.matrixWorldNeedsUpdate= true;
 
 			// 
 			setColors(child);
