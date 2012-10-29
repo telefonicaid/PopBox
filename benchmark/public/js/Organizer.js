@@ -93,8 +93,8 @@
 			drawer.addDataTo(test, point);			
 		}
 
-		this.log = function( timestamp, message ) {
-			this.vc.logData(timestamp, message);		// TODO Remove 'vc' dependencies
+		this.log = function( timestamp, message, host ) {
+			this.vc.logData(timestamp, message, host);		// TODO Remove 'vc' dependencies
 		}
 
 
