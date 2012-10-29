@@ -343,7 +343,7 @@ function getPopData(dataH, callback, queue) {
       });
       async.parallel(newStateBatch, function newStateAsyncEnd(err) {
         if (callback) {
-          callback(err, payloadWithNulls);
+          callback(err, cleanData);
         }
       });
     }
