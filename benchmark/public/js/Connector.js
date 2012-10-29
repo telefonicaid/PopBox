@@ -33,9 +33,14 @@
 
 		// Private Methods
 
-		var setupEvents = function() {
 
-			//var nagents, tests, hosts, interval;
+		var showInfoMessage = function(str) {
+			var date = new Date().toTimeString().slice(0, 8);
+			organizer.log(date, str, "");
+		}
+
+
+		var setupEvents = function() {
 
 			// Events
 
@@ -84,11 +89,7 @@
 
 
 			socket.on('endLog', function (data) {
-
-				if ( data.err ) {
-
-				}
-
+				console.log(data);
 				organizer.log( data.time, data.message, data.host );
 			});
 
@@ -100,6 +101,26 @@
 
 			socket.on('memory', function (data) {
 				organizer.addDataMemory(data.host, data.time, data.memory);
+			});
+
+
+			socket.on('disconnect', function(data) {
+				showInfoMessage("Client disconnected");
+			});
+
+
+			socket.on('reconnect_failed', function() {
+				showInfoMessage("Client could not reconnect with the server");
+			});
+
+
+			socket.on('reconnect', function() {
+				showInfoMessage("Client could reconnect successfully");
+			});
+		
+
+			socket.on('reconnecting', function () {
+				showInfoMessage("Trying to reconnect");
 			});
 
 		}
@@ -118,7 +139,9 @@
 
 
 			// Attaching events to the socket
-			setupEvents();			
+			setupEvents();
+
+			//showInfoMessage('Client connected');
 		}
 
 
