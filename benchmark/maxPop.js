@@ -13,7 +13,7 @@ http.globalAgent.maxSockets = 5000;
 var version = 0;
 exports.version = version;
 
-var doNtimes_queues = function (numQueues, provision, callback, messageEmit, version) {
+var doNtimes_queues = function (numPops, provision, callback, messageEmit, version) {
 
     var stopped = false;
 
@@ -40,9 +40,8 @@ var doNtimes_queues = function (numQueues, provision, callback, messageEmit, ver
         }
     });
 
-
-    var _doNtimes_queues = function (callback, messageEmit) {
-
+    var _doNtimes_queues = function (callback) {
+        console.log(numPops);
         async.series([
 
             /**
@@ -51,19 +50,18 @@ var doNtimes_queues = function (numQueues, provision, callback, messageEmit, ver
              */
                 function (callback) {
                 var contResponse = 0;
-
                 var fillQueue = function () {
 
                     dbPusher.pushTransaction('UNSEC:', provision, function (err, res) {
                         contResponse++;
 
-                        if (contResponse === numQueues) {
+                        if (contResponse === numPops) {
                             callback();
                         }
                     });
                 };
 
-                for (var i = 0; i < numQueues; i++) {
+                for (var i = 0; i < numPops; i++) {
                     setTimeout(function () {
                         fillQueue();
                     }, 0);
@@ -75,9 +73,9 @@ var doNtimes_queues = function (numQueues, provision, callback, messageEmit, ver
              * @param callback
              */
                 function (callback) {
+
+
                 var contResponse = 0;
-                var init = new Date().valueOf();
-                var agentIndex, host, port;
 
                 var pop = function (host, port) {
 
@@ -95,12 +93,12 @@ var doNtimes_queues = function (numQueues, provision, callback, messageEmit, ver
                                 callback('Error, empty queue: ' + data, null);
                             }
 
-                            if (contResponse === numQueues) {
+                            if (contResponse === numPops) {
                                 var end = new Date().valueOf();
                                 var time = end - init;
 
                                 var now = new Date();
-                                var message = numQueues + ' pops with a provision of ' + provision.payload.length +
+                                var message = numPops + ' pops with a provision of ' + provision.payload.length +
                                     ' bytes in ' + time + ' milliseconds without errors';
                                 var nowToString = now.toTimeString().slice(0,8);
 
@@ -108,35 +106,43 @@ var doNtimes_queues = function (numQueues, provision, callback, messageEmit, ver
 
                                 if (messageEmit && typeof (messageEmit) === 'function') {
                                     console.log(message);
-                                    messageEmit({time: nowToString, message: {id: 1, point: [numQueues, time, provision.payload.length]}, version : version});
+                                    messageEmit({time: nowToString, message: {id: 1, point: [numPops, time, provision.payload.length]}, version : version});
                                 }
 
-                                callback(null, {numPops: numQueues, time: time});
+                                setTimeout(function () {
+                                    console.log('Trying with %d queues', numPops);
+                                    callback();
+                                }, 60000);
                             }
                         });
                 };
+                function _doPop( host, port) {
+                        process.nextTick(function () {
+                            pop(host, port);
+                        });
+                }
+                var agentIndex;
 
+                function doPop(numTimes) {
+
+                    agentIndex = Math.floor(numTimes / config.slice) % config.agentsHosts.length;
+                    var host = config.agentsHosts[agentIndex].host;
+                    var port = config.agentsHosts[agentIndex].port;
+
+                    if (numTimes < numPops) {
+                        _doPop(host,port);
+                        doPop(++numTimes);
+                    }
+                }
+
+                var init = new Date().valueOf();
+                //Start doing pops.
+                doPop(0);
                 /**
                  * Auxiliary function to do a pop. This function choose the agent to do the pop depending on numTimes
                  * (The number of times that the function has been executed).
                  * @param numTimes The number of times that the function has been executed
                  */
-                function doPop(numTimes) {
-
-                    agentIndex = Math.floor(numTimes / config.slice) % config.agentsHosts.length;
-                    host = config.agentsHosts[agentIndex].host;
-                    port = config.agentsHosts[agentIndex].port;
-
-                    if (numTimes < numQueues) {
-                        setTimeout(function () {
-                            pop(host, port);
-                            doPop(++numTimes);
-                        }, 0);
-                    }
-                }
-
-                //Start doing pops.
-                doPop(0);
             }
         ],
             /**
@@ -148,21 +154,15 @@ var doNtimes_queues = function (numQueues, provision, callback, messageEmit, ver
                 if (err) {
                     console.log(err);
                     var now = new Date();
-                    var nowToString = now.toTimeString().slice(0,8);
+                    var nowToString = now.toTimeString().slice(0, 8);
                     sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: err});
                 } else {
-
-                    dbPusher.flushBBDD();
-
+                    numPops += config.maxPop.queues_inteval;
                     //Increase the number of pops until it reaches the maximum number of pops defined in the config file,
-                    if (numQueues < config.maxPop.max_pops) {
+                    if (numPops < config.maxPop.max_pops) {
 
-                        numQueues += config.maxPop.queues_inteval;
                         if (!stopped) {
-                            setTimeout(function () {
-                                //console.log('Trying with %d queues', numPops);
-                                _doNtimes_queues(callback, messageEmit);
-                            }, 60000);
+                            _doNtimes_queues(callback);
                         }
                     } else {
                         benchmark.webSocket.removeAllListeners('pauseTest');
@@ -173,7 +173,7 @@ var doNtimes_queues = function (numQueues, provision, callback, messageEmit, ver
         );
     };
 
-    _doNtimes_queues(callback, messageEmit);
+    _doNtimes_queues(callback);
 };
 
 /**
@@ -185,18 +185,18 @@ var doNtimes_queues = function (numQueues, provision, callback, messageEmit, ver
  * @param messageEmit The function that will process the generated data (times, ...). This function
  * can store this data in a data base or send it through a socket.
  */
-var doNtimes = function (numQueues, payloadLength, messageEmit, version) {
+var doNtimes = function (numPops, payloadLength, messageEmit, version) {
 
     var provision = genProvision.genProvision(1, payloadLength);
     console.log('Version actual' + version);
 
-    doNtimes_queues(numQueues, provision, function () {
+    doNtimes_queues(numPops, provision, function () {
 
         //Increase the payload until it reaches the maximum payload size defined in the config file.
         if (payloadLength < config.maxPop.max_payload) {
 
             payloadLength += config.maxPop.payload_length_interval;
-            doNtimes(numQueues, payloadLength, messageEmit, version);
+            doNtimes(numPops, payloadLength, messageEmit, version);
 
         } else {
 
@@ -206,8 +206,8 @@ var doNtimes = function (numQueues, payloadLength, messageEmit, version) {
     }, messageEmit, version);
 };
 
-var launchTest = function(numQueues, payloadLength, messageEmit){
-    doNtimes(numQueues, payloadLength, messageEmit, version);
+var launchTest = function (numPops, payloadLength, messageEmit) {
+    doNtimes(numPops, payloadLength, messageEmit, version);
     version++;
     exports.version = version;
 };
