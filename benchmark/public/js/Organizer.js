@@ -94,6 +94,7 @@
 		}
 
 		this.log = function( timestamp, message, host ) {
+			host = host || "";
 			this.vc.logData(timestamp, message, host);		// TODO Remove 'vc' dependencies
 		}
 

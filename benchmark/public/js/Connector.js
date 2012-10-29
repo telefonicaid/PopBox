@@ -36,7 +36,7 @@
 
 		var showInfoMessage = function(str) {
 			var date = new Date().toTimeString().slice(0, 8);
-			organizer.log(date, str, "");
+			organizer.log(date, str);
 		}
 
 
@@ -72,7 +72,7 @@
 					if ( data.err ) {
 						var time = new Date().toTimeString().slice(0,8);
 						var msg = 'Error: message received with no data points';
-						organizer.log( time, msg);
+						organizer.log( time, msg );
 
 					} else if ( data.message ) {
 						var id = data.message.id;
@@ -101,6 +101,11 @@
 
 			socket.on('memory', function (data) {
 				organizer.addDataMemory(data.host, data.time, data.memory);
+			});
+
+
+			socket.on('error', function(data) {
+				showInfoMessage("Client socket has an error");
 			});
 
 
@@ -135,13 +140,9 @@
 			});
 
 			socket.emit('init');
-			console.log('init');
-
 
 			// Attaching events to the socket
 			setupEvents();
-
-			//showInfoMessage('Client connected');
 		}
 
 
