@@ -5,6 +5,7 @@ var config = require('./config.js');
 var net = require('net');
 
 var webSocket;
+var nameHost = {};
 
 var receiveMessage = sender.receiveMessage;
 var sendMessage = sender.sendMessage;
@@ -100,11 +101,14 @@ var createAndLaunchAgents = function (callback) {
                     var JSONdata = JSON.parse(data);
 
                     if (JSONdata.id === 1) {
+                        nameHost[client.remoteAddress] = JSONdata.host;
                         monitorHosts.push(JSONdata.host);
                         hostsRec++;
 
                         if (hostsRec === config.agentsHosts.length) {
                             initOptions.hosts = monitorHosts;
+                            exports.nameHost = nameHost;
+                            console.log(nameHost);
                             setTimeout(callback, 1000);
                         }
 

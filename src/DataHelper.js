@@ -19,9 +19,10 @@ var config = require('./config.js');
 var path = require('path');
 var log = require('PDITCLogger');
 var logger = log.newLogger();
+var dbCluster = require('./DBCluster.js');
 logger.prefix = path.basename(module.filename, '.js');
 
-var setKey = function(db, id, value, callback) {
+var setKey = function (db, id, value, callback) {
   "use strict";
   logger.debug('setKey(db, id, value, callback)', [db, id, value, callback]);
   db.set(id, value, function onSet(err) {
@@ -36,10 +37,10 @@ var setKey = function(db, id, value, callback) {
   });
 };
 
-var getKey = function(db, id, callback) {
+var getKey = function (db, id, callback) {
   "use strict";
   logger.warning('getKey(db, id, callback)', [db, id, callback]);
-  db.get(id, function(err, value) {
+  db.get(id, function (err, value) {
     if (err) {
       //error pushing
       logger.warning(err);
@@ -52,20 +53,33 @@ var getKey = function(db, id, callback) {
 };
 
 var exists = function (db, id, callback) {
-    "use strict";
-    logger.debug('exists(db, id, callback)', [db, id, callback]);
-    db.exists(id, function(err, value) {
-        if (err) {
-            //error pushing
-            logger.warning(err);
-        }
-        if (callback) {
-            callback(err, value === 1);
-        }
-    });   
+  "use strict";
+  //logger.debug('exists(db, id, callback)', [db, id, callback]);
+  db.exists(id, function (err, value) {
+    if (err) {
+      //error pushing
+      logger.warning(err);
+    }
+    if (callback) {
+      callback(err, value === 1);
+    }
+  });
 };
 
-var pushParallel = function(db, queue, priority, transaction_id) {
+var deleteOnExpired = function (id, queueid, callback) {
+  var dBQueue = dbCluster.getDb(queueid);
+  var dbTrans = dbCluster.getTransactionDb(id);
+  exists(dbTrans, id + ":meta", function (err, exist) {
+    if (!exist) {
+      dBQueue.lrem(queueid, 1, id);
+      callback(false);
+    } else {
+      callback(true);
+    }
+  });
+};
+
+var pushParallel = function (db, queue, priority, transaction_id) {
   'use strict';
   logger.debug('pushParallel(db, queue, priority, transaction_id)',
     [db, queue, priority, transaction_id]);
@@ -84,13 +98,13 @@ var pushParallel = function(db, queue, priority, transaction_id) {
   };
 };
 
-var hsetHashParallel = function(dbTr, queue, transactionId, sufix, datastr) {
+var hsetHashParallel = function (dbTr, queue, transactionId, sufix, datastr) {
   'use strict';
   logger.debug('hsetHashParallel(dbTr, queue, transactionId, sufix, datastr)',
     [dbTr, queue, transactionId, sufix, datastr]);
   return function asyncHsetHashParallel(callback) {
     logger.debug('asyncHsetHashParallel(callback)', [callback]);
-    dbTr.hmset(transactionId + sufix, queue.id, datastr, function(err) {
+    dbTr.hmset(transactionId + sufix, queue.id, datastr, function (err) {
       if (err) {
         //error pushing
         logger.warning(err);
@@ -103,26 +117,26 @@ var hsetHashParallel = function(dbTr, queue, transactionId, sufix, datastr) {
   };
 };
 
-var hsetMetaHashParallel = function(dbTr, transaction_id, sufix, provision) {
+var hsetMetaHashParallel = function (dbTr, transaction_id, sufix, provision) {
   'use strict';
   logger.debug('hsetMetaHashParallel(dbTr, transaction_id, sufix, provision)',
     [dbTr, transaction_id, sufix, provision]);
   return function asyncHsetMetaHash(callback) {
     logger.debug('asyncHsetMetaHash(callback)', [callback]);
     /*var meta =
-    {
-      'payload': provision.payload,
-      'priority': provision.priority,
-      'callback': provision.callback,
-      'expirationDate': provision.expirationDate
-    };
-    */
+     {
+     'payload': provision.payload,
+     'priority': provision.priority,
+     'callback': provision.callback,
+     'expirationDate': provision.expirationDate
+     };
+     */
     var meta = {};
-     for (var p in provision) {
-         if(provision.hasOwnProperty(p) && provision[p] !== null &&  provision[p] !== undefined && p !== 'queue') {
-             meta[p] = provision[p];
-         }
-     }
+    for (var p in provision) {
+      if (provision.hasOwnProperty(p) && provision[p] !== null && provision[p] !== undefined && p !== 'queue') {
+        meta[p] = provision[p];
+      }
+    }
 
     dbTr.hmset(transaction_id + sufix, meta, function onHmset(err) {
       if (err) {
@@ -134,7 +148,7 @@ var hsetMetaHashParallel = function(dbTr, transaction_id, sufix, provision) {
   };
 };
 
-var setExpirationDate = function(dbTr, key, provision, callback) {
+var setExpirationDate = function (dbTr, key, provision, callback) {
   'use strict';
   logger.debug('setExpirationDate(dbTr, key, provision, callback)', [dbTr, key, provision, callback]);
   if (provision.expirationDate) {
@@ -150,10 +164,10 @@ var setExpirationDate = function(dbTr, key, provision, callback) {
     });
   }
   else {
-      if(callback) {
-          callback(null);
-      }
+    if (callback) {
+      callback(null);
     }
+  }
 };
 
 //Public area
@@ -207,5 +221,7 @@ exports.setKey = setKey;
 
 exports.getKey = getKey;
 
-exports.exists= exists;
+exports.exists = exists;
+
+exports.deleteOnExpired = deleteOnExpired;
 
