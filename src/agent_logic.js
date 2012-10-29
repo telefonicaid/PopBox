@@ -364,7 +364,7 @@ function popQueue(req, res) {
         } else {
             if (notifList) {
                 messageList = notifList.map(function (notif) {
-                    return notif.payload;
+                    return notif && notif.payload;
                 });
             }
             ev = {
@@ -407,7 +407,7 @@ function peekQueue(req, res) {
 
             if (notifList) {
                 messageList = notifList.map(function (notif) {
-                    return notif.payload;
+                    return notif && notif.payload;
                 });
             }
 

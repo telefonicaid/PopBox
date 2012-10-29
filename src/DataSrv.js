@@ -343,7 +343,7 @@ function getPopData(dataH, callback, queue) {
             });
             async.parallel(newStateBatch, function newStateAsyncEnd(err) {
                 if (callback) {
-                    callback(err, cleanData);
+                    callback(err, payloadWithNulls);
                 }
             });
         }
@@ -428,7 +428,7 @@ function getPeekData(dataH, callback, queue) {
             });
 
             if (callback) {
-                callback(null, cleanData);
+                callback(null, payloadWithNulls);
             }
         }
     });
