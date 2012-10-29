@@ -1,13 +1,15 @@
 var childProcess = require('child_process');
-var monitor = require('./cpuMemoryMonitor.js');
+var utils = require('./utils.js');
 var config = require('../src/config.js')
 var net = require('net');
 var os = require('os');
+var cluster = require('cluster');
 
 server = net.createServer(function (connection) {
 
     var pid;
     var monitorInterval;
+    var pids = new Array();
 
     if (server.connections === 1) {
 
@@ -17,9 +19,15 @@ server = net.createServer(function (connection) {
         console.log('A new agent has been created with PID: ' + pid);
         connection.write(JSON.stringify({id: 1, host: os.hostname()}));
 
+        if(config.cluster.numcpus != 0){
+            pids = utils.getchildProcesses(pid);
+        }else{
+            pids.push(pid);
+        }
+
         //Monitoring an agent sending the client information about the usage of CPU and RAM
         monitorInterval = setInterval(function () {
-            var res = monitor.monitor(pid, function (res) {
+            var res = utils.monitor(pids, function (res) {
             console.log('CPU: ' + res.cpu + ' - Memory: ' + res.memory);
                 connection.write(JSON.stringify({id: 2, host: os.hostname(), cpu: {percentage: res.cpu}, memory: {value: res.memory}}));
             });
