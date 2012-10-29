@@ -79,6 +79,8 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit, versi
 
                 var pop = function (host, port) {
 
+                    var now, end, time, tps, message, nowToString, auxHost;
+
                     rest.post(config.protocol + '://' + host + ':' + port + '/queue/q0/pop?max=1',
                         { headers: {'Accept': 'application/json'}})
                         .on('complete', function (data, response) {
@@ -86,6 +88,15 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit, versi
                             if (response) {
                                 contResponse++;
                             } else {
+                                auxHost = (host === 'localhost') ? '127.0.0.1' : host;
+                                if (data.errors) {
+                                    for(var i=0; i < data.errors.length; i++){
+                                        now = new Date();
+                                        nowToString = now.toTimeString().slice(0, 8);
+                                        sender.sendMessage(benchmark.webSocket, 'endLog', {host : benchmark.nameHost[auxHost], time: nowToString, message: "Error: " + data.errors[i]});
+                                        messageEmit({id: 1, err: true});
+                                    }
+                                }
                                 callback('Error, no response: ' + data, null);
                             }
 
@@ -94,15 +105,16 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit, versi
                             }
 
                             if (contResponse === numPops) {
-                                var end = new Date().valueOf();
-                                var time = end - init;
+                                end = new Date().valueOf();
+                                time = end - init;
+                                tps = Math.round((numPops / time) * 1000);
+                                now = new Date();
+                                message = numPops + ' pops with a provision of ' + provision.payload.length +
+                                    ' bytes in ' + time + ' milliseconds without errors (' + tps + ' tps)';
+                                nowToString = now.toTimeString().slice(0,8);
+                                auxHost = (host === 'localhost') ? '127.0.0.1' : host;
 
-                                var now = new Date();
-                                var message = numPops + ' pops with a provision of ' + provision.payload.length +
-                                    ' bytes in ' + time + ' milliseconds without errors';
-                                var nowToString = now.toTimeString().slice(0,8);
-
-                                sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: message});
+                                sender.sendMessage(benchmark.webSocket, 'endLog', {host: auxHost, time: nowToString, message: message});
 
                                 if (messageEmit && typeof (messageEmit) === 'function') {
                                     console.log(message);

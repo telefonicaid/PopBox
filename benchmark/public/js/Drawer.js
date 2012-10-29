@@ -156,7 +156,7 @@
 			projector = new THREE.Projector();
 			// 
 			window.addEventListener( 'resize', onWindowResize, false);
-			canvas[0].addEventListener( 'click', onClick, false);
+			//canvas[0].addEventListener( 'click', onClick, false);
 			canvas[0].addEventListener( 'mousemove', onMouseMove, false );
 		}
 

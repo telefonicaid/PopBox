@@ -72,7 +72,9 @@ var doNtimes_queues = function (numQueues, payload_length, callback, messageEmit
 
         'use strict';
 
-        var init = new Date().valueOf();
+        var now, init, end, time, tps, message, nowToString, auxHost;
+
+        init = new Date().valueOf();
         console.log(config.protocol + '://' + host + ':' + port + '/trans');
         rest.postJson(config.protocol + '://' + host + ':' + port + '/trans', provision).
             on('complete', function (data, response) {
@@ -81,15 +83,15 @@ var doNtimes_queues = function (numQueues, payload_length, callback, messageEmit
 
                     console.log('Finished with status 200');
 
-                    var end = new Date().valueOf();
-                    var time = end - init;
+                    end = new Date().valueOf();
+                    time = end - init;
 
-                    var now = new Date();
-                    var tps = Math.round((numQueues / time) * 1000);
-                    var message = numQueues + ' inboxes have been provisioned with ' +
+                    now = new Date();
+                    tps = Math.round((numQueues / time) * 1000);
+                    message = numQueues + ' inboxes have been provisioned with ' +
                         payload_length + ' bytes of payload in ' + time + ' ms with no errors (' + tps + ' tps)' ;
-                    var nowToString = now.toTimeString().slice(0, 8);
-                    var auxHost = (host === 'localhost') ? '127.0.0.1' : host;
+                    nowToString = now.toTimeString().slice(0, 8);
+                    auxHost = (host === 'localhost') ? '127.0.0.1' : host;
 
                     console.log(message);
                     sender.sendMessage(benchmark.webSocket, 'endLog', {host : benchmark.nameHost[auxHost], time: nowToString, message: message});
@@ -104,16 +106,24 @@ var doNtimes_queues = function (numQueues, payload_length, callback, messageEmit
 
 
                 } else {
-                    var now = new Date();
-                    var nowToString = now.toTimeString().slice(0, 8);
-                    sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: JSON.stringify(data)});
-                    messageEmit({id: 0, err: true});
+
+                    auxHost = (host === 'localhost') ? '127.0.0.1' : host;
+
+                    if ( data.errors ) {
+                        for(var i=0; i < data.errors.length; i++){
+                            now = new Date();
+                            nowToString = now.toTimeString().slice(0, 8);
+                            sender.sendMessage(benchmark.webSocket, 'endLog', {host : benchmark.nameHost[auxHost], time: nowToString, message: "Error: " + data.errors[i]});
+                            messageEmit({id: 0, err: true});
+                        }
+                    }
+
                 }
             });
     };
 
     agentsTime();
-}
+};
 
 /**
  * The test to be run. This test introduces some provisions in the queues. payloadLength increase to
