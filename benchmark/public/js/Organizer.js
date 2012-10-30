@@ -10,7 +10,7 @@
 
 	var Organizer = function(vc) {
 
-		/* Private State */
+		/* Attributes */
 
 		// App's ViewController
 		this.vc = vc;

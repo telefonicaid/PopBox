@@ -11,8 +11,7 @@
 	var barInterval;		// Time interval to increase the modal progress bar
 	var barTimeout;			// Timeout used when the client is waiting for the agents to be launched
 
-	var DOM = PBDV.Constants.DOM 
-
+	var DOM = PBDV.Constants.DOM;
 
 
 	/* Renames */
@@ -20,117 +19,166 @@
 	var CSS  = PBDV.Constants.CSS;
 	var Text = PBDV.Constants.Text;
 
-	var self;
 
 
 	/* Constructor */
 
 	var ViewController = function (domLibrary) {
 
-		self = this;
+		/* Attributes */
 
-		// TODO $ attribute
+		// The organizer object
+		this.organizer = new PBDV.Organizer(this);		
 
+		// The DOM-library (could be any jQuery-like lib)
+		this.$ = domLibrary;	
 
-		this.organizer = new PBDV.Organizer(this);		// The organizer object
-		this.$ = domLibrary;		// The DOM-library (could be any jQuery-like lib)
-		this.state = ['i', 'i'];	// The machine state used for the buttons panel (start and pause)
+		// The machine state used for the buttons panel (start and pause)	
+		this.state = ['i', 'i'];
+
 
 		// Initializing the View Controller
-		this.init();
+		init(this);
 	}
 		
 
+
 	/* Private Methods */
 
-	var setupEventHandlers = function() {
+	/*
+	 * Initializing the ViewController
+	 */
+	var init = function(vc) {
+		
+		// Showing the modal window
+		DOM.waitingModal.css({ 'display' : '' });
+
+		// Setting up the events which are going to be handled
+		setupEventHandlers(vc);
+		
+		// Creating the progress bar
+		setBarInterval(vc, 30, false);
+
+		// Initializing the test info with the first description
+		updateDescription(0);
+	}
+
+
+	/*
+	 *
+	 */
+	var setupEventHandlers = function(vc) {
 
 		DOM.startButton.on('click', function() {
-			self.start();
+			vc.start();
 		});
 
 		DOM.pauseButton.on('click', function() {
-			self.pause();
+			vc.pause();
 		});
 
 		DOM.tabs.on('click', function() {
 			var currentTab = $(this);
-			self.changeTest(currentTab);
+			vc.changeTest(currentTab);
 		});
 	}
 
 
+	/*
+	 *
+	 */
 	var updateDescription = function( number ) {
 		var Test = PBDV.Constants.Test;
 		DOM.testDescription.text( Test[number] );
 	}
 
 
-	var handler = function(event, callback) {
-		// Renames
+	/*
+	 *
+	 */
+	var modalHandler = function( event, callback ) {
+
+		// Event Constants for left click and enter key
 		var LEFT_CLICK = 1;
     	var ENTER = 13;
 
+    	// If left click or enter key were used, run the callback
     	if ( event.type === 'click'    && event.which === LEFT_CLICK ||
     		 event.type === 'keypress' && event.which === ENTER ) {
 
+    		// A callback passed by 'hideModalBox' or 'reloadWebsite' event handlers
     		callback();
 		}
+
 	}
 
 
-    var hideModalBox = function(event) {
-		handler(event, function() {
-			$(window).off('keypress', hideModalBox);
+	/*
+	 *
+	 */
+    var hideModalBox = function( event ) {
+
+    	// This event will be handled by the 'modalHandler' function
+		modalHandler(event, function() {
+
+			// Hiding the modal window
 			DOM.waitingModal.removeClass('in');
 			DOM.backdrop.removeClass('modal-backdrop');
+
+			// When the modal is hidden, the 'keypress' event is not handled
+			$(window).off('keypress', hideModalBox);
 		});
+
     }
 
 
+	/*
+	 *
+	 */
     var reloadWebsite = function(event) {
-    	handler(event, function() {
+
+    	// This event will be handled by the 'modalHandler' function
+    	modalHandler(event, function() {
+
+    		// The app is not going to listen to the 'keypress' event any more
 			$(window).off('keypress', reloadWebsite);
+
+			// The app is reloaded
     		window.location.reload();
     	});
+
     }
 
 
+	/*
+	 *
+	 */
     var clearLogger = function () {
+
+    	// Deleting every log row and disabling the 'clear' button
     	DOM.logs.empty();
     	DOM.clearButton.addClass( CSS.DISABLED );
+
     }
 
 
-	var setBarInterval = function( time, end ) {
+	/*
+	 *
+	 */
+	var setBarInterval = function( vc, time, end ) {
+
+		// Increasing the % of the modal progress bar
 		barInterval = setInterval(function() {
-			self.increaseBar( end );
+			vc.increaseBar( end );
 		}, time);
+
 	}
+
 
 
     /* Public API */
 
     ViewController.prototype = {
-
-    	/*
-    	 * Setting up the ViewController
-    	 */
-		init : function () {
-			
-			// Showing the modal window
-			document.getElementById('waiting-modal').style.display = '';
-
-			// Setting up the events which are going to be handled
-			setupEventHandlers();
-			
-			// Creating the progress bar
-			setBarInterval(30, false);
-
-			// Initializing the test info with the first description
-			updateDescription(0);
-		},
-
 
 		/*
 		 * 'Start/Restart' Button Event Handler
@@ -140,8 +188,6 @@
 			// Getting the current tab number selected and updating the buttons state
 			var current = DOM.tabs.filter('.current').prevAll().length;
 			this.state[current] = "S";
-
-			// TODO Subscribe to this.organizer
 
 			// Updating the start button text, enabling the pause button and starting the test
 			if ( !DOM.startButton.hasClass( CSS.STARTED ) ) {
@@ -194,32 +240,28 @@
 			currentTab.addClass( CSS.CURRENT );
 
 			// Updating the test info
-			updateDescription(sceneNumber);
+			updateDescription( sceneNumber );
 
 			// If test was paused, the buttons text change and the pause button is enabled
-			if ( this.state[sceneNumber] === "P" ) {
+			if ( this.state[ sceneNumber ] === "P" ) {
 				DOM.startButton.text( Text.RESTART );
-				DOM.pauseButton.removeClass( CSS.DISABLED )
-								.text( Text.CONTINUE );
+				DOM.pauseButton.removeClass( CSS.DISABLED ).text( Text.CONTINUE );
 
 			// If test was started, the buttons text change and the pause button is enabled
-			} else if ( this.state[sceneNumber] === "S" ) {
+			} else if ( this.state[ sceneNumber ] === "S" ) {
 				var PD = CSS.PAUSED + ' ' + CSS.DISABLED;
 				DOM.startButton.text( Text.RESTART );
-				DOM.pauseButton.removeClass( PD )
-								.text( Text.PAUSE );
+				DOM.pauseButton.removeClass( PD ).text( Text.PAUSE );
 
-			// Otherwise, 
+			// Otherwise, the buttons panel show the beggining state
 			} else {
-				DOM.startButton.removeClass( CSS.STARTED )
-								.text( Text.START );
-
+				DOM.startButton.removeClass( CSS.STARTED ).text( Text.START );
 				DOM.pauseButton.removeClass( CSS.PAUSED )
 								.addClass( CSS.DISABLED )
 								.text( Text.PAUSE );
 			}
 
-			// Changing to the asked by the user
+			// Changing to the asked test by the user
 			this.organizer.changeToTest( sceneNumber );
 		},
 
@@ -231,12 +273,13 @@
 		 *  @param host the machine name which sent the message
 		 */
 		logData : function( timestamp, message, host ) {
-
+			// Formatting the log with the data received from the server
 			var log =  '<tr class="log">														\
 							<td class="timestamp">' + timestamp + '<br />' + host + '</td>		\
 							<td class="message">'   + message   + '</td>						\
 						</tr>';
 
+			// Adding the new log to the DataLogger list and enabling the 'clear' button
 			DOM.logs.prepend(log);
 			DOM.clearButton.removeClass( CSS.DISABLED )
 							.on('click', clearLogger);
@@ -300,9 +343,12 @@
 		},
 
 
+		/*
+		 *
+		 */
 		endModalBar : function() {
 			clearInterval( barInterval );
-			setBarInterval(2, true);
+			setBarInterval(this, 2, true);
 		}
 
 	}; // prototype
