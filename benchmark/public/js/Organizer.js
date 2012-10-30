@@ -6,123 +6,159 @@
 	"use strict";
 
 
-	var Organizer = function() {
+	/* Constructor */
 
-		// Private State
+	var Organizer = function(vc) {
 
-		var drawer;
-		var currentTest = 0;	// TODO It will be deleted when Organized and Drawer were merged
+		/* Private State */
+
+		// App's ViewController
+		this.vc = vc;
+
+		// Main drawing utility to visualize data points using WebGL
+		this.drawer = new PBDV.Drawer();
+
+		// Connector module to establish a connection with the server
+		this.conn   = new PBDV.Connector(this);
+
+		// Plot 2D to display CPU Performance data (in %)
+		this.cpu    = new PBDV.Plot2D('cpu', 100);
+
+		// Plot 2D to display Memory Performance data (in MB)
+		this.memory = new PBDV.Plot2D('memory');
+
+	}
 
 
-		// Private Methods
+	/* Public API */
 
-
-		// Public API
+	Organizer.prototype = {
 
 		// Methods invoked by ViewController
 
-		this.start = function() {
+		/*
+		 *
+		 */
+		start : function() {
 
-			//
+			var currentTest = this.drawer.currentScene;
 			this.conn.startTest( currentTest );
-		}
+		},
 
 
-		this.pause = function() {
+		/*
+		 *
+		 */
+		pause : function() {
 
-			// 
+			var currentTest = this.drawer.currentScene;
 			this.conn.pauseTest( currentTest );
 
-		}
+		},
 
 
-		this.continue = function() {
+		/*
+		 *
+		 */
+		continue : function() {
 
-			// 
+			var currentTest = this.drawer.currentScene;
 			this.conn.continueTest( currentTest );
 
-		}
+		},
 
 
-		this.restart = function() {
+		/*
+		 *
+		 */
+		restart : function() {
 
-			// 
-			drawer.restart( currentTest );
+			var currentTest = this.drawer.currentScene;
+			this.drawer.restart();
 
 			//
 			this.conn.restartTest( currentTest );
-		}
+		},
 
 
-		this.changeToTest = function( testNumber ) {
-			currentTest = testNumber;
-			drawer.changeToTest( testNumber );
-		}
+		/*
+		 *
+		 */
+		changeToTest : function( testNumber ) {
+			this.drawer.changeToTest( testNumber );
+		},
 
 
-		this.getDOMElement = function() {
-			return drawer.getCanvas();
-		}
+		/*
+		 *
+		 */
+		getDOMElement : function() {
+			return this.drawer.getCanvas();
+		},
 
 
 
 		// Methods invoked by Connector after receiving determined events
 
-		this.initTest = function( tests ) {
-			drawer.configTest( tests );
-			this.vc.endModalBar();
-		}
 
-		this.initPlots = function( interval, nagents, hostnames ) {
+		/*
+		 *
+		 */
+		initTest : function( tests ) {
+			this.drawer.configTest( tests );
+			this.vc.endModalBar();
+		},
+
+
+		/*
+		 *
+		 */
+		initPlots : function( interval, nagents, hostnames ) {
 			this.cpu.init( interval, nagents, hostnames );
 			this.memory.init( interval, nagents, hostnames );
-		}
+		},
 
-		this.addDataCPU = function( host, time, cpuData ) {
+
+		/*
+		 *
+		 */
+		addDataCPU : function( host, time, cpuData ) {
 			this.cpu.update( host, time, cpuData );
-		}
+		},
 
-		this.addDataMemory = function( host, time, memoryData ) {
+
+		/*
+		 *
+		 */
+		addDataMemory : function( host, time, memoryData ) {
 			var mem = parseInt(memoryData) / 1000;
 			this.memory.update( host, time, mem );
-		}
+		},
 
-		this.addData = function( test, point ) {
+
+		/*
+		 *
+		 */
+		addData : function( test, point ) {
 
 			// Adding a point to the corresponding drawing
-			drawer.addDataTo(test, point);			
-		}
+			this.drawer.addDataTo(test, point);			
+		},
 
-		this.log = function( timestamp, message, host ) {
+
+		/*
+		 *
+		 */
+		log : function( timestamp, message, host ) {
 			host = host || "";
 			this.vc.logData(timestamp, message, host);		// TODO Remove 'vc' dependencies
 		}
 
-
-		// TODO Remove 'vc' dependencies!!!!!
-		this.setVC = function(vc) {
-			this.vc = vc;
-		}
-		this.setCPU = function(cpu) {
-			this.cpu = cpu;
-		}
-		this.setMemory = function(_memory) {
-			this.memory = _memory;
-		}
-		this.setConn = function(conn) {
-			this.conn = conn;
-		}
-
-		// init
-		drawer = new PBDV.Drawer();
-
-	}
-
+	}; // prototype
 	
 
 	// Exported to the namespace
 	PBDV.Organizer = Organizer;
 
 
-})( window.PBDV = window.PBDV || {}, 	// Namespace
-	THREE);								// Dependencies
+})( window.PBDV = window.PBDV || {}); 	// Namespace

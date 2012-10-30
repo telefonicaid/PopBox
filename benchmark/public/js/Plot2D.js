@@ -109,10 +109,11 @@
 
 
     var updateKeys = function( host, value ) {
+        
         var hostID = '#' + WIDGET_NAME + '-' + host;
         var agent  = keys.find(hostID);
         
-        var newValue = value.toFixed(2);
+        var newValue = (value) ? value.toFixed(2) : 0;
 
         switch ( WIDGET_NAME ) {
             case 'cpu'    : newValue += "%";    break;

@@ -20,10 +20,33 @@
 			}
 		},
 	
-		Drawers : {
-			MAIN   : 'main',
-			CPU    : 'cpu',
-			MEMORY : 'memory'
+		Connector : {
+			NEW_POINT    : 'newPoint',
+			LAST_POINT   : 'lastPoint',
+			INIT         : 'init',
+			CPU          : 'cpu',
+			MEMORY       : 'memory',
+			FINISH       : 'finish',
+
+			START_TEST   : 'startTest',
+			PAUSE_TEST   : 'pauseTest',
+			RESTART_TEST : 'restartTest',
+		},
+
+		DOM : {				// Object which contains the different elements of the View
+			testing         : $('#testing'),			// WebGL Container
+			cpu             : $('#cpu'),				// 2D Plots
+			memory          : $('#memory'),
+			tabs            : $('.tab'),				// Tab Buttons
+			testDescription : $('#test-description'),
+			startButton     : $('#start'),				// Buttons
+			pauseButton     : $('#pause'),
+			clearButton     : $('#clear-log'),
+			modalButton     : $('#modal-button'),
+			logs            : $('#logs'),				// Logs Display
+			backdrop        : $('#backdrop'),			// Modal Backdrop
+			waitingModal    : $('#waiting-modal'),		// Modal Window
+			meter           : $('.meter')				// Modal Progress Bar
 		},
 
 		CSS : {

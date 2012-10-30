@@ -5,90 +5,249 @@
 
 	"use strict";
 
-	var ViewController = function (org, domLibrary) {
 
-		// Private State 
+	/* Private Global Variables */
 
-		var self = this;
+	var barInterval;		// Time interval to increase the modal progress bar
+	var barTimeout;			// Timeout used when the client is waiting for the agents to be launched
 
-		var $ = domLibrary,				// It could be any jQuery-like library (with '#' and '.' syntax)
-			organizer = org,
-			state = ['i', 'i'];
+	var DOM = PBDV.Constants.DOM 
+
+
+
+	/* Renames */
+
+	var CSS  = PBDV.Constants.CSS;
+	var Text = PBDV.Constants.Text;
+
+	var self;
+
+
+	/* Constructor */
+
+	var ViewController = function (domLibrary) {
+
+		self = this;
+
+		// TODO $ attribute
+
+
+		this.organizer = new PBDV.Organizer(this);		// The organizer object
+		this.$ = domLibrary;		// The DOM-library (could be any jQuery-like lib)
+		this.state = ['i', 'i'];	// The machine state used for the buttons panel (start and pause)
+
+		// Initializing the View Controller
+		this.init();
+	}
+		
+
+	/* Private Methods */
+
+	var setupEventHandlers = function() {
+
+		DOM.startButton.on('click', function() {
+			self.start();
+		});
+
+		DOM.pauseButton.on('click', function() {
+			self.pause();
+		});
+
+		DOM.tabs.on('click', function() {
+			var currentTab = $(this);
+			self.changeTest(currentTab);
+		});
+	}
+
+
+	var updateDescription = function( number ) {
+		var Test = PBDV.Constants.Test;
+		DOM.testDescription.text( Test[number] );
+	}
+
+
+	var handler = function(event, callback) {
+		// Renames
+		var LEFT_CLICK = 1;
+    	var ENTER = 13;
+
+    	if ( event.type === 'click'    && event.which === LEFT_CLICK ||
+    		 event.type === 'keypress' && event.which === ENTER ) {
+
+    		callback();
+		}
+	}
+
+
+    var hideModalBox = function(event) {
+		handler(event, function() {
+			$(window).off('keypress', hideModalBox);
+			DOM.waitingModal.removeClass('in');
+			DOM.backdrop.removeClass('modal-backdrop');
+		});
+    }
+
+
+    var reloadWebsite = function(event) {
+    	handler(event, function() {
+			$(window).off('keypress', reloadWebsite);
+    		window.location.reload();
+    	});
+    }
+
+
+    var clearLogger = function () {
+    	DOM.logs.empty();
+    	DOM.clearButton.addClass( CSS.DISABLED );
+    }
+
+
+	var setBarInterval = function( time, end ) {
+		barInterval = setInterval(function() {
+			self.increaseBar( end );
+		}, time);
+	}
+
+
+    /* Public API */
+
+    ViewController.prototype = {
+
+    	/*
+    	 * Setting up the ViewController
+    	 */
+		init : function () {
 			
-		var DOM = {
-			testing         : $('#testing'),			// WebGL Container
-			cpu             : $('#cpu'),				// 2D Plots
-			memory          : $('#memory'),
-			tabs            : $('.tab'),				// Tab Buttons
-			testDescription : $('#test-description'),
-			startButton     : $('#start'),				// Buttons
-			pauseButton     : $('#pause'),
-			clearButton     : $('#clear-log'),
-			modalButton     : $('#modal-button'),
-			logs            : $('#logs'),				// Logs Display
-			meter           : $('.meter'),				// Modal Progress Bar
-			backdrop        : $('#backdrop'),			// Modal Backdrop
-			waitingModal    : $('#waiting-modal')
-		};
+			// Showing the modal window
+			document.getElementById('waiting-modal').style.display = '';
 
-		var barInterval,
-			barTimeout;
+			// Setting up the events which are going to be handled
+			setupEventHandlers();
+			
+			// Creating the progress bar
+			setBarInterval(30, false);
 
-		// Rename
-		var CSS  = PBDV.Constants.CSS,
-			Text = PBDV.Constants.Text;
+			// Initializing the test info with the first description
+			updateDescription(0);
+		},
 
 
+		/*
+		 * 'Start/Restart' Button Event Handler
+		 */
+		start : function() {
 
-		// Private Methods
+			// Getting the current tab number selected and updating the buttons state
+			var current = DOM.tabs.filter('.current').prevAll().length;
+			this.state[current] = "S";
 
-		var setupEventHandlers = function() {
-			DOM.startButton.on('click', self.start);
-			DOM.pauseButton.on('click', self.pause);
+			// TODO Subscribe to this.organizer
 
-			DOM.tabs.on('click', self.changeTest);
-		}
+			// Updating the start button text, enabling the pause button and starting the test
+			if ( !DOM.startButton.hasClass( CSS.STARTED ) ) {
+				DOM.startButton.addClass( CSS.STARTED ).text( Text.RESTART );
+				DOM.pauseButton.removeClass( CSS.DISABLED );
 
-
-		var updateDescription = function( number ) {
-			var Test = PBDV.Constants.Test;
-			DOM.testDescription.text( Test[number] );
-		}
-
-		var handler = function(event, callback) {
-			// Renames
-			var LEFT_CLICK = 1;
-        	var ENTER = 13;
-
-        	if ( event.type === 'click'    && event.which === LEFT_CLICK ||
-        		 event.type === 'keypress' && event.which === ENTER ) {
-
-        		callback();
+				this.organizer.start();
+			
+			} else {
+				// As start button was pressed, now a test is going to be restarted
+				this.organizer.restart();
 			}
-		}
+
+		},
 
 
-        var hideModalBox = function(event) {
-    		handler(event, function() {
-    			$(window).off('keypress', hideModalBox);
-				DOM.waitingModal.removeClass('in');
-    			DOM.backdrop.removeClass('modal-backdrop');
-    		});
-        }
+		/*
+		 * 'Pause/Continue' Button Event Handler
+		 */
+		pause : function() {
+			
+			// Getting the current tab number selected and updating the buttons state
+			var current = DOM.tabs.filter('.current').prevAll().length;
+			this.state[current] = "P";
 
-        var reloadWebsite = function(event) {
-        	handler(event, function() {
-				$(window).off('keypress', reloadWebsite);
-        		window.location.reload();
-        	});
-        }
+			// Updating the pause button text and pausing the current test
+			DOM.pauseButton.toggleClass( CSS.PAUSED );
 
-        var clearLogger = function () {
-        	DOM.logs.empty();
-        	DOM.clearButton.addClass( CSS.DISABLED );
-        }
+			if ( DOM.pauseButton.hasClass( CSS.PAUSED ) ) {
+				DOM.pauseButton.text( Text.CONTINUE );
+				this.organizer.pause();
 
-		this.increaseBar = function( end ){
+			} else {
+				// Asking the organizer to continue the current paused test
+				DOM.pauseButton.text( Text.PAUSE );
+				this.organizer.continue();
+			}
+
+		},
+
+
+		/*
+		 * Tab Buttons Event Handler
+		 */
+		changeTest : function(currentTab) {	
+
+			// Getting the current scene number and updating the tab style
+			var sceneNumber = currentTab.prevAll().length;
+			DOM.tabs.removeClass( CSS.CURRENT );
+			currentTab.addClass( CSS.CURRENT );
+
+			// Updating the test info
+			updateDescription(sceneNumber);
+
+			// If test was paused, the buttons text change and the pause button is enabled
+			if ( this.state[sceneNumber] === "P" ) {
+				DOM.startButton.text( Text.RESTART );
+				DOM.pauseButton.removeClass( CSS.DISABLED )
+								.text( Text.CONTINUE );
+
+			// If test was started, the buttons text change and the pause button is enabled
+			} else if ( this.state[sceneNumber] === "S" ) {
+				var PD = CSS.PAUSED + ' ' + CSS.DISABLED;
+				DOM.startButton.text( Text.RESTART );
+				DOM.pauseButton.removeClass( PD )
+								.text( Text.PAUSE );
+
+			// Otherwise, 
+			} else {
+				DOM.startButton.removeClass( CSS.STARTED )
+								.text( Text.START );
+
+				DOM.pauseButton.removeClass( CSS.PAUSED )
+								.addClass( CSS.DISABLED )
+								.text( Text.PAUSE );
+			}
+
+			// Changing to the asked by the user
+			this.organizer.changeToTest( sceneNumber );
+		},
+
+
+		/*
+		 *	Method to format and log the messages received from the server
+		 *  @param timestamp the timestamp when the log was produced
+		 *  @param message the data received
+		 *  @param host the machine name which sent the message
+		 */
+		logData : function( timestamp, message, host ) {
+
+			var log =  '<tr class="log">														\
+							<td class="timestamp">' + timestamp + '<br />' + host + '</td>		\
+							<td class="message">'   + message   + '</td>						\
+						</tr>';
+
+			DOM.logs.prepend(log);
+			DOM.clearButton.removeClass( CSS.DISABLED )
+							.on('click', clearLogger);
+		},
+
+
+		/*
+		 *	Method to increase the % of the modal progress bar
+		 *  @param end the condition to launch or not the final timeout
+		 */
+		increaseBar : function( end ) {
 
 			var span  = DOM.meter.children();
 
@@ -137,122 +296,16 @@
 			    				.text('Ready!');
 				    
 			}
-		}
 
-		var setBarInterval = function( time, end ) {
-			barInterval = setInterval(function() {
-				self.increaseBar( end );
-			}, time);
-		}
+		},
 
 
-		this.endModalBar = function() {
+		endModalBar : function() {
 			clearInterval( barInterval );
 			setBarInterval(2, true);
 		}
 
-
-		// Public API
-
-		this.init = function () {
-			
-			document.getElementById('waiting-modal').style.display = '';
-
-			setupEventHandlers();
-			
-			setBarInterval(30, false);
-
-			//
-			updateDescription(0);
-		}
-
-
-		/* 'Start/Restart' Button Event Handler */
-		this.start = function() {
-
-			var current = DOM.tabs.filter('.current').prevAll().length;
-			state[current]="S";
-
-			// TODO Subscribe to organizer
-			if ( !DOM.startButton.hasClass( CSS.STARTED ) ) {
-				DOM.startButton.addClass( CSS.STARTED ).text( Text.RESTART );
-				DOM.pauseButton.removeClass( CSS.DISABLED );
-
-				organizer.start();
-			
-			} else {
-				organizer.restart();
-			}
-			
-		}
-
-		/* 'Pause/Continue' Button Event Handler */
-		this.pause = function() {
-			
-			var current = DOM.tabs.filter('.current').prevAll().length;
-			state[current]="P";
-
-			DOM.pauseButton.toggleClass( CSS.PAUSED );
-
-			if ( DOM.pauseButton.hasClass( CSS.PAUSED ) ) {
-				DOM.pauseButton.text( Text.CONTINUE );
-				organizer.pause();
-
-			} else {
-				DOM.pauseButton.text( Text.PAUSE );
-				organizer.continue();
-			}
-
-		}
-
-		/* Tab Buttons Event Handler */
-		this.changeTest = function() {	
-
-			var currentTab  = $(this);
-			var sceneNumber = currentTab.prevAll().length;
-			DOM.tabs.removeClass( CSS.CURRENT );
-			currentTab.addClass( CSS.CURRENT );
-
-			updateDescription(sceneNumber);
-
-			if ( state[sceneNumber]==="P" ) {
-				DOM.startButton.text( Text.RESTART );
-				DOM.pauseButton.removeClass( CSS.DISABLED ).text( Text.CONTINUE );
-
-			} else if ( state[sceneNumber]==="S" ) {
-				var PD = CSS.PAUSED + ' ' + CSS.DISABLED;
-				DOM.pauseButton.removeClass( PD ).text( Text.PAUSE );
-				DOM.startButton.text( Text.RESTART );
-
-			} else {
-				DOM.startButton.removeClass( CSS.STARTED )
-								.text( Text.START );
-
-				DOM.pauseButton.removeClass( CSS.PAUSED )
-								.addClass( CSS.DISABLED )
-								.text( Text.PAUSE );
-			}
-
-			organizer.changeToTest( sceneNumber );
-		}
-
-		this.logData = function( timestamp, message, host ) {
-
-			var log =  '<tr class="log">														\
-							<td class="timestamp">' + timestamp + '<br />' + host + '</td>		\
-							<td class="message">'   + message   + '</td>						\
-						</tr>';
-
-			DOM.logs.prepend(log);
-			DOM.clearButton.removeClass( CSS.DISABLED )
-							.on('click', clearLogger);
-		}
-
-
-		// Init
-
-		this.init();
-	}
+	}; // prototype
 
 
 	// Exported to the namespace

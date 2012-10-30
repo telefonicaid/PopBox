@@ -293,7 +293,7 @@
 		}
 
 		this.init();
-
+		this.currentScene = currentScene;
 	}
 
 	// Exported to the namespace

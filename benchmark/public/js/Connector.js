@@ -6,194 +6,174 @@
 	"use strict";
 
 
-	var Connector = function (org, URL) {
+	/* Constructor */
+
+	var Connector = function(org) {
 		
-		// Private State
+		/* Private State */
 
-		var organizer = org;
-		var url = URL;
+		this.organizer = org;
+		this.url = window.location.href;
 
-		var versions = [];
+		this.versions = [];
 
-		var socket;
+		this.socket;
 		
-		var Constants = {
-			NEW_POINT    : 'newPoint',
-			LAST_POINT   : 'lastPoint',
-			INIT         : 'init',
-			CPU          : 'cpu',
-			MEMORY       : 'memory',
-			FINISH       : 'finish',
 
-			START_TEST   : 'startTest',
-			PAUSE_TEST   : 'pauseTest',
-			RESTART_TEST : 'restartTest',
-		};
+		this.connect( this.url );
+
+		// Attaching events to the socket
+		setupEvents( this );
+		
+	}
 
 
-		// Private Methods
+	/* Private Methods */
+
+	var showInfoMessage = function(str) {
+		var date = new Date().toTimeString().slice(0, 8);
+		this.organizer.log(date, str);
+	}
 
 
-		var showInfoMessage = function(str) {
-			var date = new Date().toTimeString().slice(0, 8);
-			organizer.log(date, str);
-		}
+	var setupEvents = function(conn) {
 
-
-		var setupEvents = function() {
-
-			// Events
-
-			socket.on('init', function (data) {
-				console.log(data);
-				
-				var nagents  = data.agents.nAgents;
-				var interval = data.agents.interval * 1000;
+		conn.socket.on('init', function (data) {
+			console.log(data);
 			
-				// Updating the versions because agents could be launched before
+			var nagents  = data.agents.nAgents;
+			var interval = data.agents.interval * 1000;
+		
+			// Updating the versions because agents could be launched before
 
-				for (var t in data.tests) {
-					var v = data.tests[t].version;
-					versions.push( v );
+			for (var t in data.tests) {
+				var v = data.tests[t].version;
+				conn.versions.push( v );
+			}
+
+			console.log("versions");
+			console.log(conn.versions);
+
+			conn.organizer.initTest( data.tests );
+
+			// Initializing 2D Plots Axis
+			
+			conn.organizer.initPlots( interval, nagents, data.hosts );
+
+
+			conn.socket.on('newPoint', function (data) {
+
+				if ( data.err ) {
+					var time = new Date().toTimeString().slice(0,8);
+					var msg = 'Error: message received with no data points';
+					conn.organizer.log( time, msg );
+
+				} else if ( data.message ) {
+					var id = data.message.id;
+					console.log( 'newPoint - v' + data.version + ' - cv' + conn.versions[id]);
+					if ( data.version === conn.versions[id] ) {
+						conn.organizer.addData( id, data.message.point );
+					}
+					
 				}
 
-				console.log("versions");
-				console.log(versions);
-
-				organizer.initTest( data.tests );
-
-				// Initializing 2D Plots Axis
-				
-				organizer.initPlots( interval, nagents, data.hosts );
-
-
-				socket.on('newPoint', function (data) {
-
-					if ( data.err ) {
-						var time = new Date().toTimeString().slice(0,8);
-						var msg = 'Error: message received with no data points';
-						organizer.log( time, msg );
-
-					} else if ( data.message ) {
-						var id = data.message.id;
-						console.log( 'newPoint - v' + data.version + ' - cv' + versions[id]);
-						if ( data.version === versions[id] ) {
-							organizer.addData( id, data.message.point );
-						}
-						
-					}
-
-				});
-
 			});
 
-
-			socket.on('endLog', function (data) {
-				console.log(data);
-				organizer.log( data.time, data.message, data.host );
-			});
+		});
 
 
-			socket.on('cpu', function (data) {
-				organizer.addDataCPU(data.host, data.time, data.cpu);
-			});
+		conn.socket.on('endLog', function (data) {
+			conn.organizer.log( data.time, data.message, data.host );
+		});
 
 
-			socket.on('memory', function (data) {
-				organizer.addDataMemory(data.host, data.time, data.memory);
-			});
+		conn.socket.on('cpu', function (data) {
+			conn.organizer.addDataCPU(data.host, data.time, data.cpu);
+		});
 
 
-			socket.on('error', function(data) {
-				showInfoMessage("Client socket has an error");
-			});
+		conn.socket.on('memory', function (data) {
+			conn.organizer.addDataMemory(data.host, data.time, data.memory);
+		});
 
 
-			socket.on('disconnect', function(data) {
-				showInfoMessage("Client disconnected");
-			});
+		conn.socket.on('error', function(data) {
+			showInfoMessage("Client socket has an error");
+		});
 
 
-			socket.on('reconnect_failed', function() {
-				showInfoMessage("Client could not reconnect with the server");
-			});
+		conn.socket.on('disconnect', function(data) {
+			showInfoMessage("Client disconnected");
+		});
 
 
-			socket.on('reconnect', function() {
-				showInfoMessage("Client could reconnect successfully");
-			});
+		conn.socket.on('reconnect_failed', function() {
+			showInfoMessage("Client could not reconnect with the server");
+		});
+
+
+		conn.socket.on('reconnect', function() {
+			showInfoMessage("Client could reconnect successfully");
+		});
+	
+
+		conn.socket.on('reconnecting', function () {
+			showInfoMessage("Trying to reconnect");
+		});
+
+	}
+
+
+	/* Public API */
+
+	Connector.prototype = {
 		
-
-			socket.on('reconnecting', function () {
-				showInfoMessage("Trying to reconnect");
-			});
-
-		}
-
-
-		// Public API
-
-		this.connect = function (url) {
+		connect : function () {
 			// Connecting to the server
-			socket = io.connect( URL, {
+			this.socket = io.connect( this.url, {
 				'connect timeout' : 10000
 			});
 
-			socket.emit('init');
-
-			// Attaching events to the socket
-			setupEvents();
-		}
+			this.socket.emit('init');
+		},
 
 
-		this.startTest = function(num) {
+		startTest : function(num) {
 			console.log('newTest ' + num);
-			socket.emit('newTest', { id : num });
-		}
+			this.socket.emit('newTest', { id : num });
+		},
 
-		this.restartTest = function(num) {
+
+		restartTest : function(num) {
 			console.log('restartTest ' + num);
 			
-			versions[num]++;
+			this.versions[num]++;
 
 			this.pauseTest(num);
 			this.startTest(num);
-		}
+		},
 
-		this.pauseTest = function(num) {
+
+		pauseTest : function(num) {
 			console.log('pauseTest ' + num);
-			socket.emit('pauseTest', { id : num });
-		}
+			this.socket.emit('pauseTest', { id : num });
+		},
 
-		this.continueTest = function(num) {
+
+		continueTest : function(num) {
 			console.log('continueTest ' + num);
-			socket.emit('continueTest', { id : num });
-		}
+			this.socket.emit('continueTest', { id : num });
+		},
 
 
-		this.addSocketEvent = function(event, callback) {
+		addSocketEvent : function(event, callback) {
 			if (typeof event === "string" && typeof callback === "function") {
-				socket.on(event, callback);	
+				this.socket.on(event, callback);	
 			}
 		}
 
+	}; // prototype
 
-		// Init
-
-		this.connect(url);
-	}
-
-
-	/*
-	 * This method should be deleted in order to use a Pub/Sub approach
-	 * The organizer should publish a 'stopReceiving' event after the Connector were already subscribed
-	 */
-	var stopReceiving = function() {
-		
-		// We can either stop receiving data through the WebSocket or store the data in a queue
-		
-		//socket.emit('pause');
-	}
 
 
 	// Exported to the namespace
