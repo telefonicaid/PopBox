@@ -29,7 +29,7 @@ exports.logger.Console = {
 };
 exports.logger.File ={
     level:'debug', filename:'pditclogger.log', timestamp:true, json:false ,
-    maxsize: 100,
+    maxsize: 10*1024*1024,
     maxFiles: 3
 };
 
