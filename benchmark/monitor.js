@@ -62,8 +62,8 @@ server = net.createServer(function (connection) {
  * @return The PID of the agent
  */
 var createAgent = function () {
-    dirAgent = path.resolve(dirAgent, '../src/Agent.js')
-    var child = childProcess.fork(dirAgent);
+    var pathAgent = path.resolve(dirAgent, '../src/Agent.js')
+    var child = childProcess.fork(pathAgent);
     var pid = child.pid;
     return pid;
 }
