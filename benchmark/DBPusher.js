@@ -15,7 +15,7 @@ for (var i = 0; i < config.redisServers.length; i++) {
     dbArray.push(cli);
 }
 
-var pushTransaction = function(appPrefix, provision, callback) {
+var pushTransaction = function (appPrefix, provision, callback) {
     'use strict';
 
     //handles a new transaction  (N ids involved)
@@ -34,7 +34,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
     var meta = {};
     for (var p in provision) {
 
-        if(provision.hasOwnProperty(p) && provision[p] !== null &&  provision[p] !== undefined && p !== 'queue') {
+        if (provision.hasOwnProperty(p) && provision[p] !== null && provision[p] !== undefined && p !== 'queue') {
             meta[p] = provision[p];
         }
 
@@ -47,7 +47,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
 
         } else {
 
-            async.forEach(queues, function(queue, asyncCallback) {
+            async.forEach(queues, function (queue, asyncCallback) {
 
                 fullQueueId = config.db_key_queue_prefix + priority + appPrefix + queue.id;
 
@@ -69,7 +69,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
 
                 });
 
-                dbTr.hmset(transactionId + ':state', queue.id, 'Pending', function(err) {
+                dbTr.hmset(transactionId + ':state', queue.id, 'Pending', function (err) {
 
                     if (err) {
                         asyncCallback(err, null);
@@ -79,7 +79,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
 
                 });
 
-            }, function(err) {
+            }, function (err) {
 
                 if (err) {
                     callback(err, null);
@@ -92,7 +92,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
     });
 };
 
-var closeDBConnections = function() {
+var closeDBConnections = function () {
     dbTr.end();
 
     for (var i = 0; i < dbArray.length; i++) {
@@ -100,13 +100,26 @@ var closeDBConnections = function() {
     }
 };
 
-var flushBBDD = function () {
-    dbTr.send_command('FLUSHALL', []);
+var flushBBDD = function (callback) {
 
-    for (var i = 0; i < dbArray.length; i++) {
-        dbArray[i].send_command('FLUSHALL', []);
-    }
-}
+    var flushT = function (cb) {
+        dbTr.flushall(cb);
+    };
+
+    var flushQ = function (cb) {
+        var flushed = 0;
+        for (var i = 0; i < dbArray.length; i++) {
+            dbArray[i].flushall(function () {
+                flushed++;
+                if (flushed === dbArray.length) {
+                    cb();
+                }
+            });
+        }
+    };
+
+    async.parallel([flushT, flushQ], callback);
+};
 
 exports.pushTransaction = pushTransaction;
 exports.closeDBConnections = closeDBConnections;

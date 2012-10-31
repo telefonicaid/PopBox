@@ -58,7 +58,7 @@ var doNtimes_queues = function (numQueues, payload_length, callback, messageEmit
             numQueues += config.maxProvision.queues_inteval;
         }
         async.parallel(functionArray, function () {
-            if (numQueues < config.maxProvision.max_queues) {
+            if (numQueues <= config.maxProvision.max_queues) {
                 if (!stopped) {
                     process.nextTick(agentsTime);
                 }
