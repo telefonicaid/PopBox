@@ -3,6 +3,14 @@
 
 	PBDV.Constants = {
 
+		Axis : {
+			MAX_DIV : {
+				X : 100,
+				Y : 100,
+				Z : 100
+			}
+		},
+
 		Camera : {
 			FOV 		: 30,
 			NEAR       	: 1,
