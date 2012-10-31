@@ -5,64 +5,79 @@
 
 	"use strict";
 
-	var Scene = function() {
+	/* Constructor */
 
-		// Private State
+	var Scene = function( options ) {
+		this.threeScene = createScene();
+		this.graph = new PBDV.Graph( options );
+		this.threeScene.add( this.graph.threeGraph );
+			
+	}
+	
+	
+	/* Private Methods */
 
-		var threeScene,
-			graph;
 
-		var createLight = function( position ) {
+		/*
+		 * 
+		 */
+		var createLight = function( threeScene, position ) {
 			var light = new THREE.DirectionalLight(0xffffff, 0.95);
 			light.position.set(position.x, position.y, position.z);
 			threeScene.add(light);
 		}
 
-		this.createGraph = function( options ) {
-			graph = new PBDV.Graph(options);
-			threeScene.add( graph.threeGraph );
-			this.graph = graph;
-		}
 
-
-		this.init = function() {
-			threeScene = new THREE.Scene();
+		/*
+		 * 
+		 */
+		var createScene = function() {
+			var threeScene = new THREE.Scene();
 
 			var position = {
 				x: 0,
 				y: 10,
 				z: 0
 			}
-			createLight(position);
+			createLight( threeScene, position );
 			position.y = -10;
-			createLight(position);
+			createLight( threeScene, position );
 			position.z = 10;
 			position.y = 0;
-			createLight(position);
+			createLight( threeScene, position );
 			position.z = -10;
-			createLight(position);
+			createLight( threeScene, position );
+			
+			return threeScene;
 		}
 
-		this.animate = function( threeCamera ) {
-			graph.animate(threeCamera);
-		}
 
+	/* Public API */
 
-		this.restart = function() {
+	Scene.prototype = {
+	
+		/*
+		 * 
+		 */
+		animate : function( threeCamera ) {
+			this.graph.animate(threeCamera);
+		},
+
+		/*
+		 * 
+		 */
+		restart : function() {
 			this.graph.restart();
+		},
+
+		/*
+		 * 
+		 */
+		addDataToGraph : function( point, lastPoint ) {
+			this.graph.addPoint( point, lastPoint );
 		}
 
-
-		this.addDataToGraph = function( point, lastPoint ) {
-			this.graph.addPoint(point, lastPoint);
-		}
-
-		// Init
-
-		this.init();
-		this.threeScene = threeScene;
-
-	}
+	}; //prototype
 
 
 	// Exported to the namespace

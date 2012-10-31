@@ -18,7 +18,6 @@ exports.launchWithDeployment = true;
  */
 exports.agentsHosts = [
 	{host:'localhost', port: 3001},
-	{host:'192.168.1.65', port: 3001}
 ];
 
 /**

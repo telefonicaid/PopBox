@@ -74,7 +74,7 @@
 		restart : function() {
 
 			var currentTest = this.drawer.currentScene;
-			this.drawer.restart();
+			this.drawer.restart( currentTest );
 
 			//
 			this.conn.restartTest( currentTest );

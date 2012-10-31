@@ -75,19 +75,17 @@
 	var createScenes = function( tests ) {
 		var Constants = PBDV.Constants.Drawer;
 
-		var scene1 = new PBDV.Scene();
-		scene1.createGraph({
+		var scene1 = new PBDV.Scene( {
 			size   : Constants.SIZE_MAP,
 			titles : Constants.Test.Provision,
 			test   : tests.push
-		});
+		} );
 
-		var scene2 = new PBDV.Scene();
-		scene2.createGraph({
+		var scene2 = new PBDV.Scene( {
 			size   : Constants.SIZE_MAP,
 			titles : Constants.Test.Pop,
 			test   : tests.pop
-		});
+		} );
 
 		self.arrayScenes.push( scene1, scene2 );
 	}
