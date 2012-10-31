@@ -294,8 +294,9 @@
 			// Formatting the log with the data received from the server
 			var log =  '<tr class="log">											\
 							<td class="timestampCell">                              \
-                                <div class="timestamp">' + timestamp + '            \
-                                </div><div class="host">' + host + '</div></td>		\
+                                <div class="timestamp">' + timestamp + '</div>      \
+                                <div class="host">' + host + '</div>                \
+                            </td>		                                            \
 							<td class="message">'   + message   + '</td>		    \
 						</tr>';
 
