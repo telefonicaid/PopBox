@@ -35,7 +35,7 @@
 		this.setCameraControls = function( callback, options ) {
 
 			// Using received or default control options
-			options = options || PBDV.Constants.Camera.CONTROLS;
+			options = options || PBDV.Constants.Camera.Controls;
 
 			// Creation of the Controls object
 		    threeControls = new THREE.TrackballControls( threeCamera ); // Creates the controls
