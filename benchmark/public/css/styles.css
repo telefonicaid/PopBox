@@ -217,7 +217,7 @@ box-shadow : -1px -1px 3px 0px #333;}
    .log:nth-child(even) { background : #CCC; }
    .log:nth-child(odd)  { background : #FFF; }
    
-      .timestamp {
+      .timestampCell {
         width : 20%;
       }
 

@@ -86,7 +86,8 @@
 			startButton     : $('#start'),				// Buttons
 			pauseButton     : $('#pause'),
 			clearButton     : $('#clear-log'),
-			modalButton     : $('#modal-button'),
+            saveButton      : $('#save-log'),
+            modalButton     : $('#modal-button'),
 			logs            : $('#logs'),				// Logs Display
 			backdrop        : $('#backdrop'),			// Modal Backdrop
 			waitingModal    : $('#waiting-modal'),		// Modal Window

@@ -48,7 +48,7 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit, versi
              * Introduces numPops provisions in q0 contacting the data base directly
              * @param callback
              */
-                function (callback) {
+             function (callback) {
                 var contResponse = 0;
                 var fillQueue = function () {
 
@@ -67,6 +67,7 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit, versi
                     }, 0);
                 }
             },
+
             function (callback) {
 
 
@@ -109,7 +110,8 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit, versi
                                     messageEmit({time: nowToString, message: {id: 1, point: [numPops, time, provision.payload.length]}, version: version});
                                 }
 
-                                setTimeout(callback, 30000);
+                                //setTimeout(callback, 30000);
+                                callback();
                             }
                         });
                     });
@@ -146,7 +148,7 @@ var doNtimes_queues = function (numPops, provision, callback, messageEmit, versi
              * @param err
              * @param results
              */
-                function (err, results) {
+             function (err, results) {
                 if (err) {
                     console.log(err);
                     var now = new Date();

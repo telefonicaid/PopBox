@@ -158,8 +158,26 @@
     	// Deleting every log row and disabling the 'clear' button
     	DOM.logs.empty();
     	DOM.clearButton.addClass( CSS.DISABLED );
+        DOM.clearButton.off('click', clearLogger);
+        DOM.saveButton.addClass( CSS.DISABLED );
+        DOM.saveButton.off('click', saveLogger);
 
     }
+
+    var saveLogger = function () {
+        var i, result, logs;
+
+
+        logs = DOM.logs[0].getElementsByClassName('log');
+        result = '';
+        for (i = logs.length - 1; i >= 0; i--) {
+            var timestamp = logs[i].getElementsByClassName('timestamp')[0].textContent;
+            var host = logs[i].getElementsByClassName('host')[0].textContent;
+            var message = logs[i].getElementsByClassName('message')[0].textContent;
+            result += timestamp + '\t' + host + '\t' + message + '\n';
+        }
+        window.open('data:download/plain;charset=utf-8,' + encodeURI(result), '_blank');
+     }
 
 
 	/*
@@ -274,15 +292,23 @@
 		 */
 		logData : function( timestamp, message, host ) {
 			// Formatting the log with the data received from the server
-			var log =  '<tr class="log">														\
-							<td class="timestamp">' + timestamp + '<br />' + host + '</td>		\
-							<td class="message">'   + message   + '</td>						\
+			var log =  '<tr class="log">											\
+							<td class="timestampCell">                              \
+                                <div class="timestamp">' + timestamp + '            \
+                                </div><div class="host">' + host + '</div></td>		\
+							<td class="message">'   + message   + '</td>		    \
 						</tr>';
 
 			// Adding the new log to the DataLogger list and enabling the 'clear' button
 			DOM.logs.prepend(log);
-			DOM.clearButton.removeClass( CSS.DISABLED )
+            if (DOM.clearButton.hasClass( CSS.DISABLED )) {
+			    DOM.clearButton.removeClass( CSS.DISABLED )
 							.on('click', clearLogger);
+            }
+            if (DOM.saveButton.hasClass( CSS.DISABLED )) {
+                DOM.saveButton.removeClass( CSS.DISABLED )
+                    .on('click', saveLogger);
+            }
 		},
 
 

@@ -108,9 +108,12 @@ var flushBBDD = function (callback) {
 
     var flushQ = function (cb) {
         var flushed = 0;
+
         for (var i = 0; i < dbArray.length; i++) {
+
             dbArray[i].flushall(function () {
                 flushed++;
+
                 if (flushed === dbArray.length) {
                     cb();
                 }
