@@ -16,7 +16,7 @@ var initOptions = {
     hosts: [],
     agents: {
         nAgents: config.agentsHosts.length,
-        interval: 3
+        interval: 0.5
     },
     tests: {
         push: {
@@ -111,7 +111,10 @@ var createAndLaunchAgents = function (callback) {
                 monitorSockets.push(client);
                 client.on('data', function (data) {
 
-                    var JSONdata = JSON.parse(data);
+                    var splitted = data.toString().split('\n');
+                    var validData = splitted[splitted.length - 2];
+
+                    var JSONdata = JSON.parse(validData);
 
                     if (JSONdata.id === 1) {
                         nameHost[client.remoteAddress] = JSONdata.host;
@@ -128,7 +131,7 @@ var createAndLaunchAgents = function (callback) {
                     } else if (JSONdata.id === 2) {
 
                         sendMessage(webSocket, 'cpu', {host: JSONdata.host, cpu: JSONdata.cpu.percentage});
-                        sendMessage(webSocket, 'memory', {host: JSONdata.host, memory: JSONdata.memory.value});
+                        sendMessage(webSocket, 'memory', {host: JSONdata.host, memory: parseInt(JSONdata.memory.value)});
                     }
                 });
 
