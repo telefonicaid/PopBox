@@ -11,21 +11,19 @@
 	var Axis = function( graph, size, titles, options ) {
 
 		/* Private State */
-
-		//
-		this.parentGraph = graph; // TODO remove dependency from parent
 		
 		this.size = size;
-		this.options = options
-		
+
+		this.options = options;
+
 		// Array of displayed messages
 		this.texts = [];
 
 		// Axis frame
-		this.frame = createFrame( size, titles, this.parentGraph, this.texts );
+		this.frame = createFrame( size, titles, this.texts );
 
 		// Divisions grid
-		this.grid = createGrid( size, options, this.parentGraph, this.texts );
+		this.grid = createGrid( size, options, this.texts );
 
 		// Full 3D axis object
 		this.threeAxis = createAxis(this.frame, this.grid, size);
@@ -53,7 +51,7 @@
 	    return new THREE.Vector3(x, y, z);
 	}
 
-	var createFrame = function( size, titles, parentGraph, texts ) {
+	var createFrame = function( size, titles, texts ) {
 	    var lineMat = new THREE.LineBasicMaterial({
 	    	color     : 0x424242,
 	    	linewidth : 2
@@ -89,25 +87,25 @@
 	    line.type = THREE.LinePieces;
 	    frame.add(line);
 
-		setTitles( frame, size, titles, parentGraph, texts );
+		setTitles( frame, size, titles, texts );
 
 	    return frame;
 	}
 
-	var createGrid = function( size, options, parentGraph, texts ) {
+	var createGrid = function( size, options, texts ) {
 		var grid = new THREE.Object3D();
 
 	    var coords = [ 'x', 'y', 'z' ];
 
 	    for (var i = 0; i < coords.length; i++) {
-	    	var part = setPart( coords[i], size, options, parentGraph, texts );
+	    	var part = setPart( coords[i], size, options, texts );
 	    	grid.add( part );
 	    };
 
 	    return grid;
 	}
 
-	var setPart = function ( coord, size, options, parentGraph, texts, maxHeigth ) {
+	var setPart = function ( coord, size, options, texts, maxHeigth ) {
 
 		var maxHeigth = maxHeigth || 10000;
 
@@ -199,16 +197,16 @@
 	    		a, 	b,
 	    		a, 	c
 	    	);
-	    	setValue(value, position, line, parentGraph, texts);
+	    	setValue(value, position, line, texts);
 	    }
 
 	    value = aux.start;
 		position[coord] = 0;
-		setValue(value, position, line, parentGraph, texts);
+		setValue(value, position, line, texts);
 
 		value = aux.end;
 		position[coord] = size[coord];
-		setValue(value, position, line, parentGraph, texts);
+		setValue(value, position, line, texts);
 
 	    part.add(line);
 
@@ -216,9 +214,9 @@
 
 	}
 
-	var setTitles = function( frame, size, titles, parentGraph, texts ) {
+	var setTitles = function( frame, size, titles, texts ) {
 		var titleX;
-	    titleX = parentGraph.createText2D( titles.x );
+	    titleX = PBDV.Utils.createText2D( titles.x );
 	    titleX.position.x = frame.position.x + size.x/2;
 	    titleX.position.y = frame.position.y - size.y/10;
 	    titleX.position.z = frame.position.z + size.z + size.z/10;
@@ -227,7 +225,7 @@
 	    frame.add(titleX);
 
 		var titleY;
-	    titleY = parentGraph.createText2D( titles.y );
+	    titleY = PBDV.Utils.createText2D( titles.y );
 	   	titleY.position.x = frame.position.x - size.x/10;
 	    titleY.position.y = frame.position.y + size.y/2;
 		titleY.position.z = frame.position.z + size.z +  size.z/10;
@@ -236,7 +234,7 @@
 	    frame.add(titleY);
 
 	    var titleZ;
-	    titleZ = parentGraph.createText2D( titles.z );
+	    titleZ = PBDV.Utils.createText2D( titles.z );
 	    titleZ.position.x = frame.position.x + size.x + size.x/10;
 	    titleZ.position.y = frame.position.y -  size.y/10;
 	    titleZ.position.z = frame.position.z + size.z/2;
@@ -245,8 +243,8 @@
 	    frame.add(titleZ);
 	}
 
-	var setValue = function ( value, position, part, parentGraph, texts ) {
-		var text = parentGraph.createText2D( value, 50 );
+	var setValue = function ( value, position, part, texts ) {
+		var text = PBDV.Utils.createText2D( value, 50 );
 	    text.position.x = position.x;
 	    text.position.y = position.y;
 	    text.position.z = position.z;
@@ -270,7 +268,7 @@
 
 		rescale : function ( maxHeigth ) {
 			this.grid.remove(this.grid.getChildByName('gridY', true));
-			this.grid.add(setPart('y', this.size, this.options, this.parentGraph, this.texts, maxHeigth));
+			this.grid.add(setPart('y', this.size, this.options, this.texts, maxHeigth));
 		}
 	}
 
