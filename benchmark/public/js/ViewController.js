@@ -17,31 +17,53 @@
 	var Text = PBDV.Constants.ViewController.Text;
 
 
-
-	/* Constructor */
-
+	/**
+	 *  @class ViewController
+	 *  @constructor
+	 */
 	var ViewController = function() {
 
 		/* Attributes */
 
-		// The organizer object
+		/**
+		 *  The organizer layer 
+		 *  @property organizer
+		 *  @type Organizer
+		 */
 		this.organizer = new PBDV.Organizer(this);		
 
-		// The machine state used for the buttons panel (start and pause)	
+
+		/**
+		 *  The machine state used for the buttons panel
+		 *  @property organizer
+		 *  @type Object
+		 */
 		this.state = ['I', 'I'];
 
 
 		/* Initialization */
 		
-		this.init();
+		setupEventHandlers.call(this);
+		updateDescription(0);
+
+		// Showing the modal window
+		DOM.waitingModal.css({ 'display' : '' });
+		setBarInterval.call(this, 30, false);
+
+		// Placing the canvas in the HTML
+		var canvas = this.organizer.DOMElement();
+		DOM.visualizator.html( canvas );
+
 	}
 		
 
 
 	/* Private Methods */
 
-	/*
-	 * Method invoked with the ViewController context
+	/**
+	 *  Method invoked with the ViewController context
+	 *  @method setupEventHandlers
+	 *  @private
 	 */
 	var setupEventHandlers = function() {
 
@@ -63,8 +85,11 @@
 	}
 
 
-	/*
-	 *
+	/**
+	 *  It changes the description text depending on the test number
+	 *  @method updateDescription
+	 *  @private
+	 *  @param number {number}
 	 */
 	var updateDescription = function( number ) {
 		var Test = PBDV.Constants.ViewController.Test;
@@ -72,65 +97,73 @@
 	}
 
 
-	/*
-	 *
+	/**
+	 *  Handler called by other specific modal window events handlers (hideModalBox y reloadWebsite)
+	 *  @method modalHandler
+	 *  @private
+	 *  @param event {event}
+	 *  @param callback {function}
 	 */
 	var modalHandler = function( event, callback ) {
 
-		// Event Constants for left click and enter key
 		var LEFT_CLICK = PBDV.Constants.ViewController.Code.LEFT_CLICK;
     	var ENTER      = PBDV.Constants.ViewController.Code.ENTER;
 
-    	// If left click or enter key were used, run the callback
     	if ( event.type === 'click'    && event.which === LEFT_CLICK ||
     		 event.type === 'keypress' && event.which === ENTER ) {
 
-    		// A callback passed by 'hideModalBox' or 'reloadWebsite' event handlers
     		callback();
 		}
 
 	}
 
 
-	/*
-	 *
+	/**
+	 *  Event performed when the 'Ready' button is pressed
+	 *  @event hideModalBox
+	 *  @private
+	 *  @param event {event}
 	 */
     var hideModalBox = function( event ) {
 
-    	// This event will be handled by the 'modalHandler' function
 		modalHandler(event, function() {
 
 			// Hiding the modal window
 			DOM.waitingModal.removeClass('in');
 			DOM.backdrop.removeClass( CSS.BACKDROP );
 
-			// When the modal is hidden, the 'keypress' event is not handled
 			$(window).off('keypress', hideModalBox);
 		});
 
     }
 
 
-	/*
-	 *
+	/**
+	 *  Event performed when the 'Reload' button is pressed
+	 *  @event reloadWebsite
+	 *  @private
+	 *  @param event {event}
 	 */
-    var reloadWebsite = function(event) {
+    var reloadWebsite = function( event ) {
 
-    	// This event will be handled by the 'modalHandler' function
     	modalHandler(event, function() {
 
-    		// The app is not going to listen to the 'keypress' event any more
-			$(window).off('keypress', reloadWebsite);
-
 			// The app is reloaded
+			$(window).off('keypress', reloadWebsite);
     		window.location.reload();
+
     	});
 
     }
 
 
-	/*
-	 * Method invoked with the ViewController context
+	/**
+	 *  Function invoked with the ViewController context
+	 *  It will increase the progress bar
+	 *  @method setBarInterval
+	 *  @private
+	 *  @param time {number}
+	 *  @param end {boolean}
 	 */
 	var setBarInterval = function( time, end ) {
 
@@ -150,8 +183,10 @@
 
     ViewController.prototype = {
 
-		/*
-		 * Tab Buttons Event Handler
+		/**
+		 *  Tab Buttons Event Handler
+		 *  @method changeTest
+		 *  @param {jQuery Object} currentTab
 		 */
 		changeTest : function( currentTab ) {	
 
@@ -160,7 +195,6 @@
 			DOM.tabs.removeClass( CSS.CURRENT );
 			currentTab.addClass( CSS.CURRENT );
 
-			// Updating the test info
 			updateDescription( sceneNumber );
 
 			// If test was paused, the buttons text change and the pause button is enabled
@@ -187,8 +221,9 @@
 		},
 
 
-		/*
-		 *
+		/**
+		 *  Method which removes every log tracked and disable the button
+		 *  @method clearLogger
 		 */
 	    clearLogger : function() {
 
@@ -206,8 +241,9 @@
 	    },
 
 
-		/*
-		 *
+		/**
+		 *  Method invoked by the Organizer when he receives the init event from the server
+		 *  @method endModalbar
 		 */
 		endModalBar : function() {
 			clearInterval( barInterval );
@@ -215,39 +251,37 @@
 		},
 
 
-		/*
+		/**
 		 *	Method to increase the % of the modal progress bar
 		 *  @param end the condition to launch or not the final timeout
 		 */
 		increaseBar : function( end ) {
 
+			// Rename
 			var Message = PBDV.Constants.Message;
 
-			var span  = DOM.meter.children();
+			var span      = DOM.meter.children();
+			var max       = DOM.meter.width();
+			var current   = span.width() / max * 100;
+			var increment = 1;
 
-			// 
-			var max        = DOM.meter.width();
-			var current    = span.width() / max * 100;
-			var increment  = 1;
-
-			// 
+			// Calculating the % increment
 			var amount = current + increment;
 			var set    = amount  + '%';
 			span.css({ 'width' : set });
 
-			var description = DOM.modalDescription;
 
 			if ( !end && amount >= 60 ) {
+
+				// Removing the old Interval and creating a new one to fill the bar faster
 				clearInterval( barInterval );
 
 				barTimeout = setTimeout(function() {
 
-					//
 					span.css({ 'width' : '100%' });
-					description.css({ 'font-weight' : 'bold' }).text( Message.AGENTS_LAUNCHED );
+					DOM.modalDescription.css({ 'font-weight' : 'bold' }).text( Message.AGENTS_LAUNCHED );
 					$(window).on('keypress', reloadWebsite);
 
-					//
 					DOM.modalButton.on('click', reloadWebsite)
 			    					.addClass('btn-primary')
 			     					.removeClass( CSS.DISABLED )
@@ -255,15 +289,16 @@
 				}, 3000);
 			
 			} else if ( end && span.width() >= max ) {
+
+				// The bar is full, so we remove the interval and the failure timeout
 			    clearInterval( barInterval );
 			    clearTimeout( barTimeout );
 
-			    DOM.meter.removeClass('red').addClass('green');
-
-				description.slideUp();
-			    
 				$(window).on('keypress', hideModalBox);
 
+			    DOM.meter.removeClass('red').addClass('green');
+				DOM.modalDescription.slideUp();
+			    
 			    DOM.modalButton.on('click', hideModalBox)
 			    				.addClass('btn-primary')
 			     				.removeClass( CSS.DISABLED )
@@ -274,36 +309,15 @@
 		},
 
 
-    	/*
-		 * Initializing the ViewController
-		 */
-		init : function() {
-			
-			// Showing the modal window
-			DOM.waitingModal.css({ 'display' : '' });
-
-			// Setting up the events which are going to be handled
-			setupEventHandlers.call(this);
-			
-			// Creating the progress bar
-			setBarInterval.call(this, 30, false);
-
-			//
-			var canvas = this.organizer.DOMElement();
-			DOM.visualizator.html( canvas );
-
-			// Initializing the test info with the first description
-			updateDescription(0);
-		},
-
-
-		/*
+		/**
 		 *	Method to format and log the messages received from the server
+		 *  @method logData
 		 *  @param timestamp the timestamp when the log was produced
 		 *  @param message the data received
 		 *  @param host the machine name which sent the message
 		 */
 		logData : function( timestamp, message, host ) {
+
 			// Formatting the log with the data received from the server
 			var log =  '<tr class="log">											\
 							<td class="timestampCell">                              \
@@ -329,8 +343,9 @@
 		},
 
 
-		/*
-		 * 'Pause/Continue' Button Event Handler
+		/**
+		 *	Pause/Continue Button Event Handler
+		 *  @method pause
 		 */
 		pause : function() {
 			
@@ -357,12 +372,12 @@
 		},
 
 
-		/*
-		 *
+		/**
+		 *  Method used to download and save the logs received into a file
+		 *  @method saveLogger
 		 */
 	    saveLogger : function() {
 
-	    	// String which will store the logs
 	        var result = '';
 
 	        // Searching in the DOM the current logs received from the server
@@ -370,10 +385,9 @@
 
 	        for (var i = logs.length-1; i >= 0; i--) {
 
-	        	// Current log
-	        	var log = logs.eq(i);
 
 	        	// Getting the log information
+	        	var log = logs.eq(i);
 	            var timestamp = log.find('.timestamp').text();
 	            var host      = log.find('.host').text();
 	            var message   = log.find('.message').text();
@@ -388,8 +402,9 @@
 		},
 
 
-		/*
-		 * 'Start/Restart' Button Event Handler
+		/**
+		 *  Start/Restart Button Event Handler
+		 *  @method start
 		 */
 		start : function() {
 

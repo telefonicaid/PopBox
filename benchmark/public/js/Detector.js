@@ -4,24 +4,32 @@
 	"use strict";
 
 
-	/* Detector Module */
-
+	/**
+	 *  @class Detector Module 
+	 *  @static
+	 */
 	var Detector = {
 
-		/*
-		 * Knowing the graphic card support
+		/**
+		 *  Knowing the graphic card support
+		 *  @property GPUReady
+		 *  @final
 		 */
 		GPUReady : window.WebGLRenderingContext,
 
 
-		/*
-		 * Knowing the browser support
+		/**
+		 *  Knowing the browser support
+		 *  @proerty BrowserReady
+		 *  @final
 		 */
 		BrowserReady : document.createElement( 'canvas' ).getContext( 'experimental-webgl' ),
 
 
-		/*
-		 * WebGL is supported ?
+		/**
+		 *  Knowing if WebGL is supported
+		 *  @method webgl
+		 *  @return {boolean} supported
 		 */
 		webgl : (function() { 
 
@@ -35,9 +43,10 @@
 		})(),
 
 
-		/*
-		* If there is no support for WebGL, the user will see a warning message
-		*/
+		/**
+		 *  If there is no support for WebGL, the user will see a warning message
+		 *  @method showErrorMessage
+		 */
 		showErrorMessage : function() {
 
 			// Shortcut
@@ -47,15 +56,12 @@
 			var error = DOM.errorDescription();
 			DOM.noWebGLModal.css({ 'display' : '' });
 
-			// If WebGL is not supported
 			if ( !this.webgl ) {
 
-				// The real reason because it is not supported
 				var msg = ( this.BrowserReady ) 
 					? Message.WEBGL_NOT_SUPPORTED_GPU
 					: Message.WEBGL_NOT_SUPPORTED_BROWSER;
 
-				// Finally, the message is shown in the error modal window
 				msg.join('\n');
 				error.text( msg );
 			}

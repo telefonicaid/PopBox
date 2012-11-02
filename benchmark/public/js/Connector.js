@@ -4,20 +4,37 @@
 	"use strict";
 
 
-	/* Constructor */
-
-	var Connector = function(org) {
+	/** 
+	 *  @class Connector
+	 *  @constructor
+	 *  @param org {Organizer}
+	 */
+	var Connector = function( org ) {
 		
 		/* Attributes */
 
-		// The Organizer object which direct the app
+		/**
+		 *  The Organizer object which direct the app
+		 *  @property organizer
+		 *  @type Organizer
+		 */
 		this.organizer = org;
 
-		// A list to save the current final version of each test
+
+		/**
+		 *  A list to save the current final version of each test
+		 *  @property versions
+		 *  @type array
+		 */
 		this.versions = [];
 
-		// The WebSocket used to receive/sent data from/to the server in real-time
-		this.socket;
+
+		/**
+		 *  The WebSocket used to receive/sent data from/to the server in real-time
+		 *  @property socket
+		 *  @type Object
+		 */
+		this.socket = null;
 		
 
 		/* Initialization */
@@ -30,10 +47,13 @@
 
 	/* Private Methods */
 
-	/*
-	 *
+	/**
+	 *  Auxiliary method to handle an event when a new point comes from the server
+	 *  @method setupNewPointEvent
+	 *  @private
+	 *  @param conn {Connector}
 	 */
-	var setupNewPointEvent = function(conn) {
+	var setupNewPointEvent = function( conn ) {
 
 		conn.socket.on('newPoint', function (data) {
 
@@ -58,31 +78,40 @@
 	}
 
 
-	/*
-	 *
+	/**
+	 *  Auxiliary method to handle one event per plot defined in the constants file
+	 *  @method setupPlotsEvents
+	 *  @private
+	 *  @param conn {Connector}
 	 */
-	var setupPlotsEvents = function(conn) {
+	var setupPlotsEvents = function( conn ) {
+
+		var plotCallback = function( plot ) {
+			var pl = plot;
+
+			// Listening to every event about our configured plots
+			conn.socket.on( pl, function (data) {
+				conn.organizer.addDataPlots( data.host, data.time, data[pl], pl );
+			});
+		}
+
 
 		// For each plot event, we add the data to the corresponding plot
 		for ( var p in PBDV.Constants.Plots.Components ) {
 			var plot = p.toLowerCase();
-			
-			(function() {
-				var pl = plot;
-				// Listening to every event about our configured plots
-				conn.socket.on( pl, function (data) {
-					conn.organizer.addDataPlots( data.host, data.time, data[pl], pl );
-				});
-			})();
+			plotCallback( plot );
 		}
 
 	}
 
 
-	/*
-	 *
+	/**
+	 *  Auxiliary method to handle several possible error events
+	 *  @method setupErrorEvents
+	 *  @private
+	 *  @param conn {Connector}
 	 */
-	var setupErrorEvents = function(conn) {
+	var setupErrorEvents = function( conn ) {
 
 		// Rename
 		var Message = PBDV.Constants.Message;
@@ -124,10 +153,13 @@
 	}
 
 
-	/*
-	 *
+	/**
+	 *  Method used to listen to events received by the socket
+	 *  @method setupEvents
+	 *  @private
+	 *  @param conn {Connector}
 	 */
-	var setupEvents = function(conn) {
+	var setupEvents = function( conn ) {
 
 		conn.socket.on('init', function (data) {
 
@@ -171,8 +203,10 @@
 
 	Connector.prototype = {
 		
-		/*
-		 *
+		/**
+		 *  Method to establish a new connection with a server through the Web Socket
+		 *  @method connect
+		 *  @param url {string}
 		 */
 		connect : function( url ) {
 
@@ -188,18 +222,22 @@
 		},
 
 
-		/*
-		 *
+		/**
+		 *  Method to start a new test
+		 *  @method startTest
+		 *  @param num {number} The test number
 		 */
-		startTest : function(num) {
+		startTest : function( num ) {
 			this.socket.emit('newTest', { id : num });
 		},
 
 
-		/*
-		 *
+		/**
+		 *  Method to restart a new test
+		 *  @method restartTest
+		 *  @param num {number} The test number
 		 */
-		restartTest : function(num) {			
+		restartTest : function( num ) {			
 			this.versions[num] += 1;
 
 			this.pauseTest(num);
@@ -207,30 +245,38 @@
 		},
 
 
-		/*
-		 *
+		/**
+		 *  Method to pause a new test
+		 *  @method pauseTest
+		 *  @param num {number} The test number
 		 */
-		pauseTest : function(num) {
+		pauseTest : function( num ) {
 			this.socket.emit('pauseTest', { id : num });
 		},
 
 
-		/*
-		 *
+		/**
+		 *  Method to continue a new test
+		 *  @method continueTest
+		 *  @param num {number} The test number
 		 */
-		continueTest : function(num) {
+		continueTest : function( num ) {
 			this.socket.emit('continueTest', { id : num });
 		},
 
 
-		/*
-		 *
+		/**
+		 *  Method to let clients of this API to add new events received by the WebSocket
+		 *  @method addNewEvent
+		 *  @param event {string}
+		 *  @param callback {function}
 		 */
-		addNewEvent : function(event, callback) {
-			// The socket will listen to and handle 'event' with a pre-defined 'callback'
+		addNewEvent : function( event, callback ) {
+
 			if (typeof event === "string" && typeof callback === "function") {
 				this.socket.on(event, callback);	
 			}
+
 		}
 
 	}; // prototype

@@ -4,19 +4,35 @@
 	"use strict";
 
 
-	/* Constructor */
-
+	/**
+	 *  @class Organizer
+	 *  @param vc {ViewController}
+	 *  @constructor
+	 */
 	var Organizer = function( vc ) {
 
 		/* Attributes */
 
-		// App's ViewController
+		/**
+		 *  @property vc
+		 *  @type ViewController
+		 */ 
 		this.vc = vc;
 
-		// Main drawing utility to visualize data points using WebGL
+
+		/**
+		 *  Main drawing utility to visualize data points using WebGL
+		 *  @property drawer
+		 *  @type Drawer
+		 */
 		this.drawer = new PBDV.Drawer();
 
-		// Connector module to establish a connection with the server
+
+		/**
+		 *  Connector module to establish a connection with the server
+		 *  @property conn
+		 *  @type Connector
+		 */
 		this.conn   = new PBDV.Connector(this);
 
 
@@ -34,8 +50,10 @@
 
 		// Methods published but currently invoked only by the Organizer itself
 
-		/*
-		 * Invoked with the Organizer context
+	 	/**
+		 *  Method to create 2D plots dynamically
+		 *  @method createPlots
+		 *  @param plots {Object}
 		 */
 		createPlots : function( plots ) {
 
@@ -54,18 +72,19 @@
 
 		// Methods invoked by ViewController
 
-		/*
-		 *
+	 	/**
+		 *  Method to change the current test status to the given one
+		 *  @method changeToTest
+		 *  @param testNumber {number}
 		 */
 		changeToTest : function( testNumber ) {
-
 			this.drawer.changeToTest( testNumber );
-
 		},
 
 
-		/*
-		 *
+	 	/**
+		 *  Method to tell the Connector to resume a paused test
+		 *  @method continue
 		 */
 		continue : function() {
 
@@ -75,18 +94,19 @@
 		},
 
 
-		/*
-		 *
+	 	/**
+		 *  Method to return back the DOM element that represents the WebGL Render
+		 *  @method DOMElement
+		 *  @return {Canvas Object}
 		 */
 		DOMElement : function() {
-
 			return this.drawer.DOMElement();
-
 		},
 
 
-		/*
-		 *
+	 	/**
+		 *  Method to tell the Connector to pause a started test
+		 *  @method pause
 		 */
 		pause : function() {
 
@@ -96,8 +116,9 @@
 		},
 
 
-		/*
-		 *
+	 	/**
+		 *  Method to tell the Connector to restart a started test
+		 *  @method restart
 		 */
 		restart : function() {
 
@@ -110,8 +131,9 @@
 		},
 
 
-		/*
-		 *
+	 	/**
+		 *  Method to tell the Connector to start a test
+		 *  @method start
 		 */
 		start : function() {
 
@@ -123,8 +145,11 @@
 
 		// Methods invoked by Connector after receiving determined events
 
-		/*
-		 *
+	 	/**
+		 *  Method to tell the drawer to draw a new received point
+		 *  @method addData
+		 *  @param test {number}
+		 *  @param point {array}
 		 */
 		addData : function( test, point ) {
 
@@ -134,8 +159,13 @@
 		},
 
 
-		/*
-		 *
+	 	/**
+		 *  Method to tell a specific 2D plot to draw a new received performance data
+		 *  @method addDataPlots
+		 *  @param host {string}
+		 *  @param time {number}
+		 *  @param data {number}
+		 *  @param plotName {string}
 		 */
 		addDataPlots : function( host, time, data, plotName ) {
 
@@ -154,8 +184,12 @@
 		},
 
 
-		/*
-		 *
+	 	/**
+		 *  Method to initialize and configure the 2D plots
+		 *  @method configPlots
+		 *  @param interval {number}
+		 *  @param nagents {number}
+		 *  @param hostnames {array}
 		 */
 		configPlots : function( interval, nagents, hostnames ) {
 
@@ -172,8 +206,10 @@
 		},
 
 
-		/*
-		 *
+	 	/**
+		 *  Method to initialize and configure main 3D drawer
+		 *  @method configTest
+		 *  @param tests {object}
 		 */
 		configTest : function( tests ) {
 
@@ -183,8 +219,12 @@
 		},
 
 
-		/*
-		 *
+	 	/**
+		 *  Method to log and show in the UI every received data
+		 *  @method log
+		 *  @param timestamp {number}
+		 *  @param message {string}
+		 *  @param host {string}
 		 */
 		log : function( timestamp, message, host ) {
 

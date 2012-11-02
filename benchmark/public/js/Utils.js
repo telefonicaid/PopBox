@@ -6,8 +6,15 @@
 
 	/* Auxiliary Functions */
 
-	/*
-	 *
+	/**
+	 *  Auxiliary function called by createText2D
+	 *  @method createTextCanvas
+	 *  @private
+	 *  @param text {string}
+	 *  @param size {number}
+	 *  @param color {string}
+	 *  @param font {string}
+	 *  @return {Canvas Object}
 	 */
 	var createTextCanvas = function( text, size, color, font ) {
        	var size = size || 140;
@@ -30,10 +37,21 @@
 
 
 
-	/* Auxiliary Utils Module */
-
+	/**
+	 *  Auxiliary Utils Module
+	 *  @module Utils
+	 */
 	var Utils = {
 
+		/**
+		 *  Method to create meshes
+		 *  @method createText2D
+		 *  @param text {string}
+		 *  @param size {number}
+		 *  @param color {string}
+		 *  @param font {string}
+		 *  @return {THREE.Mesh} A 2D mesh object
+		 */
 		createText2D : function( text, size, color, font ) {
 
 			// Creating the Text Canvas

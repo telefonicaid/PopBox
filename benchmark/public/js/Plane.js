@@ -243,9 +243,6 @@
 		 * This function is used to set the points that haven't been received
 		 *  yet to a height equal to the average of the points received (so that
 		 *  the colors are more precise from the beginning)
-		 *
-		 * @param vertices : the list of already setted vertices (with which
-		 * 		we are calculatoing the average height)
 		 */
 		stabilize : function( ) {
 
