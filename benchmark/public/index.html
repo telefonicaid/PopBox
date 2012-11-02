@@ -73,9 +73,7 @@
 		</header>
 			
 		<section id="visual" class="columns eight left">
-
-			
-			<div id="testing" class="total graph3D"></div>
+			<div id="visualizator" class="total"></div>
 		</section>
 
 
@@ -140,7 +138,7 @@
 					<header>
 						<h3 class="headline">
                             Data logged
-                            <a href="#" id="save-log" class="btn btn-primary btn-large disabled">Save Log</a>
+                            <a href="#" id="save-log" class="btn btn-primary btn-mini disabled">Save Log</a>
                         </h3>
                     </header>
 
@@ -182,18 +180,22 @@
 	</div>
 
 
-
+	
 
 	<!-- JavaScript -->
 	<div id="scripts" style="display : none;">
+
+		<!-- Libraries used for the project -->
 		<script type="text/javascript" src="js/lib/jquery-1.8.1.min.js"></script>
 		<script type="text/javascript" src="js/lib/three.min.js"></script>
 		<script type="text/javascript" src="js/lib/flotr2.min.js"></script>
 		<script type="text/javascript" src="/socket.io/socket.io.js"></script>
 
-		<script type="text/javascript" src="js/Plot2D.js"></script>
-
+		<!-- Constants file -->
 		<script type="text/javascript" src="js/Constants.js"></script>
+
+		<!-- App's components -->
+		<script type="text/javascript" src="js/Plot2D.js"></script>
 		<script type="text/javascript" src="js/Axis.js"></script>
 		<script type="text/javascript" src="js/Plane.js"></script>
 		<script type="text/javascript" src="js/Graph.js"></script>
@@ -203,10 +205,14 @@
 		<script type="text/javascript" src="js/Organizer.js"></script>
 		<script type="text/javascript" src="js/Connector.js"></script>
 		<script type="text/javascript" src="js/ViewController.js"></script>
+
+		<!-- Auxiliary Modules -->
 		<script type="text/javascript" src="js/Detector.js"></script>
         <script type="text/javascript" src="js/Utils.js"></script>
 
+        <!-- Main -->
         <script type="text/javascript" src="js/WebGL_Main.js"></script>
+        
 	</div>
 
 </body>
