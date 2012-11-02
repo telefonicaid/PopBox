@@ -1,6 +1,4 @@
 
-// Graph Class
-
 (function (PBDV, THREE, undefined) {
 
 	"use strict";
@@ -13,40 +11,25 @@
 		/* Attributes */
 
 		//
-		//this.options = options;
+		this.axis = this.createAxis( options );
 
 		//
-		this.axis = createAxis( options );
-
-		//
-		this.plot = createPlot( options );
+		this.plot = this.createPlot( options );
 
 		//
 		this.maxPoint = options.size.y * 2/3;
 
 		//
-		this.cota = 0;//= maxPoint * 2/3;
+		this.cota = 0;
 
-		//
+
+		/* Initialization */
+
 		this.threeGraph = new THREE.Object3D();
 		this.threeGraph.add( this.axis.threeAxis );
 		this.threeGraph.add( this.plot.threePlot );
 	}
 
-		/*
-		 *
-		 */
-		var createAxis = function( options ) {
-			return new PBDV.Axis( this, options.size, options.titles, options.test );
-		}
-
-
-		/*
-		 *
-		 */
-		var createPlot = function( options ) {
-			return new PBDV.Plane( options.test, options.size );
-		}
 
 
 	/* Public API */
@@ -76,6 +59,47 @@
 			
 			// Otherwise, we add the new point received
 			this.plot.addPoint( point );
+
+		},
+
+
+		/*
+		 *
+		 */
+		animate : function( threeCamera ) {
+
+			this.axis.animate( threeCamera );
+			this.plot.animate();
+
+		},
+
+
+		/*
+		 *
+		 */
+		createAxis : function( options ) {
+
+			// 
+			this.axis = new PBDV.Axis( options.size, options.titles, options.test );
+			return this.axis;
+
+		},
+
+
+		/*
+		 *
+		 */
+		createPlot : function( options ) {
+
+			// 
+			this.plot = new PBDV.Plane( options.test, options.size );
+			return this.plot;
+
+		},
+
+
+		position : function() {
+			return this.threeGraph.position;
 		},
 
 
@@ -85,15 +109,6 @@
 		restart : function() {
 			this.plot.restart();
 			this.cota = 0;
-		},
-
-
-		/*
-		 *
-		 */
-		animate : function( threeCamera ) {
-			this.axis.animate( threeCamera );
-			this.plot.animate();
 		}
 		
 	}; // prototype

@@ -1,7 +1,5 @@
 
-// Connector Class
-
-(function (PBDV, undefined) {
+(function (PBDV, io, undefined) {
 
 	"use strict";
 
@@ -22,22 +20,15 @@
 		this.socket;
 		
 
-		// Connecting to the server
+		/* Initialization */
+		
 		var url = window.location.href;
 		this.connect( url );	
 	}
 
 
+
 	/* Private Methods */
-
-	/*
-	 *
-	 */
-	var showInfoMessage = function(str) {
-		var date = new Date().toTimeString().slice(0, 8);
-		this.organizer.log(date, str);
-	}
-
 
 	/*
 	 *
@@ -47,13 +38,16 @@
 		conn.socket.on('newPoint', function (data) {
 
 			if ( data.err ) {
-				var time = new Date().toTimeString().slice(0,8);
-				var msg = 'Error: message received with no data points';
+				// No points received, so we report to the UI
+				var time = new Date().toTimeString().slice(0, 8);
+				var msg  = PBDV.Constants.Message.NO_POINTS_RECEIVED;
 				conn.organizer.log( time, msg );
 
 			} else if ( data.message ) {
+
+				// Sending the data received to the corresponding test
 				var id = data.message.id;
-				console.log( 'newPoint - v' + data.version + ' - cv' + conn.versions[id]);
+//				console.log( 'newPoint - v' + data.version + ' - cv' + conn.versions[id]);
 				if ( data.version === conn.versions[id] ) {
 					conn.organizer.addData( id, data.message.point );
 				}
@@ -68,30 +62,61 @@
 	/*
 	 *
 	 */
+	var setupPlotsEvents = function(conn) {
+
+		// For each plot event, we add the data to the corresponding plot
+		for ( var p in PBDV.Constants.Plots.Components ) {
+			var plot = p.toLowerCase();
+			
+			// Listening to every event about our configured plots
+			conn.socket.on( plot, function (data) {
+				conn.organizer.addDataPlots( data.host, data.time, data[ plot ], plot );
+			});
+		}
+
+	}
+
+
+	/*
+	 *
+	 */
 	var setupErrorEvents = function(conn) {
 
+		// Rename
+		var Message = PBDV.Constants.Message;
+
+
+		// Auxiliary function to show the extraordinary events
+		var showInfoMessage = function(str) {
+			var date = new Date().toTimeString().slice(0, 8);
+			conn.organizer.log(date, str);
+		}
+
+
+		// Listening to the corresponding events
+
 		conn.socket.on('error', function(data) {
-			showInfoMessage("Client socket has an error");
+			showInfoMessage( Message.SOCKET_ERROR );
 		});
 
 
 		conn.socket.on('disconnect', function(data) {
-			showInfoMessage("Client disconnected");
+			showInfoMessage( Message.CLIENT_DISCONNECT );
 		});
 
 
 		conn.socket.on('reconnect_failed', function() {
-			showInfoMessage("Client could not reconnect with the server");
+			showInfoMessage( Message.CLIENT_COULD_NOT_RECONNECT );
 		});
 
 
 		conn.socket.on('reconnect', function() {
-			showInfoMessage("Client could reconnect successfully");
+			showInfoMessage( Message.SUCCESSFUL_RECONNECTION );
 		});
 	
 
 		conn.socket.on('reconnecting', function () {
-			showInfoMessage("Trying to reconnect");
+			showInfoMessage( Message.TRYING_TO_RECONNECT );
 		});
 
 	}
@@ -115,10 +140,10 @@
 			}
 
 			// Initializing Drawer and 3D Test
-			conn.organizer.initTest( data.tests );
+			conn.organizer.configTest( data.tests );
 
 			// Initializing 2D Plots Axis
-			conn.organizer.initPlots( interval, nagents, data.hosts );
+			conn.organizer.configPlots( interval, nagents, data.hosts );
 
 			// Setting up the event handler when new points come from the server
 			setupNewPointEvent(conn);
@@ -130,15 +155,9 @@
 		});
 
 
-		conn.socket.on('cpu', function (data) {
-			conn.organizer.addDataCPU(data.host, data.time, data.cpu);
-		});
-
-
-		conn.socket.on('memory', function (data) {
-			conn.organizer.addDataMemory(data.host, data.time, data.memory);
-		});
-
+		// 
+		setupPlotsEvents(conn);
+		
 
 		//
 		setupErrorEvents(conn);
@@ -205,7 +224,7 @@
 		/*
 		 *
 		 */
-		addSocketEvent : function(event, callback) {
+		addNewEvent : function(event, callback) {
 			// The socket will listen to and handle 'event' with a pre-defined 'callback'
 			if (typeof event === "string" && typeof callback === "function") {
 				this.socket.on(event, callback);	
@@ -218,5 +237,8 @@
 	// Exported to the namespace
 	PBDV.Connector = Connector;
 
+//})( window.PBDV = window.PBDV || {});	// Namespace
 
-})( window.PBDV = window.PBDV || {});	// Namespace
+})( window.PBDV = window.PBDV || {},	// Namespace
+	io);								// Dependencies
+

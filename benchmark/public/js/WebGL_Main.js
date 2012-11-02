@@ -1,13 +1,16 @@
 
-(function  (window, jQuery, undefined) {
+(function  (window, PBDV, undefined) {
 
 	"use strict";
 
-	if ( ! PBDV.Detector.webgl ) {
-		PBDV.Detector.getWebGLErrorMessage();
+
+	// If WebGL is not supported, show an error message
+	if ( PBDV.Detector.webgl ) {
+		PBDV.Detector.showErrorMessage();
 	
-	} else {
-		var vc = new PBDV.ViewController(jQuery);
+	} else {	// Otherwise, create the app 
+		var vc = new PBDV.ViewController();
 	}
 	
-})(window, jQuery);
+
+})(window, PBDV);

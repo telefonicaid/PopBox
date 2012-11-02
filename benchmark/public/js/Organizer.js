@@ -1,6 +1,4 @@
 
-// Organizer Class
-
 (function (PBDV, THREE, undefined) {
 
 	"use strict";
@@ -8,7 +6,7 @@
 
 	/* Constructor */
 
-	var Organizer = function(vc) {
+	var Organizer = function( vc ) {
 
 		/* Attributes */
 
@@ -21,38 +19,47 @@
 		// Connector module to establish a connection with the server
 		this.conn   = new PBDV.Connector(this);
 
-		// Plot 2D to display CPU Performance data (in %)
-		this.cpu    = new PBDV.Plot2D('cpu', 100);
 
-		// Plot 2D to display Memory Performance data (in MB)
-		this.memory = new PBDV.Plot2D('memory');
+		/* Initialization */
+		
+		this.createPlots( PBDV.Constants.Plots.Components );
 
 	}
+
 
 
 	/* Public API */
 
 	Organizer.prototype = {
 
+		// Methods published but currently invoked only by the Organizer itself
+
+		/*
+		 * Invoked with the Organizer context
+		 */
+		createPlots : function( plots ) {
+
+			// Creation of the 2D Performance Plots (cpu, memory, ...)
+			for (var k in plots) {
+
+				// Getting the name and the limit per plot component
+				var str   = k.toLowerCase();
+				var limit = plots[k];
+
+				this[ str ] = new PBDV.Plot2D( str, limit );
+			}
+
+		},
+
+
 		// Methods invoked by ViewController
 
 		/*
 		 *
 		 */
-		start : function() {
+		changeToTest : function( testNumber ) {
 
-			var currentTest = this.drawer.currentScene;
-			this.conn.startTest( currentTest );
-		},
-
-
-		/*
-		 *
-		 */
-		pause : function() {
-
-			var currentTest = this.drawer.currentScene;
-			this.conn.pauseTest( currentTest );
+			this.drawer.changeToTest( testNumber );
 
 		},
 
@@ -71,70 +78,50 @@
 		/*
 		 *
 		 */
+		DOMElement : function() {
+
+			return this.drawer.DOMElement();
+
+		},
+
+
+		/*
+		 *
+		 */
+		pause : function() {
+
+			var currentTest = this.drawer.currentScene;
+			this.conn.pauseTest( currentTest );
+
+		},
+
+
+		/*
+		 *
+		 */
 		restart : function() {
 
 			var currentTest = this.drawer.currentScene;
+			this.conn.restartTest( currentTest );
+			
+			// Also, we ask for the drawer to restart its plane
 			this.drawer.restart( currentTest );
 
-			//
-			this.conn.restartTest( currentTest );
 		},
 
 
 		/*
 		 *
 		 */
-		changeToTest : function( testNumber ) {
-			this.drawer.changeToTest( testNumber );
+		start : function() {
+
+			var currentTest = this.drawer.currentScene;
+			this.conn.startTest( currentTest );
+
 		},
-
-
-		/*
-		 *
-		 */
-		getDOMElement : function() {
-			return this.drawer.getCanvas();
-		},
-
 
 
 		// Methods invoked by Connector after receiving determined events
-
-
-		/*
-		 *
-		 */
-		initTest : function( tests ) {
-			this.drawer.configTest( tests );
-			this.vc.endModalBar();
-		},
-
-
-		/*
-		 *
-		 */
-		initPlots : function( interval, nagents, hostnames ) {
-			this.cpu.init( interval, nagents, hostnames );
-			this.memory.init( interval, nagents, hostnames );
-		},
-
-
-		/*
-		 *
-		 */
-		addDataCPU : function( host, time, cpuData ) {
-			this.cpu.update( host, time, cpuData );
-		},
-
-
-		/*
-		 *
-		 */
-		addDataMemory : function( host, time, memoryData ) {
-			var mem = parseInt(memoryData) / 1000;
-			this.memory.update( host, time, mem );
-		},
-
 
 		/*
 		 *
@@ -142,7 +129,57 @@
 		addData : function( test, point ) {
 
 			// Adding a point to the corresponding drawing
-			this.drawer.addDataTo(test, point);			
+			this.drawer.addData( test, point );
+
+		},
+
+
+		/*
+		 *
+		 */
+		addDataPlots : function( host, time, data, plotName ) {
+
+			// 
+			if ( !plotName ) {
+				console.error( PBDV.Constants.Message.PLOT_DOES_NOT_EXIST );
+
+			} else if ( plotName === 'memory' ) {
+				var data = data / 1000;
+			}
+
+			// 
+			var plot = this[ plotName ];
+			plot.update( host, time, data );
+
+		},
+
+
+		/*
+		 *
+		 */
+		configPlots : function( interval, nagents, hostnames ) {
+
+			// Rename
+			var plots = PBDV.Constants.Plots.Components;
+
+			for (var k in plots) {
+				var plotName = k.toLowerCase();
+				var plot = this[ plotName ];
+				plot.config( interval, nagents, hostnames );
+				plot.draw();
+			}
+
+		},
+
+
+		/*
+		 *
+		 */
+		configTest : function( tests ) {
+
+			this.drawer.configTest( tests );
+			this.vc.endModalBar();
+
 		},
 
 
@@ -150,8 +187,10 @@
 		 *
 		 */
 		log : function( timestamp, message, host ) {
-			host = host || "";
-			this.vc.logData(timestamp, message, host);		// TODO Remove 'vc' dependencies
+
+			var host = host || "";
+			this.vc.logData( timestamp, message, host );
+
 		}
 
 	}; // prototype

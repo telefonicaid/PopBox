@@ -1,10 +1,14 @@
 
-/* Auxiliary Utils Module */
-
 (function (PBDV, THREE, undefined) {
 
 	"use strict";
 
+
+	/* Auxiliary Functions */
+
+	/*
+	 *
+	 */
 	var createTextCanvas = function( text, size, color, font ) {
        	var size = size || 140;
 
@@ -15,7 +19,7 @@
        	ctx.font = fontStr;
         var w = ctx.measureText(text).width;
         var h = Math.ceil(size);
-       	canvas.width = w;
+       	canvas.width  = w;
        	canvas.height = h;
         ctx.font = fontStr;
        	ctx.fillStyle = color || '#2E2E2E';
@@ -23,6 +27,10 @@
 
       	return canvas;
    	}
+
+
+
+	/* Auxiliary Utils Module */
 
 	var Utils = {
 
@@ -42,7 +50,7 @@
 
     		// Returning the mesh object that needs the previous geometry and material
     		var res = new THREE.Mesh( geo, mat );
-		    res.scale.set(0.001, 0.001, 0.001);
+		    res.scale.set( 0.001, 0.001, 0.001 );
 		    return res;
 		}
 

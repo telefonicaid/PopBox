@@ -3,93 +3,142 @@
 
 	"use strict";
 
-	var Camera = function() {
 
-		// Private State
+	/* Constructor */
 
-		var threeCamera,
-			threeControls;
+	var Camera = function( aspect ) {
+
+		/* Attibutes */
+
+		//
+		this.threeCamera   = this.createCamera( aspect );
+
+		//
+		this.threeControls = null;
 		
+	}
 
-		// Private Methods
 
-		var createCamera = function() {
+
+	/* Public API */
+
+	Camera.prototype = {
+
+		/*
+		 *
+		 */
+		animate : function() {
+			this.updateControls();
+		},
+
+
+		createCamera : function( aspect ) {
+
 			// Rename
-			var Camera = PBDV.Constants.Camera;
+			var Position = PBDV.Constants.Camera.Position;
 
-			var canvas = $('#testing');
-			threeCamera = new THREE.PerspectiveCamera(
-				Camera.FOV,
-				canvas.width() / canvas.height(),
-				Camera.NEAR,
-				Camera.FAR);
+			// Creation of a new camera
+			this.threeCamera = new THREE.PerspectiveCamera(
+				Position.FOV,
+				aspect,
+				Position.NEAR,
+				Position.FAR
+			);
 
-			threeCamera.position.x = 4;
-			threeCamera.position.y = 4;
-			threeCamera.position.z = 10;
-		}
+			// Setting the position
+			this.threeCamera.position.x = 4;
+			this.threeCamera.position.y = 4;
+			this.threeCamera.position.z = 10;
+
+			return this.threeCamera;
+
+		},
 
 
-		// Public API
+		/*
+		 *
+		 */
+		disableControls : function() {
+			this.threeControls.enabled = false;
+		},
 
-		this.setCameraControls = function( callback, options ) {
+
+		/*
+		 *
+		 */
+		enableControls : function() {
+			this.threeControls.enabled = true;
+		},
+
+
+		/*
+		 *
+		 */
+		lookAt : function( target ) {
+			this.threeCamera.lookAt( target );
+		},
+
+
+		/*
+		 *
+		 */
+		setControls : function( callback, options ) {
 
 			// Using received or default control options
-			options = options || PBDV.Constants.Camera.Controls;
+			var options = options || PBDV.Constants.Camera.Controls;
 
 			// Creation of the Controls object
-		    threeControls = new THREE.TrackballControls( threeCamera ); // Creates the controls
-		    threeControls.addEventListener('change', callback);
+		    this.threeControls = new THREE.TrackballControls( this.threeCamera );
+		    this.threeControls.addEventListener('change', callback);
+
 		    // Some optional parameters
+		    this.threeControls.noPan        = options.NO_PAN;  			// Enables/disables pan, that is, the capability to move the camera
+		    this.threeControls.rotateSpeed  = options.ROTATE_SPEED;
+		    this.threeControls.zoomSpeed    = options.ZOOM_SPEED;
+		    this.threeControls.staticMoving = options.STATIC_MOVING;
+		    this.threeControls.keys         = options.KEYS;
+		    // threeControls.noZoom = options.NO_ZOOM; 					// Enables/disables zoom, using the mouse wheel by default (can be changed)
+		    // threeControls.dynamicDampingFactor = options.DYN_DAMP_FACT;
+		    // threeControls.panSpeed = options.PAN_SPEED;
 
-		    //threeControls.noZoom = options.NO_ZOOM; 			// Enables/disables zoom, using the mouse wheel by default (can be changed)
-		    threeControls.noPan = options.NO_PAN;  				// Enables/disables pan, that is, the capability to move the camera
-		    threeControls.rotateSpeed = options.ROTATE_SPEED;
-		    threeControls.zoomSpeed = options.ZOOM_SPEED;
-		    //threeControls.panSpeed = options.PAN_SPEED;
+		},
 
-		    threeControls.staticMoving = options.STATIC_MOVING;
-		    //threeControls.dynamicDampingFactor = options.DYN_DAMP_FACT;
 
-		    threeControls.keys = options.KEYS;
+		/*
+		 *
+		 */
+		setPosition : function( pos ) {
 
-		    // Adding the controls to the camera
-		    //threeCamera.threeControls = threeControls;
-		}
-
-		this.enableControls = function() {
-			threeControls.enabled = true;
-		}
-
-		this.disableControls = function() {
-			threeControls.enabled = false;
-		}
-
-		this.animate = function() {
-			this.updateControls();
-		}
-		
-		this.setPosition = function(position) {
-			for (var coord in position) {
-				threeCamera.position[coord] = position[coord];
+			// 
+			for (var coord in pos) {
+				this.threeCamera.position[ coord ] = pos[ coord ];
 			}
-		}
 
-		this.updateControls = function() {
-			if ( threeControls ) {
-				threeControls.update();
+		},
+
+
+		/*
+		 * 
+		 */
+		updateAspect : function( aspect ) {
+			this.threeCamera.aspect = aspect;
+			this.threeCamera.updateProjectionMatrix();
+		},
+
+
+		/*
+		 *
+		 */
+		updateControls : function() {
+
+			// If the controls were created, then we update them
+			if ( this.threeControls ) {
+				this.threeControls.update();
 			}
-		}
 
-		// Init
-
-		createCamera();
-		this.threeCamera = threeCamera;
-		this.position = function() {
-			return threeCamera.position;
-		}
-		
-	}	
+		},
+			
+	}; // prototype
 
 
 	// Exported to the namespace

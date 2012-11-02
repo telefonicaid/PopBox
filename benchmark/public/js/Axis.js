@@ -8,7 +8,7 @@
 
 	/* Constructor */
 
-	var Axis = function( graph, size, titles, options ) {
+	var Axis = function( size, titles, options ) {
 
 		/* Private State */
 		
@@ -28,9 +28,9 @@
 		// Full 3D axis object
 		this.threeAxis = createAxis(this.frame, this.grid, size);
 
-		var self = this;
-
 	}
+
+
 
 	/* Private Methods */
 
@@ -107,6 +107,7 @@
 
 	var setPart = function ( coord, size, options, texts, maxHeigth ) {
 
+		var MaxDiv = PBDV.Constants.Axis.MaxDiv;
 		var maxHeigth = maxHeigth || 10000;
 
 		var divisions;
@@ -136,14 +137,14 @@
 		    	case 'x' : 	aux = options.queues;
 		    				var q = options.queues;
 		    				var d = (q.end - q.start)/q.interval;
-		    				divisions = d < PBDV.Constants.Axis.MAX_DIV.X ? d : PBDV.Constants.Axis.MAX_DIV.X;
+		    				divisions = d < MaxDiv.X ? d : MaxDiv.X;
 		    				position.y = -size.y/50;
 		    				position.z = size.z + size.z/50;
 		    				part.name = 'gridX';
 		    				break;
 
 		    	case 'y' :  aux = {start : 0, end : maxHeigth};
-		    				divisions = PBDV.Constants.Axis.MAX_DIV.Y;
+		    				divisions = MaxDiv.Y;
 		    				position.x = -size.x/50;
 		    				position.z = size.z + size.z/50;
 		    				part.name = 'gridY';
@@ -152,7 +153,7 @@
 				case 'z' :  aux = options.payload;
 							var p = options.payload;
 		    				var d = (p.end - p.start)/p.interval;
-		    				divisions = d < PBDV.Constants.Axis.MAX_DIV.Z ? d : PBDV.Constants.Axis.MAX_DIV.Z;
+		    				divisions = d < MaxDiv.Z ? d : MaxDiv.Z;
 							position.x = size.x + size.x/50;
 		    				position.y = -size.y/50;
 		    				part.name = 'gridZ';
