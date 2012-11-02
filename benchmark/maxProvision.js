@@ -22,7 +22,6 @@ var doNtimes_queues = function (numQueues, payload_length, callback, messageEmit
         benchmark.webSocket.on('continueTest', function (data) {
             if (stopped && data.id === 0) {
                 stopped = false;
-                benchmark.webSocket.removeAllListeners('continueTest');
                 callback();
             }
         });
