@@ -47,7 +47,6 @@
 
 				// Sending the data received to the corresponding test
 				var id = data.message.id;
-//				console.log( 'newPoint - v' + data.version + ' - cv' + conn.versions[id]);
 				if ( data.version === conn.versions[id] ) {
 					conn.organizer.addData( id, data.message.point );
 				}
@@ -68,10 +67,13 @@
 		for ( var p in PBDV.Constants.Plots.Components ) {
 			var plot = p.toLowerCase();
 			
-			// Listening to every event about our configured plots
-			conn.socket.on( plot, function (data) {
-				conn.organizer.addDataPlots( data.host, data.time, data[ plot ], plot );
-			});
+			(function() {
+				var pl = plot;
+				// Listening to every event about our configured plots
+				conn.socket.on( pl, function (data) {
+					conn.organizer.addDataPlots( data.host, data.time, data[pl], pl );
+				});
+			})();
 		}
 
 	}
