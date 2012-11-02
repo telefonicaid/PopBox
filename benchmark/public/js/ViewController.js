@@ -337,6 +337,7 @@
 			// Getting the current tab number selected and updating the buttons state
 			var currentTab = DOM.tabs.filter( '.' + CSS.CURRENT );
 			var numTab = currentTab.prevAll().length;
+			
 
 			// Updating the pause button text and pausing the current test
 			DOM.pauseButton.toggleClass( CSS.PAUSED );

@@ -21,7 +21,7 @@ server = net.createServer(function (connection) {
 
         pid = createAgent();
         console.log('A new agent has been created with PID: ' + pid);
-        connection.write(JSON.stringify({id:1, host:os.hostname()}));
+        connection.write(JSON.stringify({id:1, host:os.hostname()}) + '\n');
 
         setTimeout(function () {
             if (config.cluster.numcpus != 0) {
@@ -35,9 +35,9 @@ server = net.createServer(function (connection) {
         monitorInterval = setInterval(function () {
             var res = utils.monitor(pids, function (res) {
                 console.log('CPU: ' + res.cpu + ' - Memory: ' + res.memory);
-                connection.write(JSON.stringify({id:2, host:os.hostname(), cpu:{percentage:res.cpu}, memory:{value:res.memory}}));
+                connection.write(JSON.stringify({id:2, host:os.hostname(), cpu:{percentage:res.cpu}, memory:{value:res.memory}}) + '\n');
             });
-        }, 3000);
+        }, 500);
 
         /*connection.on('data', function(data){
          config.tranRedisServer = JSON.parse(data);

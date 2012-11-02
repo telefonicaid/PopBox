@@ -98,7 +98,7 @@ exports.maxPop = {};
 /**
  * @type {Number}
  */
-exports.maxPop.start_number_pops = 100;
+exports.maxPop.start_number_pops = 1000;
 
 /**
  * @type {Number}
@@ -108,7 +108,7 @@ exports.maxPop.max_pops = 20000;
 /**
  * @type {Number}
  */
-exports.maxPop.queues_inteval = 100;
+exports.maxPop.queues_inteval = 1000;
 
 /**
  * @type {Number}

@@ -29,7 +29,7 @@ exports.logger.Console = {
 };
 exports.logger.File ={
     level:'warning', filename:'pditclogger.log', timestamp:true, json:false ,
-    maxsize: 100,
+    maxsize: 10*1024*1024,
     maxFiles: 3
 };
 
@@ -119,7 +119,7 @@ exports.agent.max_req_size = '1mb';
  * Maximum number of queues for transaction
  * @type {Number}
  */
-exports.agent.max_num_queues = 10000;
+exports.agent.max_num_queues = 100000;
 
 /**
  * Expiration date delay now+defaultExpireDelay seconds
