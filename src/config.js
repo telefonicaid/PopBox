@@ -22,13 +22,13 @@ For those usages not covered by the GNU Affero General Public License please con
  * @type {String}
  */
 exports.logger = {};
-exports.logger.logLevel = 'debug';
+exports.logger.logLevel = 'warning';
 exports.logger.inspectDepth = 1 ;
 exports.logger.Console = {
-    level: 'debug', timestamp:true
+    level: 'warning', timestamp:true
 };
 exports.logger.File ={
-    level:'debug', filename:'pditclogger.log', timestamp:true, json:false ,
+    level:'warning', filename:'pditclogger.log', timestamp:true, json:false ,
     maxsize: 10*1024*1024,
     maxFiles: 3
 };
@@ -119,7 +119,7 @@ exports.agent.max_req_size = '1mb';
  * Maximum number of queues for transaction
  * @type {Number}
  */
-exports.agent.max_num_queues = 10000;
+exports.agent.max_num_queues = 100000;
 
 /**
  * Expiration date delay now+defaultExpireDelay seconds
