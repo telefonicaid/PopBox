@@ -62,7 +62,6 @@ sender.createSocket(8090, function (socket) {
         //Once the agents are launched, the listener can be added to launch new tests...
         receiveMessage(webSocket, 'newTest', function (req) {
             console.log('version exportada:' + maxProvision.version);
-            webSocket.removeAllListeners('continueTest');
             var date = new Date().toString();
             switch (req.id) {
                 case 0:
