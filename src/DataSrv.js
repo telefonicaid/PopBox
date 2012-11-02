@@ -343,9 +343,93 @@ function getPopData(dataH, callback, queue) {
             });
             async.parallel(newStateBatch, function newStateAsyncEnd(err) {
                 if (callback) {
-                    callback(err, cleanData);
+                    callback(err, payloadWithNulls);
                 }
             });
+        }
+    });
+}
+
+var peek = function (appPrefix, queue, maxElems, callback) {
+    'use strict';
+    logger.debug('peek(appPrefix, queue, maxElems, callback)',
+        [appPrefix, queue, maxElems, callback]);
+    var queueId = queue.id,
+        fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id,
+        fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id,
+        restElems = 0;
+
+    dbCluster.getOwnDb(queueId, function(err, db){
+        if(err) {
+            manageError(err, callback);
+        } else {
+            peek_aux(db);
+        }
+    });
+
+    function peek_aux(db) {
+        db.lrange(fullQueueIdH, 0, maxElems - 1, function onRangeH(errH, dataH) {
+
+            var dataHlength = dataH.length;
+            logger.debug('onRangeH(errH, dataH)', [ errH, dataH ]);
+
+            if (errH) {//errH
+                manageError(errH, callback);
+
+            } else {
+                if (dataHlength < maxElems) {
+
+                    restElems = maxElems - dataHlength;
+                    //Extract from both queues
+                    db.lrange(fullQueueIdL, 0, restElems - 1, function on_rangeL(errL, dataL) {
+
+                        if (errL) {
+
+                            //fail but we may have data of previous range
+                            if (dataH) {
+                                //if there is dataH dismiss the low priority error
+                                getPeekData(dataH, callback, queue);
+                            } else {
+                                manageError(errL, callback);
+                            }
+
+                        } else {
+
+                            if (dataL) {
+                                dataH = dataH.concat(dataL);
+                            }
+
+                            getPeekData(dataH, callback, queue);
+                        }
+                    });
+                } else {
+                    //just one queue used
+                    getPeekData(dataH, callback, queue);
+                }
+            }
+        });
+    }
+};
+
+function getPeekData(dataH, callback, queue) {
+    'use strict';
+    logger.debug('getPopData(dataH, callback, queue)', [dataH, callback, queue]);
+    var transactionId = null, dbTr = null, cleanData = null;
+
+    retrieveData(queue, dataH, function onData(err, payloadWithNulls) {
+        logger.debug('onData(err, payloadWithNulls)', [err, payloadWithNulls]);
+        if (err) {
+            manageError(err, callback);
+
+        } else {
+            //Handle post-pop behaviour (callback)
+            cleanData = payloadWithNulls.filter(function notNull(elem) {
+                return elem !== null;
+            });
+
+            if (callback) {
+                callback(null, payloadWithNulls);
+            }
         }
     });
 }
@@ -703,6 +787,14 @@ exports.getTransactionMeta = getTransactionMeta;
  * @param {function(Object, Array.Object)} callback takes (err, poppedData).
  */
 exports.blockingPop = blockingPop;
+
+/**
+ * @param {string} appPrefix For secure/non secure behaviour
+ * @param {PopBox.Queue} queue Object representing a queue.
+ * @param {number} maxElems maximun number of elements to be retrieved.
+ * @param {function(Object, Array.Object)} callback takes (err, peekedData).
+ */
+exports.peek = peek;
 
 /**
  *

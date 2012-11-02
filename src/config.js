@@ -22,14 +22,14 @@ For those usages not covered by the GNU Affero General Public License please con
  * @type {String}
  */
 exports.logger = {};
-exports.logger.logLevel = 'warning';
+exports.logger.logLevel = 'debug';
 exports.logger.inspectDepth = 1 ;
 exports.logger.Console = {
-    level: 'warning', timestamp:true
+    level: 'debug', timestamp:true
 };
 exports.logger.File ={
-    level:'warning', filename:'pditclogger.log', timestamp:true, json:false ,
-    maxsize: 100,
+    level:'debug', filename:'pditclogger.log', timestamp:true, json:false ,
+    maxsize: 10*1024*1024,
     maxFiles: 3
 };
 
