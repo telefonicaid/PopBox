@@ -76,7 +76,7 @@
                             <td class="usage"></td>             \
                         </tr>';
 
-    }
+    };
 
 
 
@@ -109,7 +109,7 @@
             this.keys.append( html );
         }
 
-    }
+    };
 
 
     /**
@@ -148,7 +148,7 @@
 
         }
 
-    }
+    };
 
 
     /**
@@ -172,7 +172,7 @@
         
         agent.find('.usage').text( newValue );
 
-    }
+    };
 
 
 
@@ -250,7 +250,7 @@
          */
         update : function( agent, value ) {
 
-            if (!value) value = 0; 
+            if (!value) { value = 0; } 
             updateAgentData.call( this, agent, value );
 
             if ( this.agents.length ) {
