@@ -4,22 +4,37 @@
 	"use strict";
 
 
-	/* Constructor */
-
+	/**
+	 * @class
+	 * @Constructor
+	 * @param 		{Object}	options		the characteristics of the Graph
+	 */
 	var Graph = function( options ) {
 
 		/* Attributes */
 
-		//
+		/**
+		 * @property	axis
+		 * @type		Axis
+		 */
 		this.axis = this.createAxis( options );
 
-		//
+		/**
+		 * @property	plot
+		 * @type		Plane
+		 */
 		this.plot = this.createPlot( options );
 
-		//
+		/**
+		 * @property	maxPoint
+		 * @type		Int
+		 */
 		this.maxPoint = options.size.y * 2/3;
 
-		//
+		/**
+		 * @property	cota
+		 * @type		Int
+		 */
 		this.cota = 0;
 
 
@@ -36,7 +51,11 @@
 
 	Graph.prototype = {
 
-		/*
+		/**
+		 * adds a Point to the plane and checks if reescalation is needed
+		 *
+		 * @method 	addPoint
+		 * @param 	{Object}	point	the point that is going to be drawn
 		 *
 		 */
 		addPoint : function( point ) {
@@ -63,8 +82,10 @@
 		},
 
 
-		/*
+		/**
+		 * this method delegates the animate to Axis and Plot implementations
 		 *
+		 *	@method animate
 		 */
 		animate : function( threeCamera ) {
 
@@ -74,8 +95,12 @@
 		},
 
 
-		/*
+		/**
+		 * this method creates an instance of Axis
 		 *
+		 * @method 	createAxis
+		 * @param 	{Object}	options		the characteristics of the Axis
+		 * @return 	{Axis}		the created axis
 		 */
 		createAxis : function( options ) {
 
@@ -86,8 +111,12 @@
 		},
 
 
-		/*
+		/**
+		 * this method creates an instance of Plane
 		 *
+		 * @method 	createPlot
+		 * @param 	{Object}	options		the characteristics of the Plane
+		 * @return 	{Plane}		the created plane
 		 */
 		createPlot : function( options ) {
 
@@ -103,8 +132,10 @@
 		},
 
 
-		/*
+		/**
+		 * This method delegates the restart behaviour to the implementation in Plot
 		 *
+		 * @method restart
 		 */
 		restart : function() {
 			this.plot.restart();
