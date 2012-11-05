@@ -4,19 +4,59 @@
 	"use strict";
 
 
-	/* Constructor */
-
+	/**
+	 * @class Camera
+	 * @constructor
+	 */
 	var Camera = function( aspect ) {
 
 		/* Attibutes */
 
-		//
-		this.threeCamera   = this.createCamera( aspect );
+		/**
+		 * The actual camera object
+		 * @property threeCamera
+		 * @type THREE.PerspectiveCamera
+		 */
+		this.threeCamera = createCamera( aspect );
 
-		//
+
+		/**
+		 * The object which contains the camera controls
+		 * @property threeCamera
+		 * @type THREE.PerspectiveCamera
+		 */
 		this.threeControls = null;
 		
-	}
+	};
+
+
+	/**
+	 *  Creates a new actual camera object
+	 *  @method createCamera
+	 *  @private
+	 *  @param aspect {number} The camera aspect
+	 *  @return {THREE.Camera} The created camera
+	 */
+	var createCamera = function( aspect ) {
+
+		// Rename
+		var Position = PBDV.Constants.Camera.Position;
+
+		var fov  = Position.FOV;
+		var near = Position.NEAR;
+		var far  = Position.FAR;
+
+		// Creation of a new camera
+		threeCamera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+
+		// Setting the position
+		threeCamera.position.x = 4;
+		threeCamera.position.y = 4;
+		threeCamera.position.z = 10;
+
+		return threeCamera;
+
+	};
 
 
 
@@ -24,68 +64,53 @@
 
 	Camera.prototype = {
 
-		/*
-		 *
+		/**
+		 *  This method updates the camera state within the main animation loop
+		 *  @method animate
 		 */
 		animate : function() {
 			this.updateControls();
 		},
 
 
-		createCamera : function( aspect ) {
-
-			// Rename
-			var Position = PBDV.Constants.Camera.Position;
-
-			// Creation of a new camera
-			this.threeCamera = new THREE.PerspectiveCamera(
-				Position.FOV,
-				aspect,
-				Position.NEAR,
-				Position.FAR
-			);
-
-			// Setting the position
-			this.threeCamera.position.x = 4;
-			this.threeCamera.position.y = 4;
-			this.threeCamera.position.z = 10;
-
-			return this.threeCamera;
-
-		},
-
-
-		/*
-		 *
+		/**
+		 *  Disables the camera controls
+		 *  @method disableControls
 		 */
 		disableControls : function() {
 			this.threeControls.enabled = false;
 		},
 
 
-		/*
-		 *
+		/**
+		 *  Enables the camera controls
+		 *  @method enableControls
 		 */
 		enableControls : function() {
 			this.threeControls.enabled = true;
 		},
 
 
-		/*
-		 *
+		/**
+		 *  The camera will look at the specified target
+		 *  @method lookAt
+		 *  @param {THREE.Object3D} The target
 		 */
 		lookAt : function( target ) {
 			this.threeCamera.lookAt( target );
 		},
 
 
-		/*
-		 *
+		/**
+		 *  To set the camera controls
+		 *  @method setControls
+		 *  @param {function} The callback called when the controls change
+		 *  @param {object} The object with the predefined options
 		 */
 		setControls : function( callback, options ) {
 
 			// Using received or default control options
-			var options = options || PBDV.Constants.Camera.Controls;
+			options = options || PBDV.Constants.Camera.Controls;
 
 			// Creation of the Controls object
 		    this.threeControls = new THREE.TrackballControls( this.threeCamera );
@@ -104,12 +129,13 @@
 		},
 
 
-		/*
-		 *
+		/**
+		 *  To set the camera position
+		 *  @method setPosition
+		 *  @param {object} The object with the X, Y and Z coordinates
 		 */
 		setPosition : function( pos ) {
 
-			// 
 			for (var coord in pos) {
 				this.threeCamera.position[ coord ] = pos[ coord ];
 			}
@@ -117,17 +143,23 @@
 		},
 
 
-		/*
-		 * 
+		/**
+		 *  Updates the current camera aspect
+		 *  @method updateAspect
+		 *  @param {number} The new aspect
 		 */
 		updateAspect : function( aspect ) {
+
 			this.threeCamera.aspect = aspect;
 			this.threeCamera.updateProjectionMatrix();
+			
 		},
 
 
-		/*
-		 *
+		/**
+		 *  To update the camera controls manually (this is perfomed automatically by the animation method)
+		 *  @method updateControls
+		 *  @param {object} The object with the X, Y and Z coordinates
 		 */
 		updateControls : function() {
 
@@ -136,7 +168,7 @@
 				this.threeControls.update();
 			}
 
-		},
+		}
 			
 	}; // prototype
 
