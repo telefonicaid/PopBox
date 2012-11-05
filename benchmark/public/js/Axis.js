@@ -175,7 +175,8 @@
 		    	case 'x' :  a = v(i, 0, 0);
 		    				b = v(i, size.y, 0);
 		    				c = v(i, 0, size.z);
-		    				value = Math.round(options.queues.start + (options.queues.end/divisions)*i/amount);
+		    				var q = options.queues;
+		    				value = Math.round(q.start + ((q.end-q.start)/divisions)*i/amount);
 		    				position.x = i;
 		    				break;
 
@@ -189,7 +190,8 @@
 				case 'z' :  a = v(0, 0, i);
 		    				b = v(size.x, 0, i);
 		    				c = v(0, size.y, i);
-		    				value = Math.round(options.payload.start + (options.payload.end/divisions)*i/amount);
+		    				var p = options.payload;
+		    				value = Math.round(p.start + ((p.end-p.start)/divisions)*i/amount);
 		    				position.z = i;
 		    				break;
 		    }
