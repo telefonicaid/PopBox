@@ -11,18 +11,18 @@
 	var Plane = function( test, size ) {
 
 		this.test=test;
-
-		this.oldAverage = 0;				// Used to keep information about the average height among the points
-
-		this.sizeMap = {};					// Object that stores information about the size of the map and the number of divisions in each axis
-
-		this.plane = createPlane.call(this, test, size);			// The THREE.Mesh instance that represents our plane
-
-		this.points = [];					// The list of points that have been already received
-
-		this.ratio;							// ratio with wich we are rescalating the height of the points
-
-		this.threePlot = this.plane;		// We rename this.plane to this.threePlot
+		// Used to keep information about the average height among the points
+		this.oldAverage = 0;				
+		// Object that stores information about the size of the map and the number of divisions in each axis
+		this.sizeMap = {};					
+		// The THREE.Mesh instance that represents our plane
+		this.plane = createPlane.call(this, test, size);			
+		// The list of points that have been already received
+		this.points = [];					
+		// ratio with wich we are rescalating the height of the points
+		this.ratio;							
+		// We rename this.plane to this.threePlot
+		this.threePlot = this.plane;		
 	}
 
 
@@ -30,11 +30,13 @@
 
 	/**
 	 * This function returns the transformed coordinate of one coordinate
+	 *
 	 * @method coord
 	 * @private
-	 * @param i			: The coordinate to transform
-	 * @param start		: The minimum value that i can be
-	 * @param interval	: The interval on i for two consecutive coordinates
+	 * @param  {int} 	i			 The coordinate to transform
+	 * @param  {int} 	start		 The minimum value that i can be
+	 * @param  {int} 	interval	 The interval on i for two consecutive coordinates
+	 * @return {int}	the coord that has been transformated
 	 */
 
 	var coord = function(i, start, interval) {
@@ -44,9 +46,10 @@
 
 	/**
 	 * This function sets the transition between different colors on a Plane
+	 *
 	 * @method setColors
 	 * @private
-	 * @param plane 	: The plane to set colors to
+	 * @param  {THREE.Mesh}		plane 	The plane to set colors to
 	 */
 	var setColors = function( plane ) {
 		plane.geometry.computeBoundingBox();
@@ -82,9 +85,10 @@
 
 	/**
 	 * This function is used to tell the Renderer that a plane must be recalculated.
+	 *
 	 * @method setup
 	 * @private
-	 * @param p : the index of the plane to recalculate
+	 * @param 	{int}	p 	the index of the plane to recalculate
 	 */
 	var setup = function(p) {
 
@@ -123,8 +127,12 @@
 
 	/**
 	 * this function creates a THREE.3DObject with the required size and returns it
-	 * @method createPlane
+
+	 * @Method createPlane
 	 * @private
+	 * @param  {Object}	test object that contains the characteristics of the running test
+	 * @param  {Object}	size object that contains x and y sizes of the plane that's being created
+	 * @return {Plane}  The created Plane
 	 */
 	var createPlane = function(test, size) {
 		//
@@ -174,8 +182,9 @@
 		/**
 		 * This function draws a new received point into the plane and
 		 *	marks it to be updated.
-		 * @method addPoint
-		 * @param point : the point to be drawn
+		 *
+		 * @method 	addPoint
+		 * @param	{Object}	point the point to be drawn
 		 */
 		addPoint : function( point ) {
 
@@ -207,8 +216,9 @@
 
 		/**
 		 * This method rescales all the points of the plane according to a new Ratio
-		 * @method rescale
-		 * @param newRatio : the ratio that is going to be used to rescale the points
+		 *
+		 * @method 	rescale
+		 * @param 	{float}	newRatio	the ratio that is going to be used to rescale the points
 		 */
 		rescale : function( newRatio ) {
 
@@ -234,6 +244,7 @@
 
 		/**
 		 * This method clears the array of received points and sets the height of all the points to 0
+		 *
 		 * @method restart
 		 */
 		restart : function() {
@@ -247,6 +258,7 @@
 		 * This function is used to set the points that haven't been received
 		 *  yet to a height equal to the average of the points received (so that
 		 *  the colors are more precise from the beginning)
+		 *
 		 * @method stabilize
 		 */
 		stabilize : function( ) {

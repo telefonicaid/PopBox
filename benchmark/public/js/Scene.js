@@ -26,7 +26,12 @@
 
 	/* Private Methods */
 
-	/*
+	/**
+	 * Method that creates an instance of Scene and returns it
+	 *
+	 * @method createScene
+	 * @private
+	 * @return {Scene} the instantiated scene
 	 * 
 	 */
 	var createScene = function() {
@@ -35,6 +40,13 @@
 		return threeScene;
 
 	}
+
+	/**
+	 * This function creates the standard lights
+	 *
+	 * @method createLights
+	 * @private
+	 */
 
 	var	createLights = function() {
 
@@ -63,7 +75,10 @@
 	Scene.prototype = {
 	
 		/*
-		 * 
+		 * This function adds a point to the Plane
+		 *
+		 * @method addDataToGraph
+		 * @param {Object} point The coordinatesof the point
 		 */
 		addDataToGraph : function( point ) {
 			this.graph.addPoint( point );
@@ -71,7 +86,10 @@
 
 
 		/*
-		 * 
+		 * This method delegates the animate functions to the Graph
+		 *
+		 * @method animate
+		 * @param {THREE.PerspectiveCamera} threeCamera the camera with which we are rendering
 		 */
 		animate : function( threeCamera ) {
 			this.graph.animate(threeCamera);
@@ -79,7 +97,11 @@
 
 
 		/*
-		 * 
+		 * This method adds one light to the ones that already exist
+		 *
+		 * @method createLight
+		 * @param  {Object}		pos		object that contains the position of the new Light
+		 * @return {THREE.DirectionalLight} the created light
 		 */
 		createLight : function( pos ) {
 
@@ -95,7 +117,11 @@
 
 
 		/*
-		 * 
+		 * this method instantiates the Graph attribute
+		 *
+		 * @method createGraph
+		 * @param  {Object} options the info needed by the Graph to be instantiated
+		 * @return {Graph} the created Graph
 		 */
 		createGraph : function( options ) {
 
@@ -107,7 +133,9 @@
 
 
 		/*
-		 * 
+		 * This function delegates the restart behaviour to the Graph
+
+		 * @method restart
 		 */
 		restart : function() {
 			this.graph.restart();
