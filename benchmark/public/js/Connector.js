@@ -285,8 +285,6 @@
 	// Exported to the namespace
 	PBDV.Connector = Connector;
 
-//})( window.PBDV = window.PBDV || {});	// Namespace
-
 })( window.PBDV = window.PBDV || {},	// Namespace
 	io);								// Dependencies
 
