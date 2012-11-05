@@ -28,9 +28,10 @@
 
 	/* Private Methods */
 
-	/*
+	/**
 	 * This function returns the transformed coordinate of one coordinate
-	 *
+	 * @method coord
+	 * @private
 	 * @param i			: The coordinate to transform
 	 * @param start		: The minimum value that i can be
 	 * @param interval	: The interval on i for two consecutive coordinates
@@ -41,9 +42,10 @@
 	}
 
 
-	/*
+	/**
 	 * This function sets the transition between different colors on a Plane
-	 *
+	 * @method setColors
+	 * @private
 	 * @param plane 	: The plane to set colors to
 	 */
 	var setColors = function( plane ) {
@@ -78,9 +80,10 @@
 	}
 
 
-	/*
+	/**
 	 * This function is used to tell the Renderer that a plane must be recalculated.
-	 *
+	 * @method setup
+	 * @private
 	 * @param p : the index of the plane to recalculate
 	 */
 	var setup = function(p) {
@@ -118,9 +121,10 @@
 	}
 
 
-	/*
+	/**
 	 * this function creates a THREE.3DObject with the required size and returns it
-	 *
+	 * @method createPlane
+	 * @private
 	 */
 	var createPlane = function(test, size) {
 		//
@@ -167,10 +171,10 @@
 
 	Plane.prototype={
 
-		/*
+		/**
 		 * This function draws a new received point into the plane and
 		 *	marks it to be updated.
-		 *
+		 * @method addPoint
 		 * @param point : the point to be drawn
 		 */
 		addPoint : function( point ) {
@@ -201,9 +205,9 @@
 		},
 
 
-		/*
+		/**
 		 * This method rescales all the points of the plane according to a new Ratio
-		 *
+		 * @method rescale
 		 * @param newRatio : the ratio that is going to be used to rescale the points
 		 */
 		rescale : function( newRatio ) {
@@ -228,9 +232,9 @@
 		},
 
 
-		/*
+		/**
 		 * This method clears the array of received points and sets the height of all the points to 0
-		 *
+		 * @method restart
 		 */
 		restart : function() {
 			this.rescale(0);
@@ -239,10 +243,11 @@
 		},
 
 
-		/*
+		/**
 		 * This function is used to set the points that haven't been received
 		 *  yet to a height equal to the average of the points received (so that
 		 *  the colors are more precise from the beginning)
+		 * @method stabilize
 		 */
 		stabilize : function( ) {
 
