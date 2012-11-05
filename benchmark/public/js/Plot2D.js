@@ -4,7 +4,12 @@
     "use strict";
 
 
-    /* Constructor */
+     /**
+     * @class Plot2D
+     * @constructor
+     * @param name {String}
+     * @param limit {Integer}
+     */
 
     var Plot2D = function( name, limit ) {
 
@@ -13,28 +18,59 @@
 
         /* Attributes */
         
-        //
+        /** 
+         * The name which set the widget we are referring
+         * @property NAME
+         * @type String
+         */
         this.NAME = name;
         
-        // 
+        /**
+         * The top limit of the graphic
+         * @property limit
+         * @type Number
+         */
         this.limit = limit;
 
-        // 
+        /**
+         * List whose length determines the number of agents involved in the test
+         * @property agents
+         * @type array
+         */
         this.agents;
 
-        // 
+        /**
+         * List of the points that will be drawn in the graphic
+         * @property data
+         * @type array 
+         */  
         this.data = [];
 
-        // 
+        /**
+         * Graphic that will be drawn
+         * @property graph
+         * @type Flotr object
+         */ 
         this.graph;
 
-        // 
+        /**
+         * DOM object where the "name" graphics will be placed
+         * @property dom 
+         * @type DOM element
+         */
         this.dom = widget.find( '#' + name + '-graph' )[0];
 
-        // 
+        /**
+         * Key table
+         * @property keys
+         * @type DOM element
+         */ 
         this.keys = widget.find('.keys').find('tbody');
 
-        //
+        /**
+         * Template for the key table
+         * @property template
+         */
         this.template = '<tr class="agent">                     \
                             <td class="host"></td>              \
                             <td class="usage"></td>             \
@@ -46,8 +82,10 @@
 
     /* Private Methods */
 
-    /*
-     * Method invoked with the Plot2D context
+    /**
+     * Auxiliary method to set the keys in the DOM
+     * @method setupKeysHTML
+     * @private
      */
     var setupKeysHTML = function() {
 
@@ -74,10 +112,14 @@
     }
 
 
-    /*
-     * Method invoked with the Plot2D context
+    /**
+     * Method used for the update of the data for each agent
+     * @method updateAgentData
+     * @private
+     * @param agent {String}
+     * @param value {Number}
      */
-    var updateAgentData = function( agent, time, value ) {
+    var updateAgentData = function( agent, value ) {
 
         // Shortcut
         var Message = PBDV.Constants.Message;
@@ -109,8 +151,12 @@
     }
 
 
-    /*
-     * Method invoked with the Plot2D context
+    /**
+     * Method used for the update of the keys
+     * @method updateKeys
+     * @private
+     * @param host {String}
+     * @param value {Number}
      */
     var updateKeys = function( host, value ) {
         
@@ -134,8 +180,12 @@
 
     Plot2D.prototype = {
 
-        /*
-         *
+        /**
+         * Method to initialize the graphic 
+         * @method config
+         * @param interval {Number}
+         * @param nagents {Number}
+         * @param hostnames {array}
          */
         config : function( interval, nagents, hostnames ) {
 
@@ -166,8 +216,9 @@
         },
 
 
-        /*
-         *
+        /**
+         * Method to draw the graphic
+         * @method draw
          */
         draw : function() {
 
@@ -191,22 +242,21 @@
         },
 
 
-        /*
-         *
+        /**
+         * Method to update the value of a particular agent
+         * @method update
+         * @param agent {String}
+         * @param value {Number}
          */
-        update : function( agent, time, value ) {
+        update : function( agent, value ) {
 
-            if (!value) value = 0;
-            // 
-            updateAgentData.call( this, agent, time, value );
+            if (!value) value = 0; 
+            updateAgentData.call( this, agent, value );
 
-
-            //
             if ( this.agents.length ) {
                 updateKeys.call( this, agent, value );
             }
 
-            // 
             this.draw();
 
         }
