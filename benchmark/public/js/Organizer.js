@@ -181,7 +181,7 @@
             }
 
             var plot = this[ plotName ];
-            plot.update( host, time, data );
+            plot.update( host, data );
 
         },
 

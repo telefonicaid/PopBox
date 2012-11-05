@@ -192,8 +192,8 @@
 
         // Finally we set the colors of the plane
         for (p in plane.children) {
-            if (plane.hasOwnProperty(p)){
-            setColors( plane.children[p] );
+            if (plane.children.hasOwnProperty(p)){
+                setColors( plane.children[p] );
             }
         }
         return plane;
@@ -204,7 +204,7 @@
 
     /* Public API */
 
-    Plane.prototype={
+    Plane.prototype = {
 
         /**
          * This function draws a new received point into the plane and
@@ -216,7 +216,7 @@
         addPoint : function( point ) {
 
             for (var p in this.plane.children) {
-                if (this.plane.hasOwnProperty(p)){
+                if (this.plane.children.hasOwnProperty(p)){
                     // We calculate the three coordinates of the point in our plane
                     var queue   = coord( point[0], this.test.queues.start, this.test.queues.interval );
                     var payload = coord( point[2], this.test.payload.start, this.test.payload.interval ) * this.sizeMap.x;
@@ -247,7 +247,7 @@
          * This method rescales all the points of the plane according to a new Ratio
          *
          * @method  rescale
-         * @param   {float} newRatio    the ratio that is going to be used to rescale the points
+         * @param   {number} newRatio    the ratio that is going to be used to rescale the points
          */
         rescale : function( newRatio ) {
 
@@ -294,7 +294,7 @@
             var average;
             for (var p in this.plane.children) {
 
-                if(this.plane.hasOwnProperty(p)){
+                if(this.plane.children.hasOwnProperty(p)){
                     var vertices = this.plane.children[p].geometry.vertices;
                     var length = 0;
                     average = 0;
