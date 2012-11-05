@@ -4,20 +4,33 @@
 	"use strict";
 
 
-	/* Constructor */
-
+	/**
+	 * @class Scene
+	 * @constructor
+	 * @param options {object} The options required for the graph creation
+	 */
 	var Scene = function( options ) {
 
 		/* Attributes */
 
-		// The actual scene object
+		/**
+		 * The actual scene object
+		 * @property threeScene
+		 * @type THREE.Scene
+		 */ 
 		this.threeScene = createScene.call( this );
 
-		// The contained graph
+
+		/**
+		 * The contained graph
+		 * @property graph
+		 * @type THREE.Scene
+		 */ 
 		this.graph = this.createGraph( options );
 
 
 		/* Initialization */
+
 		createLights.call(this);
 
 	}
@@ -89,7 +102,7 @@
 		 * This method delegates the animate functions to the Graph
 		 *
 		 * @method animate
-		 * @param {THREE.PerspectiveCamera} threeCamera the camera with which we are rendering
+		 * @param threeCamera {THREE.PerspectiveCamera} the camera with which we are rendering
 		 */
 		animate : function( threeCamera ) {
 			this.graph.animate(threeCamera);
@@ -100,7 +113,7 @@
 		 * This method adds one light to the ones that already exist
 		 *
 		 * @method createLight
-		 * @param  {Object}		pos		object that contains the position of the new Light
+		 * @param pos {Object} object that contains the position of the new Light
 		 * @return {THREE.DirectionalLight} the created light
 		 */
 		createLight : function( pos ) {

@@ -7,6 +7,7 @@
 	/**
 	 * @class Camera
 	 * @constructor
+	 * @param aspect {number} The camera aspect
 	 */
 	var Camera = function( aspect ) {
 
