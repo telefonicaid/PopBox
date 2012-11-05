@@ -270,7 +270,7 @@ var blockingPop = function (appPrefix, queue, maxElems, blockingTime, callback) 
 
   function blockingPop_aux(db) {
     db.set(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
-      popDate);
+      popDate, function() {});
     //Do the blocking part (over the two lists)
     db.blpop(fullQueueIdH, fullQueueIdL, blockingTime,
       function onPopData(err, data) {
