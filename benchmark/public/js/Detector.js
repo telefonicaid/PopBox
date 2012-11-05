@@ -58,9 +58,9 @@
 
 			if ( !this.webgl ) {
 
-				var msg = ( this.BrowserReady ) 
-					? Message.WEBGL_NOT_SUPPORTED_GPU
-					: Message.WEBGL_NOT_SUPPORTED_BROWSER;
+				var msg = ( this.BrowserReady ) ?
+					PBDV.Constants.Message.WEBGL_NOT_SUPPORTED_GPU
+					: PBDV.Constants.Message.WEBGL_NOT_SUPPORTED_BROWSER;
 
 				msg.join('\n');
 				error.text( msg );

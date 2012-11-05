@@ -1,153 +1,153 @@
 
 (function (PBDV, THREE, undefined) {
 
-	"use strict";
+    "use strict";
 
 
-	/**
-	 * @class
-	 * @Constructor
-	 * @param 		{Object}	options		the characteristics of the Graph
-	 */
-	var Graph = function( options ) {
+    /**
+     * @class
+     * @Constructor
+     * @param       {Object}    options     the characteristics of the Graph
+     */
+    var Graph = function( options ) {
 
-		/* Attributes */
+        /* Attributes */
 
-		/**
-		 * @property	axis
-		 * @type		Axis
-		 */
-		this.axis = this.createAxis( options );
+        /**
+         * @property    axis
+         * @type        Axis
+         */
+        this.axis = this.createAxis( options );
 
-		/**
-		 * @property	plot
-		 * @type		Plane
-		 */
-		this.plot = this.createPlot( options );
+        /**
+         * @property    plot
+         * @type        Plane
+         */
+        this.plot = this.createPlot( options );
 
-		/**
-		 * @property	maxPoint
-		 * @type		Int
-		 */
-		this.maxPoint = options.size.y * 2/3;
+        /**
+         * @property    maxPoint
+         * @type        Int
+         */
+        this.maxPoint = options.size.y * 2/3;
 
-		/**
-		 * @property	cota
-		 * @type		Int
-		 */
-		this.cota = 0;
-
-
-		/* Initialization */
-
-		this.threeGraph = new THREE.Object3D();
-		this.threeGraph.add( this.axis.threeAxis );
-		this.threeGraph.add( this.plot.threePlot );
-	}
+        /**
+         * @property    cota
+         * @type        Int
+         */
+        this.cota = 0;
 
 
+        /* Initialization */
 
-	/* Public API */
-
-	Graph.prototype = {
-
-		/**
-		 * adds a Point to the plane and checks if reescalation is needed
-		 *
-		 * @method 	addPoint
-		 * @param 	{Object}	point	the point that is going to be drawn
-		 *
-		 */
-		addPoint : function( point ) {
-
-			//
-			var z = (point[0] / (point[1]/1000));
-
-			// 
-			if ( z > this.cota ) {
-
-				//
-				this.cota = z;
-				var ratio = this.maxPoint / this.cota;
-				var round = Math.round(this.cota * 3/2);
-
-				//
-				this.axis.rescale( round );
-				this.plot.rescale( ratio );
-			}
-			
-			// Otherwise, we add the new point received
-			this.plot.addPoint( point );
-
-		},
+        this.threeGraph = new THREE.Object3D();
+        this.threeGraph.add( this.axis.threeAxis );
+        this.threeGraph.add( this.plot.threePlot );
+    };
 
 
-		/**
-		 * this method delegates the animate to Axis and Plot implementations
-		 *
-		 *	@method animate
-		 */
-		animate : function( threeCamera ) {
 
-			this.axis.animate( threeCamera );
-			this.plot.animate();
+    /* Public API */
 
-		},
+    Graph.prototype = {
 
+        /**
+         * adds a Point to the plane and checks if reescalation is needed
+         *
+         * @method  addPoint
+         * @param   {Object}    point   the point that is going to be drawn
+         *
+         */
+        addPoint : function( point ) {
 
-		/**
-		 * this method creates an instance of Axis
-		 *
-		 * @method 	createAxis
-		 * @param 	{Object}	options		the characteristics of the Axis
-		 * @return 	{Axis}		the created axis
-		 */
-		createAxis : function( options ) {
+            //
+            var z = (point[0] / (point[1]/1000));
 
-			// 
-			this.axis = new PBDV.Axis( options.size, options.titles, options.test );
-			return this.axis;
+            // 
+            if ( z > this.cota ) {
 
-		},
+                //
+                this.cota = z;
+                var ratio = this.maxPoint / this.cota;
+                var round = Math.round(this.cota * 3/2);
 
+                //
+                this.axis.rescale( round );
+                this.plot.rescale( ratio );
+            }
+            
+            // Otherwise, we add the new point received
+            this.plot.addPoint( point );
 
-		/**
-		 * this method creates an instance of Plane
-		 *
-		 * @method 	createPlot
-		 * @param 	{Object}	options		the characteristics of the Plane
-		 * @return 	{Plane}		the created plane
-		 */
-		createPlot : function( options ) {
-
-			// 
-			this.plot = new PBDV.Plane( options.test, options.size );
-			return this.plot;
-
-		},
+        },
 
 
-		position : function() {
-			return this.threeGraph.position;
-		},
+        /**
+         * this method delegates the animate to Axis and Plot implementations
+         *
+         *  @method animate
+         */
+        animate : function( threeCamera ) {
+
+            this.axis.animate( threeCamera );
+            this.plot.animate();
+
+        },
 
 
-		/**
-		 * This method delegates the restart behaviour to the implementation in Plot
-		 *
-		 * @method restart
-		 */
-		restart : function() {
-			this.plot.restart();
-			this.cota = 0;
-		}
-		
-	}; // prototype
+        /**
+         * this method creates an instance of Axis
+         *
+         * @method  createAxis
+         * @param   {Object}    options     the characteristics of the Axis
+         * @return  {Axis}      the created axis
+         */
+        createAxis : function( options ) {
+
+            // 
+            this.axis = new PBDV.Axis( options.size, options.titles, options.test );
+            return this.axis;
+
+        },
 
 
-	// Exported to the namespace
-	PBDV.Graph = Graph;
+        /**
+         * this method creates an instance of Plane
+         *
+         * @method  createPlot
+         * @param   {Object}    options     the characteristics of the Plane
+         * @return  {Plane}     the created plane
+         */
+        createPlot : function( options ) {
+
+            // 
+            this.plot = new PBDV.Plane( options.test, options.size );
+            return this.plot;
+
+        },
 
 
-})( window.PBDV = window.PBDV || {},	// Namespace
-	THREE);								// Dependencies
+        position : function() {
+            return this.threeGraph.position;
+        },
+
+
+        /**
+         * This method delegates the restart behaviour to the implementation in Plot
+         *
+         * @method restart
+         */
+        restart : function() {
+            this.plot.restart();
+            this.cota = 0;
+        }
+        
+    }; // prototype
+
+
+    // Exported to the namespace
+    PBDV.Graph = Graph;
+
+
+})( window.PBDV = window.PBDV || {},    // Namespace
+    THREE);                             // Dependencies
