@@ -10,11 +10,11 @@
 	 *  Auxiliary function called by createText2D
 	 *  @method createTextCanvas
 	 *  @private
-	 *  @param text {string}
-	 *  @param size {number}
-	 *  @param color {string}
-	 *  @param font {string}
-	 *  @return {Canvas Object}
+	 *  @param text {string} The text that should be boxed in a canvas
+	 *  @param size {number} The size of the element
+	 *  @param color {string} The desired color 
+	 *  @param font {string} The desired text font 
+	 *  @return {Canvas Object} The object needed
 	 */
 	var createTextCanvas = function( text, size, color, font ) {
        	var size = size || 140;
@@ -46,10 +46,10 @@
 		/**
 		 *  Method to create meshes
 		 *  @method createText2D
-		 *  @param text {string}
-		 *  @param size {number}
-		 *  @param color {string}
-		 *  @param font {string}
+		 *  @param text {string} The text that should be boxed in a canvas
+	 	 *  @param size {number} The size of the element
+	 	 *  @param color {string} The desired color 
+	 	 *  @param font {string} The desired text font 
 		 *  @return {THREE.Mesh} A 2D mesh object
 		 */
 		createText2D : function( text, size, color, font ) {

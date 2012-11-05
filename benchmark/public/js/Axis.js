@@ -69,12 +69,12 @@
 
 	    if (size.z >= 0) {
 	    	lineGeo.vertices.push(
-	    		v(0,0,0),						v(0,0,size.z),
+	    		v(0,0,0),					v(0,0,size.z),
 	    		v(size.x,0,0),				v(size.x,0,size.z),
 	    		v(0,size.y,0),				v(0,size.y,size.z),
-	    		v(size.x,size.y,0),	v(size.x,size.y,size.z),
+	    		v(size.x,size.y,0),			v(size.x,size.y,size.z),
 
-	    		v(0,0,size.z),						v(0,size.y,size.z),
+	    		v(0,0,size.z),				v(0,size.y,size.z),
 	    		v(0,size.y,size.z),			v(size.x,size.y,size.z),
 	    		v(size.x,size.y,size.z),	v(size.x,0,size.z),
 	    		v(size.x,0,size.z),			v(0,0,size.z)
@@ -137,7 +137,7 @@
 		    	case 'x' : 	aux = options.queues;
 		    				var q = options.queues;
 		    				var d = (q.end - q.start)/q.interval;
-		    				divisions = d < MaxDiv.X ? d : MaxDiv.X;
+		    				divisions = (d < MaxDiv.X) ? d : MaxDiv.X;
 		    				position.y = -size.y/50;
 		    				position.z = size.z + size.z/50;
 		    				part.name = 'gridX';
@@ -153,7 +153,7 @@
 				case 'z' :  aux = options.payload;
 							var p = options.payload;
 		    				var d = (p.end - p.start)/p.interval;
-		    				divisions = d < MaxDiv.Z ? d : MaxDiv.Z;
+		    				divisions = (d < MaxDiv.Z) ? d : MaxDiv.Z;
 							position.x = size.x + size.x/50;
 		    				position.y = -size.y/50;
 		    				part.name = 'gridZ';
@@ -175,7 +175,8 @@
 		    	case 'x' :  a = v(i, 0, 0);
 		    				b = v(i, size.y, 0);
 		    				c = v(i, 0, size.z);
-		    				value = Math.round(options.queues.start + options.queues.interval*i/amount);
+		    				var q = options.queues;
+		    				value = Math.round(q.start + ((q.end-q.start)/divisions)*i/amount);
 		    				position.x = i;
 		    				break;
 
@@ -189,7 +190,8 @@
 				case 'z' :  a = v(0, 0, i);
 		    				b = v(size.x, 0, i);
 		    				c = v(0, size.y, i);
-		    				value = Math.round(options.payload.start + options.payload.interval*i/amount);
+		    				var p = options.payload;
+		    				value = Math.round(p.start + ((p.end-p.start)/divisions)*i/amount);
 		    				position.z = i;
 		    				break;
 		    }

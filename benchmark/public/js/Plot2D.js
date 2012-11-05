@@ -20,13 +20,13 @@
         this.limit = limit;
 
         // 
-        this.agents = null;
+        this.agents;
 
         // 
         this.data = [];
 
         // 
-        this.graph = null;
+        this.graph;
 
         // 
         this.dom = widget.find( '#' + name + '-graph' )[0];
@@ -196,8 +196,10 @@
          */
         update : function( agent, time, value ) {
 
+            if (!value) value = 0;
             // 
             updateAgentData.call( this, agent, time, value );
+
 
             //
             if ( this.agents.length ) {

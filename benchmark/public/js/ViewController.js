@@ -89,7 +89,7 @@
 	 *  It changes the description text depending on the test number
 	 *  @method updateDescription
 	 *  @private
-	 *  @param number {number}
+	 *  @param number {number} the test number
 	 */
 	var updateDescription = function( number ) {
 		var Test = PBDV.Constants.ViewController.Test;
@@ -101,8 +101,8 @@
 	 *  Handler called by other specific modal window events handlers (hideModalBox y reloadWebsite)
 	 *  @method modalHandler
 	 *  @private
-	 *  @param event {event}
-	 *  @param callback {function}
+	 *  @param event {event} The event launched
+	 *  @param callback {function} The callback which must be called
 	 */
 	var modalHandler = function( event, callback ) {
 
@@ -122,7 +122,7 @@
 	 *  Event performed when the 'Ready' button is pressed
 	 *  @event hideModalBox
 	 *  @private
-	 *  @param event {event}
+	 *  @param event {event} The event launched
 	 */
     var hideModalBox = function( event ) {
 
@@ -142,7 +142,7 @@
 	 *  Event performed when the 'Reload' button is pressed
 	 *  @event reloadWebsite
 	 *  @private
-	 *  @param event {event}
+	 *  @param event {event} The event launched
 	 */
     var reloadWebsite = function( event ) {
 
@@ -162,8 +162,8 @@
 	 *  It will increase the progress bar
 	 *  @method setBarInterval
 	 *  @private
-	 *  @param time {number}
-	 *  @param end {boolean}
+	 *  @param time {number} the time needed for the animation
+	 *  @param end {boolean} the boolean condition to end or not the animation
 	 */
 	var setBarInterval = function( time, end ) {
 
@@ -186,7 +186,7 @@
 		/**
 		 *  Tab Buttons Event Handler
 		 *  @method changeTest
-		 *  @param {jQuery Object} currentTab
+		 *  @param currentTab {jQuery Object} The current tab clicked by the user
 		 */
 		changeTest : function( currentTab ) {	
 
@@ -253,7 +253,7 @@
 
 		/**
 		 *	Method to increase the % of the modal progress bar
-		 *  @param end the condition to launch or not the final timeout
+		 *  @param end {boolean} the condition to launch or not the final timeout
 		 */
 		increaseBar : function( end ) {
 
@@ -312,9 +312,9 @@
 		/**
 		 *	Method to format and log the messages received from the server
 		 *  @method logData
-		 *  @param timestamp the timestamp when the log was produced
-		 *  @param message the data received
-		 *  @param host the machine name which sent the message
+		 *  @param timestamp {string} The timestamp when the log was produced
+		 *  @param message {string} The message which contains the data received
+		 *  @param host {string} The machine name which sent the message
 		 */
 		logData : function( timestamp, message, host ) {
 

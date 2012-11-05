@@ -6,8 +6,8 @@
 
 	/**
 	 *  @class Organizer
-	 *  @param vc {ViewController}
 	 *  @constructor
+	 *  @param vc {ViewController} The ViewController object
 	 */
 	var Organizer = function( vc ) {
 
@@ -53,7 +53,7 @@
 	 	/**
 		 *  Method to create 2D plots dynamically
 		 *  @method createPlots
-		 *  @param plots {Object}
+		 *  @param plots {Object} The object which contains the plot configurations
 		 */
 		createPlots : function( plots ) {
 
@@ -75,7 +75,7 @@
 	 	/**
 		 *  Method to change the current test status to the given one
 		 *  @method changeToTest
-		 *  @param testNumber {number}
+		 *  @param testNumber {number} The test id
 		 */
 		changeToTest : function( testNumber ) {
 			this.drawer.changeToTest( testNumber );
@@ -97,7 +97,7 @@
 	 	/**
 		 *  Method to return back the DOM element that represents the WebGL Render
 		 *  @method DOMElement
-		 *  @return {Canvas Object}
+		 *  @return {Canvas Object} The DOM element addressed by the ViewController
 		 */
 		DOMElement : function() {
 			return this.drawer.DOMElement();
@@ -148,8 +148,8 @@
 	 	/**
 		 *  Method to tell the drawer to draw a new received point
 		 *  @method addData
-		 *  @param test {number}
-		 *  @param point {array}
+		 *  @param test {number} The test id
+		 *  @param point {array} The point that must be added to the drawer
 		 */
 		addData : function( test, point ) {
 
@@ -162,10 +162,10 @@
 	 	/**
 		 *  Method to tell a specific 2D plot to draw a new received performance data
 		 *  @method addDataPlots
-		 *  @param host {string}
-		 *  @param time {number}
-		 *  @param data {number}
-		 *  @param plotName {string}
+		 *  @param host {string} The host name
+		 *  @param time {number} The time when the event was produced on the server
+		 *  @param data {number} The data point received
+		 *  @param plotName {string} The plot name which should add the point
 		 */
 		addDataPlots : function( host, time, data, plotName ) {
 
@@ -187,9 +187,9 @@
 	 	/**
 		 *  Method to initialize and configure the 2D plots
 		 *  @method configPlots
-		 *  @param interval {number}
-		 *  @param nagents {number}
-		 *  @param hostnames {array}
+		 *  @param interval {number} The interval between points
+		 *  @param nagents {number} The number of agents considered by the plots
+		 *  @param hostnames {array} The array of hosts which will send points
 		 */
 		configPlots : function( interval, nagents, hostnames ) {
 
@@ -209,7 +209,7 @@
 	 	/**
 		 *  Method to initialize and configure main 3D drawer
 		 *  @method configTest
-		 *  @param tests {object}
+		 *  @param tests {object} the object with the test information
 		 */
 		configTest : function( tests ) {
 
@@ -222,9 +222,9 @@
 	 	/**
 		 *  Method to log and show in the UI every received data
 		 *  @method log
-		 *  @param timestamp {number}
-		 *  @param message {string}
-		 *  @param host {string}
+		 *  @param timestamp {number} The time when the event was produced on the server
+		 *  @param message {string} The message that must be logged
+		 *  @param host {string} The host name
 		 */
 		log : function( timestamp, message, host ) {
 
