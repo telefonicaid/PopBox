@@ -15,13 +15,13 @@
 
         /**
          * @property    axis
-         * @type        Axis
+         * @type        THREE.Axis
          */
         this.axis = this.createAxis( options );
 
         /**
          * @property    plot
-         * @type        Plane
+         * @type        THREE.Plane
          */
         this.plot = this.createPlot( options );
 
@@ -33,7 +33,7 @@
 
         /**
          * @property    cota
-         * @type        Int
+         * @type        number
          */
         this.cota = 0;
 
@@ -55,7 +55,7 @@
          * adds a Point to the plane and checks if reescalation is needed
          *
          * @method  addPoint
-         * @param   {Object}    point   the point that is going to be drawn
+         * @param   {object}    point   the point that is going to be drawn
          *
          */
         addPoint : function( point ) {
@@ -99,8 +99,8 @@
          * this method creates an instance of Axis
          *
          * @method  createAxis
-         * @param   {Object}    options     the characteristics of the Axis
-         * @return  {Axis}      the created axis
+         * @param   {object}    options     the characteristics of the Axis
+         * @return  {THREE.Axis}            the created axis
          */
         createAxis : function( options ) {
 
@@ -115,8 +115,8 @@
          * this method creates an instance of Plane
          *
          * @method  createPlot
-         * @param   {Object}    options     the characteristics of the Plane
-         * @return  {Plane}     the created plane
+         * @param   {object}    options     the characteristics of the Plane
+         * @return  {THREE.Plane}           the created plane
          */
         createPlot : function( options ) {
 

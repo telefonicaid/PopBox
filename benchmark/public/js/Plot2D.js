@@ -4,13 +4,12 @@
     "use strict";
 
 
-     /**
+    /**
      * @class Plot2D
      * @constructor
-     * @param name {String}
-     * @param limit {Integer}
+     * @param name {String} The name of the plot component (cpu, memory, ...)
+     * @param limit {Integer} The limit of the plot (the top is 100%)
      */
-
     var Plot2D = function( name, limit ) {
 
         var widget = $( '#' + name );
@@ -37,7 +36,7 @@
          * @property agents
          * @type array
          */
-        this.agents;
+        this.agents = null;
 
         /**
          * List of the points that will be drawn in the graphic
@@ -51,7 +50,7 @@
          * @property graph
          * @type Flotr object
          */ 
-        this.graph;
+        this.graph = null;
 
         /**
          * DOM object where the "name" graphics will be placed
@@ -116,8 +115,8 @@
      * Method used for the update of the data for each agent
      * @method updateAgentData
      * @private
-     * @param agent {String}
-     * @param value {Number}
+     * @param agent {String} the name of the agent to be updated
+     * @param value {Number} the performance value
      */
     var updateAgentData = function( agent, value ) {
 
@@ -155,8 +154,8 @@
      * Method used for the update of the keys
      * @method updateKeys
      * @private
-     * @param host {String}
-     * @param value {Number}
+     * @param host {String} the name of the agent to be updated
+     * @param value {Number} the performance value
      */
     var updateKeys = function( host, value ) {
         
@@ -183,9 +182,9 @@
         /**
          * Method to initialize the graphic 
          * @method config
-         * @param interval {Number}
-         * @param nagents {Number}
-         * @param hostnames {array}
+         * @param interval {Number} The interval between points
+         * @param nagents {Number} The number of agents
+         * @param hostnames {array} The array with the agents names
          */
         config : function( interval, nagents, hostnames ) {
 
@@ -195,7 +194,6 @@
 
             this.agents = hostnames;
 
-            // 
             for (var i = 0; i < nagents; i++) {
 
                 var aux = [];
@@ -222,7 +220,6 @@
          */
         draw : function() {
 
-            // Shortcut
             var Settings = PBDV.Constants.Plots.Settings;
 
             // Drawing the graph with the updated data
@@ -245,8 +242,8 @@
         /**
          * Method to update the value of a particular agent
          * @method update
-         * @param agent {String}
-         * @param value {Number}
+         * @param agent {String} the name of the agent to be updated
+         * @param value {Number} the performance value
          */
         update : function( agent, value ) {
 
