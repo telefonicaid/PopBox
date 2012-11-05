@@ -36,7 +36,7 @@ exports.Pool = function Pool(poolIndex){
 
     function get(queueId, callback) {
         var con = connections.pop();
-        logger.info('get', connections.toString());
+        logger.debug('get', connections.toString());
         if (con) {
             callback(null, con);
 
@@ -63,6 +63,6 @@ exports.Pool = function Pool(poolIndex){
     //get back to the pool
      
       connections.push(con);
-      logger.info('free', connections.toString());
+      logger.debug('free', connections.toString());
   }
 };
