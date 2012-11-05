@@ -17,7 +17,7 @@ var config = require('./config.js');
 
 var path = require('path');
 var log = require('PDITCLogger');
-config.logger.File.filename = 'popbox.log';
+
 log.setConfig(config.logger);
 var logger = log.newLogger();
 logger.prefix = path.basename(module.filename,'.js');
@@ -34,6 +34,9 @@ var sendrender = require('./sendrender');
 
 logger.info('Node version:', process.versions.node);
 logger.info('V8 version:', process.versions.v8);
+logger.info('Current directory: ' , process.cwd());
+logger.info('POPBOX_DIR_PREFIX: ' , process.env.POPBOX_DIR_PREFIX);
+
 
 if (config.cluster.numcpus >= 0 && config.cluster.numcpus < numCPUs) {
     numCPUs = config.cluster.numcpus;

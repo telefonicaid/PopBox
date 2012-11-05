@@ -13,6 +13,11 @@ For those usages not covered by the GNU Affero General Public License please con
 */
 
 
+
+var dir_prefix = './';
+if(process.env.POPBOX_DIR_PREFIX) {
+    dir_prefix =process.env.POPBOX_DIR_PREFIX;
+}
 /**
  * Level for logger
  * debug
@@ -28,7 +33,7 @@ exports.logger.Console = {
     level: 'debug', timestamp:true
 };
 exports.logger.File ={
-    level:'debug', filename:'pditclogger.log', timestamp:true, json:false ,
+    level:'debug', filename: dir_prefix +'/popbox.log', timestamp:true, json:false ,
     maxsize: 10*1024*1024,
     maxFiles: 3
 };
