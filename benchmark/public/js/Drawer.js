@@ -324,7 +324,7 @@
         },
 
 
-        /*
+        /**
          * Method to return the DOM element
          * @method DOMElement
          * @return the DOM element provided by the renderer

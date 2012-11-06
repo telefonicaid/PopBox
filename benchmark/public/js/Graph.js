@@ -5,7 +5,7 @@
 
 
     /**
-     * @class
+     * @class Graph
      * @Constructor
      * @param       {Object}    options     the characteristics of the Graph
      */

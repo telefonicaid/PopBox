@@ -5,7 +5,8 @@
 
 
 	/**
-	 *  @class Detector Module 
+	 *  Auxiliary Detector Module
+	 *  @class Detector
 	 *  @static
 	 */
 	var Detector = {
@@ -20,7 +21,7 @@
 
 		/**
 		 *  Knowing the browser support
-		 *  @proerty BrowserReady
+		 *  @property BrowserReady
 		 *  @final
 		 */
 		BrowserReady : document.createElement( 'canvas' ).getContext( 'experimental-webgl' ),

@@ -35,7 +35,7 @@
 
         /**
          *  The machine state used for the buttons panel
-         *  @property organizer
+         *  @property state
          *  @type Object
          */
         this.state = ['I', 'I'];
@@ -255,6 +255,7 @@
 
         /**
          *  Method to increase the % of the modal progress bar
+         *  @method increaseBar
          *  @param end {boolean} the condition to launch or not the final timeout
          */
         increaseBar : function ( end ) {

@@ -39,7 +39,8 @@
 
     /**
      *  Auxiliary Utils Module
-     *  @module Utils
+     *  @class Utils
+     *  @static
      */
     var Utils = {
 

@@ -89,7 +89,7 @@
 
     Scene.prototype = {
     
-        /*
+        /**
          * This function adds a point to the Plane
          *
          * @method addDataToGraph
@@ -100,7 +100,7 @@
         },
 
 
-        /*
+        /**
          * This method delegates the animate functions to the Graph
          *
          * @method animate
@@ -111,7 +111,7 @@
         },
 
 
-        /*
+        /**
          * This method adds one light to the ones that already exist
          *
          * @method createLight
@@ -131,7 +131,7 @@
         },
 
 
-        /*
+        /**
          * this method instantiates the Graph attribute
          *
          * @method createGraph
@@ -147,9 +147,9 @@
         },
 
 
-        /*
+        /**
          * This function delegates the restart behaviour to the Graph
-
+         *
          * @method restart
          */
         restart : function () {
