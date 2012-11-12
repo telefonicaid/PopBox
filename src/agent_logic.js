@@ -456,7 +456,7 @@ function checkPerm(req, res, cb) {
         if (err) {
             res.send('ERROR:' + err, {
                 'Content-Type': 'text/plain',
-                'WWW-Authenticate': 'Basic realm="EL MAL TE PERSIGUE"' }, 500);
+                'WWW-Authenticate': 'Basic realm="PopBox"' }, 500);
         }
 
         else if (value) {
@@ -466,15 +466,15 @@ function checkPerm(req, res, cb) {
                 }
             }
             else {
-                res.send('Unauthorized ' + username + "," + password, {
+                res.send('Unauthorized ' + username, {
                     'Content-Type': 'text/plain',
-                    'WWW-Authenticate': 'Basic realm="EL MAL TE PERSIGUE"' }, 401);
+                    'WWW-Authenticate': 'Basic realm="PopBox"' }, 401);
             }
         }
         else {
             res.send('ERROR: Secure Queue does not exist', {
                 'Content-Type': 'text/plain',
-                'WWW-Authenticate': 'Basic realm="EL MAL TE PERSIGUE"' }, 500);
+                'WWW-Authenticate': 'Basic realm="PopBox"' }, 500);
         }
     });
 
