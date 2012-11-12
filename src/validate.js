@@ -32,7 +32,7 @@ function errorsTrans(trans) {
         errors.push('undefined priority');
     }
     else if (trans.priority !== 'H' && trans.priority !== 'L') {
-        errors.push('invalid priority')
+        errors.push('invalid priority');
     }
 
     if (!trans.queue) {
@@ -64,6 +64,7 @@ function errorsTrans(trans) {
 
 
 function errorsPayload(payload, required) {
+    'use strict';
     logger.debug('errorsPayload(payload)', [payload]);
     var maxPayloadSize = config.agent.max_payload_size,
         errors = [];
@@ -76,17 +77,18 @@ function errorsPayload(payload, required) {
     }
     return errors;
 }
-function errorsExpirationDate(expirationDate, required) {
+function errorsExpirationDate(expirationDate) {
+    'use strict';
     logger.debug('errorsExpirationDate(expirationDate)', [expirationDate]);
     var errors = [];
     if (expirationDate) {
         if (typeof expirationDate !== 'number') {
-            errors.push('expirationDate is not a number')
+            errors.push('expirationDate is not a number');
         }
         else {
             // not 0, the current date ??
             if (expirationDate < 0 || expirationDate > MAX_TIMESTAMP) {
-                errors.push('expirationDate out of range')
+                errors.push('expirationDate out of range');
             }
         }
     }
@@ -122,7 +124,7 @@ exports.errorsExpirationDate = errorsExpirationDate;
 
 /**
  *
- * @param {strimg} payload.
+ * @param {string} payload.
  * @param {boolean} required if the payload is required
  * @return {Array.String} return array with error information.
  */

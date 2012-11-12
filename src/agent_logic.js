@@ -437,7 +437,7 @@ function peekQueue(req, res) {
 function checkPerm(req, res, cb) {
     'use strict';
     logger.debug('checkPerm(req, res, cb)', [req, res, cb]);
-    var header = req.headers['authorization'] || '', // get the header
+    var header = req.headers.authorization || '', // get the header
         token = header.split(/\s+/).pop() || '', // and the encoded auth token
         auth = new Buffer(token, 'base64').toString(), // convert from base64
         parts = auth.split(/:/), // split on colon

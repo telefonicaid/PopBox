@@ -72,15 +72,16 @@ if (cluster.isMaster && numCPUs !== 0) {
     app._backlog = 2048;
     servers.push(app);
 
+    var optionsDir;
     logger.info("config.enableSecure", config.enableSecure);
     if (config.enableSecure === true || config.enableSecure === "true" || config.enableSecure === 1) {
         if (!config.agent.crt_path) {
-            var options_dir = {
+            optionsDir = {
                 key: path.resolve(dirModule, '../utils/server.key'),
                 cert: path.resolve(dirModule, '../utils/server.crt')
             };
         } else {
-            var options_dir = {
+            optionsDir = {
                 key: path.resolve(config.agent.crt_path, 'server.key'),
                 cert: path.resolve(config.agent.crt_path, 'server.crt')
             };
@@ -89,18 +90,18 @@ if (cluster.isMaster && numCPUs !== 0) {
         /*checks whether the cert files exist or not
          and starts the appSec server*/
 
-        if (path.existsSync(options_dir.key) &&
-            path.existsSync(options_dir.cert) &&
-            fs.statSync(options_dir.key).isFile() &&
-            fs.statSync(options_dir.cert).isFile()) {
+        if (path.existsSync(optionsDir.key) &&
+            path.existsSync(optionsDir.cert) &&
+            fs.statSync(optionsDir.key).isFile() &&
+            fs.statSync(optionsDir.cert).isFile()) {
 
             var options = {
-                key: fs.readFileSync(options_dir.key),
-                cert: fs.readFileSync(options_dir.cert)
+                key: fs.readFileSync(optionsDir.key),
+                cert: fs.readFileSync(optionsDir.cert)
             };
             logger.info("valid certificates");
         } else {
-            logger.debug('certs not found', options_dir);
+            logger.debug('certs not found', optionsDir);
             throw new Error("No valid certificates were found in the given path");
         }
 
@@ -112,6 +113,7 @@ if (cluster.isMaster && numCPUs !== 0) {
     }
 
     servers.forEach(function (server) {
+        'use strict';
         server.use(express.query());
         server.use(express.bodyParser());
         server.use(express.limit(config.agent.max_req_size));
