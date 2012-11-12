@@ -125,7 +125,7 @@ if (cluster.isMaster && numCPUs !== 0) {
         server.post('/trans/:id_trans/payload', logic.payloadTrans);
         server.post('/trans/:id_trans/expirationDate', logic.expirationDate);
         server.post('/trans/:id_trans/callback', logic.callbackTrans);
-        server.post('/trans', logic.postTrans);
+        server.post('/trans', logic.postTransDelayed);
         server.get('/queue/:id', logic.getQueue);
         server.post('/queue/:id/pop', logic.popQueue);
         server.get('/queue/:id/peek', logic.peekQueue);

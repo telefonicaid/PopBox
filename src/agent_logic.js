@@ -75,11 +75,29 @@ function postTrans(req, res) {
         ]);
     }
 }
+
+function postTransDelayed(req, res) {
+    'use strict';
+    logger.debug('postTransDelayed(req, res)', [req, res]);
+    var delay = Number(req.param('delay'));
+    if(delay) {
+        setTimeout(function() {
+            postTrans(req, { send: function() {}});    
+        }, delay * 1000);
+        res.send({"ok":true,"data":"unknown-delayed"});
+    }
+    else {
+        postTrans(req, res);
+    }
+}
+
 function putTransMeta(req, res) {
+    'use strict';
     logger.debug('putTransMeta(req, res)', [req, res]);
     var id = req.param('id_trans', null),
         empty = true, filteredReq = {}, errorsP, errorsExpDate, errors = [];
 
+    
     filteredReq.payload = req.body.payload;
     filteredReq.callback = req.body.callback;
     filteredReq.expirationDate = req.body.expirationDate;
@@ -253,7 +271,7 @@ function expirationDate(req, res) {
     logger.debug("expirationDate - id  req.body", id, req.body);
     if (id) {
         errors = validate.errorsExpirationDate(req.body);
-        if (errors.length == 0) {
+        if (errors.length === 0) {
             logger.debug('putTransMeta - errors', errors);
             dataSrv.setExpirationDate(id, req.body, function (e) {
                 if (e) {
@@ -524,4 +542,5 @@ exports.postQueue = postQueue;
 exports.checkPerm = checkPerm;
 exports.transMeta = transMeta;
 exports.putTransMeta = putTransMeta;
+exports.postTransDelayed = postTransDelayed; 
 
