@@ -130,7 +130,7 @@ var free = function (db) {
 var promoteMaster = function(){
   "use strict";
   transactionDbClient.slaveof('NO', 'ONE');
-  queuesDbArray.each(function(db){
+  queuesDbArray.forEach(function(db){
      db.slaveof('NO', 'ONE');
   });
 };
