@@ -31,6 +31,7 @@ var dirModule = path.dirname(module.filename);
 
 var prefixer = require('./prefixer');
 var sendrender = require('./sendrender');
+var promoteSlave = require('./promoteExprMdwr.js');
 
 logger.info('Node version:', process.versions.node);
 logger.info('V8 version:', process.versions.v8);
@@ -119,6 +120,7 @@ if (cluster.isMaster && numCPUs !== 0) {
         server.use(express.limit(config.agent.max_req_size));
         server.use(prefixer.prefixer(server.prefix));
         server.use(sendrender.sendRender());
+        server.use(promoteSlave.checkAndPromote());
         server.use("/", express.static(__dirname + '/public'));
         server.del('/trans/:id_trans', logic.deleteTrans);
         //app.get('/trans/:id_trans/state/:state?', logic.transState);
