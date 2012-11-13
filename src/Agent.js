@@ -144,17 +144,15 @@ if (cluster.isMaster && numCPUs !== 0) {
                 logger.info('PopBox listening on', server.prefix+server.port);
             });
         });
-    /* servers.forEach(function (server) {
-     server.listen(server.port);
-     });*/
 }
 
-/*
+
  process.on('uncaughtException', function onUncaughtException (err) {
  'use strict';
  logger.warning('onUncaughtException', err);
+ if (err==='fatalError') {process.exit();}
  });
- */
+
 
 
 
