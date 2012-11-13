@@ -32,13 +32,13 @@ var slaveOf = function(rc, masterHost, masterPort){
   "use strict";
   logger.debug('slaveOf(rc, masterHost, masterPort)', [rc, masterHost, masterPort]);
   if (!(masterHost && masterPort) ) {
-    logger.err('Masters must be defined in slave configuration. Look at configFile');
+    logger.error('Masters must be defined in slave configuration. Look at configFile');
     throw 'fatalError';
   }
 
   rc.slaveof(masterHost,masterPort, function(err){
     if(err){
-      logger.err('slaveOf(rc, masterHost, masterPort):: '+ err);
+      logger.error('slaveOf(rc, masterHost, masterPort):: '+ err);
       throw 'fatalError';
     }
   });
