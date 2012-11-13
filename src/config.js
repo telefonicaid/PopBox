@@ -42,7 +42,7 @@ exports.logger.File ={
  *
  * @type {Boolean}
  */
-exports.slave = true;
+exports.slave = false;
 
 /**
  *
