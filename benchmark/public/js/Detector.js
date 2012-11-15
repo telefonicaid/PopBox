@@ -5,7 +5,8 @@
 
 
 	/**
-	 *  @class Detector Module 
+	 *  Auxiliary Detector Module
+	 *  @class Detector
 	 *  @static
 	 */
 	var Detector = {
@@ -20,7 +21,7 @@
 
 		/**
 		 *  Knowing the browser support
-		 *  @proerty BrowserReady
+		 *  @property BrowserReady
 		 *  @final
 		 */
 		BrowserReady : document.createElement( 'canvas' ).getContext( 'experimental-webgl' ),
@@ -58,9 +59,9 @@
 
 			if ( !this.webgl ) {
 
-				var msg = ( this.BrowserReady ) 
-					? Message.WEBGL_NOT_SUPPORTED_GPU
-					: Message.WEBGL_NOT_SUPPORTED_BROWSER;
+				var msg = ( this.BrowserReady ) ?
+					PBDV.Constants.Message.WEBGL_NOT_SUPPORTED_GPU
+					: PBDV.Constants.Message.WEBGL_NOT_SUPPORTED_BROWSER;
 
 				msg.join('\n');
 				error.text( msg );
