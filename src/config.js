@@ -229,3 +229,37 @@ exports.pool = {};
  * @type {Number}
  */
 exports.pool.max_elems = 10000;
+
+
+/* generic event listener */
+var gevlsnr_mongo = 'localhost';
+if(process.env.POPBOX_GEN_MONGO) {
+    gevlsnr_mongo =process.env.POPBOX_GEN_MONGO;
+}
+var gevlsnr = {};
+gevlsnr.name = "gevlsnr-state";
+gevlsnr.event = 'NEWSTATE';
+gevlsnr.mongo_host = gevlsnr_mongo;
+gevlsnr.mongo_port = 27017;
+gevlsnr.mongo_db =  'popbox';
+gevlsnr.collection= 'PopBoxState';
+gevlsnr.filter = null;
+gevlsnr.take= {transaction: 'transaction', state: 'state'};
+
+var gevlsnr_action = {};
+gevlsnr_action.name = "gevlsnr-action";
+gevlsnr_action.event = 'ACTION';
+gevlsnr_action.mongo_host = gevlsnr_mongo;
+gevlsnr_action.mongo_port = 27017;
+gevlsnr_action.mongo_db =  'popbox';
+gevlsnr_action.collection= 'PopBoxAction';
+gevlsnr_action.filter = null;
+gevlsnr_action.take= {transaction: 'transaction', action: 'action'};
+exports.evModules = [{ module:'./ev_callback_lsnr'},
+                    { module:'./gevlsnr', config: gevlsnr},
+                    { module:'./gevlsnr', config: gevlsnr_action}
+                    ];
+
+
+
+

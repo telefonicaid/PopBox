@@ -135,25 +135,36 @@ if (cluster.isMaster && numCPUs !== 0) {
         server.get('/queue/:id/peek', logic.peekQueue);
     });
 
-
-//Add subscribers
-    async.parallel([evLsnr.init(emitter), cbLsnr.init(emitter)],
-        function onSubscribed() {
+    var evModules = config.evModules;
+    var evInitArray = evModules.map(function (x) {
+        'use strict';
+        return require(x.module).init(emitter, x.config);
+    });
+    
+    async.parallel(evInitArray,
+        function onSubscribed(err, results) {
             'use strict';
-            // logger.debug('onSubscribed()', []);
-            servers.forEach(function (server) {
-                server.listen(server.port);
-                logger.info('PopBox listening on', server.prefix+server.port);
-            });
+            logger.debug('onSubscribed(err, results)', [err, results]);
+            if(err){
+                logger.error('error subscribing event listener', err);
+                throw new Error(['error subscribing event listener', err]);
+            }
+            else {
+                servers.forEach(function (server) {
+                    server.listen(server.port);
+                    logger.info('PopBox listening on', server.prefix+server.port);
+                });
+            }
         });
 }
 
-
+ 
  process.on('uncaughtException', function onUncaughtException (err) {
  'use strict';
  logger.warning('onUncaughtException', err);
  if (err==='fatalError') {process.exit();}
  });
+ 
 
 
 
