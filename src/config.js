@@ -38,7 +38,11 @@ exports.logger.File ={
     maxFiles: 3
 };
 
-
+/**
+ *
+ * @type {Boolean}
+ */
+exports.slave = false;
 
 /**
  *
@@ -48,11 +52,24 @@ exports.logger.File ={
 exports.redisServers = [{host:'localhost', port: 6379}];
 
 /**
+ * One to One relationship with redisServers
+ * @type {Array} ex. [{host:'localhost'}, {host:'localhost', port:'6789'}]
+ */
+exports.masterRedisServers = [];
+
+/**
  *
  * @type {Object} ex. { host:'hostname', port: 'port'} 
  * 
  */
 exports.tranRedisServer = {host:'localhost', port: 6379};
+
+/**
+ *
+ * @type {Object} ex. { host:'hostname', port: 'port'}
+ *
+ */
+exports.masterTranRedisServer = {};
 
 /**
  *
