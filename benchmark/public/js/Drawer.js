@@ -1,259 +1,357 @@
 
-// Drawer Class
+(function ( PBDV, THREE, undefined ) {
+
+    "use strict";
 
-(function (PBDV, THREE, undefined) {
 
-	"use strict";
-
-
-	var Drawer = function() {
+    /**
+     * @class Drawer
+     * @constructor
+     */
+    var Drawer = function () {
+
+        /* Attributes */
 
-		// Private State
+        /**
+         * The array which contains the created scenes by the drawer
+         * @property arrayScenes
+         * @type array
+         */
+        this.arrayScenes   = [];
 
-		var arrayScenes,
-			arrayCameras,
-			arrayRays,
 
-			threeRenderer,
+        /**
+         * The array which contains the created cameras by the drawer
+         * There must be the same number of scenes and cameras (one camera per scene)
+         * @property arrayCameras
+         * @type array
+         */
+        this.arrayCameras  = [];
 
-			canvas = $('#testing'),
-			currentScene = 0,
-			mouse = { 
-				x : 0,
-				y : 0
-			};
+
+        /**
+         * The number of the scene that is currently being rendered
+         * @property currentScene
+         * @type number
+         * @default 0
+         */
+        this.currentScene  = 0;
+
+
+        /**
+         * The canvas object where the WebGL render draws
+         * @property canvas
+         * @type DOMObject
+         */
+        this.canvas = PBDV.Constants.ViewController.DOM.visualizator;
+        
 
+        /**
+         * The THREE renderer object
+         * @property threeRenderer
+         * @type THREE.Renderer
+         */
+        this.threeRenderer = this.createRenderer();
 
-		// Private Methods
 
-		this.createScenes = function( tests ) {
-			// TODO use this var for the next objects
-			var size = {
-				x : 3,
-				y : 3,
-				z : 3
-			};
+        /* Initialization */
 
-			/*
-			var cap = function( string ) {
-		    	return string.charAt(0).toUpperCase() + string.slice(1);
-			}
-			*/
+        var ctx = this;
+        window.addEventListener( 'resize', function () {
+            onWindowResize.call(ctx);
+        }, false);
 
-			var scene1 = new PBDV.Scene();
-			scene1.createGraph({
-				size : {
-					x : 3,
-					y : 3,
-					z : 3
-				},
+    };
 
-				titles : {
-					x : 'Queues',
-					y : 'TPS',
-					z : 'Payload'
-				},
 
-				test : tests.push
-			});
 
-			var scene2 = new PBDV.Scene();
-			scene2.createGraph({
-				size : {
-					x : 3,
-					y : 3,
-					z : 3
-				},
+    /* Private Methods */
 
-				titles : {
-					x : 'Clients',
-					y : 'TPS',
-					z : 'Payload'
-				},
+    /**
+     * Auxiliary function to support shim RequestAnimationFrame
+     * @method requestAnimationFrame
+     * @private
+     * @param callback {function} The callback perform by the RAF
+     */
+    var requestAnimationFrame = function ( callback ) {
 
-				test : tests.pop
-			});
+        // Getting the actual RAF function depending on the used browser and its support
+        var f = window.requestAnimationFrame || 
+        window.webkitRequestAnimationFrame   || 
+        window.mozRequestAnimationFrame      || 
+        window.oRequestAnimationFrame        || 
+        window.msRequestAnimationFrame       || 
+        function ( callback ) {
+            window.setTimeout( callback, 1000 / 60 );
+        };
 
-			arrayScenes = [ scene1, scene2 ];
+        // Running the callback animation with the RAF function
+        f(callback);
 
-		}
+    };
 
 
-		this.createCameras = function() {
-			arrayCameras = [];
+    /**
+     * Event called when the window changed its size
+     * Method invoked with the Drawer context
+     * @event onWindowResize
+     * @private
+     */
+    var onWindowResize = function () {
+        
+        if ( this.arrayCameras ) {
 
-			for (var i = 0; i < arrayScenes.length; i++) {
-				var camera = new PBDV.Camera();
-				
-				camera.setCameraControls( this.render );
-				if ( i !== 0 ) {
-					camera.disableControls();
-				}
+            // Updating the aspect of the current camera 
+            var camera = this.arrayCameras[ this.currentScene ];
+            var aspect = this.canvas.width() / this.canvas.height();
+            camera.updateAspect( aspect );
+        }
 
-				arrayCameras.push( camera );
-			}
+        // Updating the render size
+        this.threeRenderer.setSize( this.canvas.width(), this.canvas.height() );
 
-			canvas.mouseenter(onMouseEnter);
-			canvas.mouseout(onMouseOut);
-		}
+    };
 
-		var onMouseMove = function( event ) {
-			// update sprite position
-			// sprite1.position.set( event.clientX, event.clientY, 0 );
-			
-			// update the mouse variable
-			mouse.x = ( event.clientX / canvas.width() ) * 2 - 1;
-			mouse.y = - ( event.clientY / canvas.height() ) * 2 + 1;
-		}
 
+    /**
+     * Event called when the mouse entered in the render region
+     * Method invoked with the Drawer context
+     * @event onMouseEnter
+     * @private
+     */
+    var onMouseEnter = function () {
+        this.arrayCameras[ this.currentScene ].enableControls();
+    };
 
-		this.createRenderer = function() {
-			// Rename
-			var Rend = PBDV.Constants.Renderer;
 
-			threeRenderer = new THREE.WebGLRenderer({
-				antialias : true
-			});
+    /**
+     * Event called when the mouse went out of the render region
+     * Method invoked with the Drawer context
+     * @event onMouseOut
+     * @private
+     */ 
+    var onMouseOut = function () {
 
-            threeRenderer.setSize( canvas.width(), canvas.height() ); 
+        for (var i = 0; i < this.arrayCameras.length; i++) {
+            this.arrayCameras[i].disableControls();
+        }
 
-			// TODO Add constants !!!
-    		threeRenderer.setClearColorHex(0xEEEEEE, 1.0);
+    };
 
-			// Attach the render-supplied DOM elements
-			canvas.html( threeRenderer.domElement );
-		}
+    
 
+    /* Public API */
 
-		var requestAnimationFrame = function() {
+    Drawer.prototype = {
 
-			return window.requestAnimationFrame || 
-			window.webkitRequestAnimationFrame  || 
-			window.mozRequestAnimationFrame     || 
-			window.oRequestAnimationFrame       || 
-			window.msRequestAnimationFrame      || 
-			function( callback, element) {
-				window.setTimeout( callback, 1000 / 60 );
-			}
+        // Methods invoked by the Drawer itself
 
-		}
+        /**
+         * Method which performs the animation loop
+         * @method animate
+         */ 
+        animate : function () {
 
-		var onWindowResize = function() {
-			var camera = arrayCameras[ currentScene ];
+            // Animation loop executed just when the user is viewing the tab
+            var ctx = this;
+            requestAnimationFrame(function () {
+                return ctx.animate.call(ctx);
+            });
 
-			camera.threeCamera.aspect = canvas.width() / canvas.height();
-			camera.threeCamera.updateProjectionMatrix();
+            // Animating the current rendered scene and camera
+            var scene  = this.arrayScenes[ this.currentScene ];
+            var camera = this.arrayCameras[ this.currentScene ];
 
-			threeRenderer.setSize( canvas.width(), canvas.height() );
-		}
+            camera.animate();
+            scene.animate( camera.threeCamera );
+        
+            this.render.call(this);
 
-		var onMouseEnter = function(event) {
-			arrayCameras[ currentScene ].enableControls();
-		}
+        },
 
-		var onMouseOut = function(event) {
-			for (var i = 0; i < arrayCameras.length; i++) {
-				arrayCameras[i].disableControls();
-			}
-		}
 
+        /**
+         * Creates the cameras needed by the scenes
+         * @method createCameras
+         */ 
+        createCameras : function () {
 
-		// Public API
+            // Defining the callback that will be passed to the Camera controls
+            var renderCallback = function () {
+                return ctx.render.call(ctx);
+            };
 
-		this.init = function() {
+            // Loop for the Cameras creation
+            for (var i = 0; i < this.arrayScenes.length; i++) {
 
-			//
-			this.createRenderer();
+                var aspect = this.canvas.width() / this.canvas.height();
+                var camera = new PBDV.Camera( aspect );
 
-			// 
-			window.addEventListener( 'resize', onWindowResize, false);
-			window.addEventListener( 'mousemove', onMouseMove, false );
-		}
+                // Enabling the controls for each camera except the first one
+                var ctx = this;
+                camera.setControls( renderCallback );
 
-		//var projector;
+                if ( i !== 0 ) {
+                    camera.disableControls();
+                }
 
-		var detectCollision = function() {
-			var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
-			var projector = new THREE.Projector();
-			var camera = arrayCameras[currentScene];
-			projector.unprojectVector( vector, camera );
-			var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
+                // Storing each camera
+                this.arrayCameras.push( camera );
+            }
 
-			// create an array containing all objects in the scene with which the ray intersects
-			var plot = arrayScenes[currentScene].graph.plot.threePlot;
-			var intersects = ray.intersectObject( plot );
-			if (intersects.length > 0) {
-				console.error("interseca");
-				console.log(intersects[0].point);
-			}
-		}
+            var self = this;
 
+            // Launching mouse events to enable/disable the camera controls
+            this.canvas.mouseenter(function () {
+                onMouseEnter.call(self);
+            });
 
-		this.render = function() {
-			var scene  = arrayScenes[ currentScene ];
-			var camera = arrayCameras[ currentScene ];
+            this.canvas.mouseout(function () {
+                onMouseOut.call(self);
+            });
 
-			camera.threeCamera.lookAt(scene.graph.threeGraph.position);
+        },
 
-			threeRenderer.render( scene.threeScene, camera.threeCamera );
-		}
 
+        /**
+         * Creates the 3D renderer and will draw inside of the canvas
+         * @method createRenderer
+         * @param canvas {DOMObject} The canvas which should replace the current one
+         */ 
+        createRenderer : function ( canvas ) {
 
-		this.animate = function() {
+            if ( canvas ) {
+                this.canvas = canvas;
+            }
 
-			var self = this;
+            // Creating the WebGL Render and setting its size and color
+            var threeRenderer = new THREE.WebGLRenderer({
+                antialias : true
+            });
 
-			var raf = requestAnimationFrame();
-			raf(function() {
-				self.animate();
-			});	
+            threeRenderer.setSize( this.canvas.width(), this.canvas.height() ); 
+            threeRenderer.setClearColorHex(0xEEEEEE, 1.0);
+            return threeRenderer;
 
-			var scene  = arrayScenes[ currentScene ];
-			var camera = arrayCameras[ currentScene ];
+        },
 
-			camera.animate();
 
-			scene.animate( camera.threeCamera );
+        /**
+         * Creates the scenes needed for each test
+         * @method createScenes
+         * @param tests {object} The test information needed for the graphs creation
+         */ 
+        createScenes : function ( tests ) {
 
-			this.render();
+            // Rename
+            var Constants = PBDV.Constants.Drawer;
 
-		}
+            var scene1 = new PBDV.Scene({
+                size   : Constants.SIZE_MAP,
+                titles : Constants.Test.Provision,
+                test   : tests.push
+            });
 
-		this.addDataTo = function( testNumber, point, lastPoint ) {
-			var scene = arrayScenes[ testNumber ];
-			scene.addDataToGraph( point, lastPoint );
-		}
+            var scene2 = new PBDV.Scene({
+                size   : Constants.SIZE_MAP,
+                titles : Constants.Test.Pop,
+                test   : tests.pop
+            });
 
-		this.changeToTest = function( testNumber ) {
-			currentScene = testNumber;
-			onWindowResize();
-		}
+            this.arrayScenes = [ scene1, scene2 ];
 
-		this.configTest = function( tests ) {
+        },
 
-			//
-			this.createScenes( tests );
 
-			//
-			this.createCameras();
+        /**
+         * The method to render the current scene with its corresponding camera
+         * @method render
+         */ 
+        render : function () {
 
-			//
-			this.animate();
+            var scene  = this.arrayScenes[ this.currentScene ];
+            var camera = this.arrayCameras[ this.currentScene ];
 
-		}
+            camera.lookAt( scene.graph.position() );
 
-		this.restart = function( testNumber ) {
-			var scene = arrayScenes[testNumber];
-			scene.restart();
-		}
+            this.threeRenderer.render( scene.threeScene, camera.threeCamera );
 
-		this.init();
+        },
 
-	}
 
-	// Exported to the namespace
-	PBDV.Drawer = Drawer;
+        // Methods invoked by the Organizer
 
+        /**
+         * To add a new point sent by the connector to the current scene.
+         * The drawer delegates this task in order to get a scene which add the point to its inner elements
+         * @method addData
+         * @param testNumber {number} The test ID
+         * @param point {object} The received point to be added into the scene
+         */ 
+        addData : function ( testNumber, point ) {
 
-})( window.PBDV = window.PBDV || {}, 	// Namespace
-	THREE);								// Dependencies
+            var scene = this.arrayScenes[ testNumber ];
+            scene.addDataToGraph( point );
+
+        },
+
+
+        /**
+         * Updates the drawer to the new current scenes asked by the user
+         * @method changeToTest
+         * @param testNumber {number} The test ID
+         */ 
+        changeToTest : function ( testNumber ) {
+
+            this.currentScene = testNumber;
+            onWindowResize.call(this);
+
+        },
+
+
+        /**
+         * Configures the drawer creating the scenes and cameras needed and performs the animation loop
+         * @method changeToTest
+         * @param tests {number} The test ID
+         */ 
+        configTest : function ( tests ) {
+
+            this.createScenes( tests );
+            this.createCameras();
+
+            this.animate();
+
+        },
+
+
+        /**
+         * Method to return the DOM element
+         * @method DOMElement
+         * @return the DOM element provided by the renderer
+         */
+        DOMElement : function () {
+            return this.threeRenderer.domElement;
+        },
+
+
+        /**
+         * Restarts the scene of the given test
+         * @method restart
+         * @param testNumber {number} The test ID
+         */ 
+        restart : function ( testNumber ) {
+
+            var scene = this.arrayScenes[ testNumber ];
+            scene.restart();
+
+        }
+
+    }; // prototype
+
+
+    // Exported to the namespace
+    PBDV.Drawer = Drawer;
+
+
+})( window.PBDV = window.PBDV || {},    // Namespace
+    THREE);                             // Dependencies

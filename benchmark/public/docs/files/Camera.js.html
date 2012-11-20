@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Camera.js</title>
+    <link rel="stylesheet" href="http:&#x2F;&#x2F;yui.yahooapis.com&#x2F;3.7.0&#x2F;build&#x2F;cssgrids&#x2F;cssgrids-min.css">
+    <link rel="stylesheet" href="..&#x2F;assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="..&#x2F;assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="..&#x2F;assets/favicon.png">
+    <script src="http:&#x2F;&#x2F;yui.yahooapis.com&#x2F;combo?3.7.0&#x2F;build&#x2F;yui&#x2F;yui-min.js"></script>
+</head>
+<body class="yui3-skin-sam">
+
+<div id="doc">
+    <div id="hd" class="yui3-g header">
+        <div class="yui3-u-3-4">
+            
+                <h1><img src="..&#x2F;assets/css/logo.png" title=""></h1>
+            
+        </div>
+        <div class="yui3-u-1-4 version">
+            <em>API Docs for: </em>
+        </div>
+    </div>
+    <div id="bd" class="yui3-g">
+
+        <div class="yui3-u-1-4">
+            <div id="docs-sidebar" class="sidebar apidocs">
+                <div id="api-list">
+    <h2 class="off-left">APIs</h2>
+    <div id="api-tabview" class="tabview">
+        <ul class="tabs">
+            <li><a href="#api-classes">Classes</a></li>
+            <li><a href="#api-modules">Modules</a></li>
+        </ul>
+
+        <div id="api-tabview-filter">
+            <input type="search" id="api-filter" placeholder="Type to filter APIs">
+        </div>
+
+        <div id="api-tabview-panel">
+            <ul id="api-classes" class="apis classes">
+            
+                <li><a href="..&#x2F;classes/Axis.html">Axis</a></li>
+            
+                <li><a href="..&#x2F;classes/Camera.html">Camera</a></li>
+            
+                <li><a href="..&#x2F;classes/Connector.html">Connector</a></li>
+            
+                <li><a href="..&#x2F;classes/Detector.html">Detector</a></li>
+            
+                <li><a href="..&#x2F;classes/Drawer.html">Drawer</a></li>
+            
+                <li><a href="..&#x2F;classes/Graph.html">Graph</a></li>
+            
+                <li><a href="..&#x2F;classes/Organizer.html">Organizer</a></li>
+            
+                <li><a href="..&#x2F;classes/Plane.html">Plane</a></li>
+            
+                <li><a href="..&#x2F;classes/Plot2D.html">Plot2D</a></li>
+            
+                <li><a href="..&#x2F;classes/Scene.html">Scene</a></li>
+            
+                <li><a href="..&#x2F;classes/Utils.html">Utils</a></li>
+            
+                <li><a href="..&#x2F;classes/ViewController.html">ViewController</a></li>
+            
+            </ul>
+
+            <ul id="api-modules" class="apis modules">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+
+            </div>
+        </div>
+        <div class="yui3-u-3-4">
+                <div id="api-options">
+        Show:
+        <label for="api-show-inherited">
+            <input type="checkbox" id="api-show-inherited" checked>
+            Inherited
+        </label>
+
+        <label for="api-show-protected">
+            <input type="checkbox" id="api-show-protected">
+            Protected
+        </label>
+
+        <label for="api-show-private">
+            <input type="checkbox" id="api-show-private">
+            Private
+        </label>
+        <label for="api-show-deprecated">
+            <input type="checkbox" id="api-show-deprecated">
+            Deprecated
+        </label>
+
+    </div>
+
+
+            <div class="apidocs">
+                <div id="docs-main">
+                    <div class="content">
+                        <h1 class="file-heading">File: Camera.js</h1>
+
+<div class="file">
+    <pre class="code prettyprint linenums">
+
+(function (PBDV, THREE, undefined) {
+
+    &quot;use strict&quot;;
+
+
+    &#x2F;**
+     * @class Camera
+     * @constructor
+     * @param aspect {number} The camera aspect
+     *&#x2F;
+    var Camera = function ( aspect ) {
+
+        &#x2F;* Attibutes *&#x2F;
+
+        &#x2F;**
+         * The actual camera object
+         * @property threeCamera
+         * @type THREE.PerspectiveCamera
+         *&#x2F;
+        this.threeCamera = createCamera( aspect );
+
+
+        &#x2F;**
+         * The object which contains the camera controls
+         * @property threeCamera
+         * @type THREE.PerspectiveCamera
+         *&#x2F;
+        this.threeControls = null;
+        
+    };
+
+
+    &#x2F;**
+     *  Creates a new actual camera object
+     *  @method createCamera
+     *  @private
+     *  @param aspect {number} The camera aspect
+     *  @return {THREE.Camera} The created camera
+     *&#x2F;
+    var createCamera = function ( aspect ) {
+
+        &#x2F;&#x2F; Rename
+        var Position = PBDV.Constants.Camera.Position;
+
+        var fov  = Position.FOV;
+        var near = Position.NEAR;
+        var far  = Position.FAR;
+
+        &#x2F;&#x2F; Creation of a new camera
+        var threeCamera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+
+        &#x2F;&#x2F; Setting the position
+        threeCamera.position.x = 4;
+        threeCamera.position.y = 4;
+        threeCamera.position.z = 10;
+
+        return threeCamera;
+
+    };
+
+
+
+    &#x2F;* Public API *&#x2F;
+
+    Camera.prototype = {
+
+        &#x2F;**
+         *  This method updates the camera state within the main animation loop
+         *  @method animate
+         *&#x2F;
+        animate : function () {
+            this.updateControls();
+        },
+
+
+        &#x2F;**
+         *  Disables the camera controls
+         *  @method disableControls
+         *&#x2F;
+        disableControls : function () {
+            this.threeControls.enabled = false;
+        },
+
+
+        &#x2F;**
+         *  Enables the camera controls
+         *  @method enableControls
+         *&#x2F;
+        enableControls : function () {
+            this.threeControls.enabled = true;
+        },
+
+
+        &#x2F;**
+         *  The camera will look at the specified target
+         *  @method lookAt
+         *  @param {THREE.Object3D} The target
+         *&#x2F;
+        lookAt : function ( target ) {
+            this.threeCamera.lookAt( target );
+        },
+
+
+        &#x2F;**
+         *  To set the camera controls
+         *  @method setControls
+         *  @param {function} The callback called when the controls change
+         *  @param {object} The object with the predefined options
+         *&#x2F;
+        setControls : function ( callback, options ) {
+
+            &#x2F;&#x2F; Using received or default control options
+            options = options || PBDV.Constants.Camera.Controls;
+
+            &#x2F;&#x2F; Creation of the Controls object
+            this.threeControls = new THREE.TrackballControls( this.threeCamera );
+            this.threeControls.addEventListener(&#x27;change&#x27;, callback);
+
+            &#x2F;&#x2F; Some optional parameters
+            this.threeControls.noPan        = options.NO_PAN;           &#x2F;&#x2F; Enables&#x2F;disables pan, that is, the capability to move the camera
+            this.threeControls.rotateSpeed  = options.ROTATE_SPEED;
+            this.threeControls.zoomSpeed    = options.ZOOM_SPEED;
+            this.threeControls.staticMoving = options.STATIC_MOVING;
+            this.threeControls.keys         = options.KEYS;
+            &#x2F;&#x2F; threeControls.noZoom = options.NO_ZOOM;                  &#x2F;&#x2F; Enables&#x2F;disables zoom, using the mouse wheel by default (can be changed)
+            &#x2F;&#x2F; threeControls.dynamicDampingFactor = options.DYN_DAMP_FACT;
+            &#x2F;&#x2F; threeControls.panSpeed = options.PAN_SPEED;
+
+        },
+
+
+        &#x2F;**
+         *  To set the camera position
+         *  @method setPosition
+         *  @param {object} The object with the X, Y and Z coordinates
+         *&#x2F;
+        setPosition : function ( pos ) {
+
+            for (var coord in pos) {
+                if ( pos.hasOwnProperty(coord) ) {
+                    this.threeCamera.position[ coord ] = pos[ coord ];
+                }
+            }
+
+        },
+
+
+        &#x2F;**
+         *  Updates the current camera aspect
+         *  @method updateAspect
+         *  @param {number} The new aspect
+         *&#x2F;
+        updateAspect : function ( aspect ) {
+
+            this.threeCamera.aspect = aspect;
+            this.threeCamera.updateProjectionMatrix();
+            
+        },
+
+
+        &#x2F;**
+         *  To update the camera controls manually (this is perfomed automatically by the animation method)
+         *  @method updateControls
+         *  @param {object} The object with the X, Y and Z coordinates
+         *&#x2F;
+        updateControls : function () {
+
+            &#x2F;&#x2F; If the controls were created, then we update them
+            if ( this.threeControls ) {
+                this.threeControls.update();
+            }
+
+        }
+            
+    }; &#x2F;&#x2F; prototype
+
+
+    &#x2F;&#x2F; Exported to the namespace
+    PBDV.Camera = Camera;
+
+
+})( window.PBDV = window.PBDV || {},    &#x2F;&#x2F; Namespace
+    THREE);                             &#x2F;&#x2F; Dependencies
+    </pre>
+</div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="..&#x2F;assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="..&#x2F;assets/js/yui-prettify.js"></script>
+<script src="..&#x2F;assets/../api.js"></script>
+<script src="..&#x2F;assets/js/api-filter.js"></script>
+<script src="..&#x2F;assets/js/api-list.js"></script>
+<script src="..&#x2F;assets/js/api-search.js"></script>
+<script src="..&#x2F;assets/js/apidocs.js"></script>
+</body>
+</html>

@@ -1,30 +1,16 @@
 
-(function  (window, jQuery, undefined) {
+(function (window, PBDV, undefined) {
 
-	"use strict";
+    "use strict";
 
-	if ( ! PBDV.Detector.webgl ) {
-		PBDV.Detector.getWebGLErrorMessage();
-	} else {
-		
-	
-	
-	// Getting the current URL
-	var URL = window.location.href;
 
-	
-	var cpu    = new PBDV.Plot2D('cpu', 100);
-	var memory = new PBDV.Plot2D('memory');
+    // If WebGL is not supported, show an error message
+    if ( PBDV.Detector.webgl ) {
+        PBDV.Detector.showErrorMessage();
+    
+    } else {    // Otherwise, create the app 
+        new PBDV.ViewController();
+    }
+    
 
-	var org    = new PBDV.Organizer();
-
-	var conn   = new PBDV.Connector(org, URL);
-	var vc     = new PBDV.ViewController(org, jQuery);
-
-	org.setConn(conn);
-	org.setVC(vc);
-	org.setCPU(cpu);
-	org.setMemory(memory);
-	}
-
-})(window, jQuery);
+})(window, PBDV);

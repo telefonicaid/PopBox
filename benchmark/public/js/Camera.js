@@ -1,100 +1,184 @@
 
 (function (PBDV, THREE, undefined) {
 
-	"use strict";
-
-	var Camera = function() {
-
-		// Private State
-
-		var threeCamera,
-			threeControls;
-		
-
-		// Private Methods
-
-		var createCamera = function() {
-			// Rename
-			var Camera = PBDV.Constants.Camera;
-
-			var canvas = $('#testing');
-			threeCamera = new THREE.PerspectiveCamera(
-				Camera.FOV,
-				canvas.width() / canvas.height(),
-				Camera.NEAR,
-				Camera.FAR);
-
-			threeCamera.position.x = 4;
-			threeCamera.position.y = 4;
-			threeCamera.position.z = 10;
-		}
+    "use strict";
 
 
-		// Public API
+    /**
+     * @class Camera
+     * @constructor
+     * @param aspect {number} The camera aspect
+     */
+    var Camera = function ( aspect ) {
 
-		this.setCameraControls = function( callback, options ) {
+        /* Attibutes */
 
-			// Using received or default control options
-			options = options || PBDV.Constants.Camera.CONTROLS;
-
-			// Creation of the Controls object
-		    threeControls = new THREE.TrackballControls( threeCamera ); // Creates the controls
-		    threeControls.addEventListener('change', callback);
-		    // Some optional parameters
-
-		    //threeControls.noZoom = options.NO_ZOOM; 			// Enables/disables zoom, using the mouse wheel by default (can be changed)
-		    threeControls.noPan = options.NO_PAN;  				// Enables/disables pan, that is, the capability to move the camera
-		    threeControls.rotateSpeed = options.ROTATE_SPEED;
-		    threeControls.zoomSpeed = options.ZOOM_SPEED;
-		    //threeControls.panSpeed = options.PAN_SPEED;
-
-		    threeControls.staticMoving = options.STATIC_MOVING;
-		    //threeControls.dynamicDampingFactor = options.DYN_DAMP_FACT;
-
-		    threeControls.keys = options.KEYS;
-
-		    // Adding the controls to the camera
-		    //threeCamera.threeControls = threeControls;
-		}
-
-		this.enableControls = function() {
-			threeControls.enabled = true;
-		}
-
-		this.disableControls = function() {
-			threeControls.enabled = false;
-		}
-
-		this.animate = function() {
-			this.updateControls();
-		}
-		
-		this.setPosition = function(position) {
-			for (var coord in position) {
-				threeCamera.position[coord] = position[coord];
-			}
-		}
-
-		this.updateControls = function() {
-			if ( threeControls ) {
-				threeControls.update();
-			}
-		}
-
-		// Init
-
-		createCamera();
-		this.threeCamera = threeCamera;
-		this.position = function() {
-			return threeCamera.position;
-		}
-		
-	}	
+        /**
+         * The actual camera object
+         * @property threeCamera
+         * @type THREE.PerspectiveCamera
+         */
+        this.threeCamera = createCamera( aspect );
 
 
-	// Exported to the namespace
-	PBDV.Camera = Camera;
+        /**
+         * The object which contains the camera controls
+         * @property threeCamera
+         * @type THREE.PerspectiveCamera
+         */
+        this.threeControls = null;
+        
+    };
 
 
-})( window.PBDV = window.PBDV || {},	// Namespace
-	THREE);								// Dependencies
+    /**
+     *  Creates a new actual camera object
+     *  @method createCamera
+     *  @private
+     *  @param aspect {number} The camera aspect
+     *  @return {THREE.Camera} The created camera
+     */
+    var createCamera = function ( aspect ) {
+
+        // Rename
+        var Position = PBDV.Constants.Camera.Position;
+
+        var fov  = Position.FOV;
+        var near = Position.NEAR;
+        var far  = Position.FAR;
+
+        // Creation of a new camera
+        var threeCamera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+
+        // Setting the position
+        threeCamera.position.x = 4;
+        threeCamera.position.y = 4;
+        threeCamera.position.z = 10;
+
+        return threeCamera;
+
+    };
+
+
+
+    /* Public API */
+
+    Camera.prototype = {
+
+        /**
+         *  This method updates the camera state within the main animation loop
+         *  @method animate
+         */
+        animate : function () {
+            this.updateControls();
+        },
+
+
+        /**
+         *  Disables the camera controls
+         *  @method disableControls
+         */
+        disableControls : function () {
+            this.threeControls.enabled = false;
+        },
+
+
+        /**
+         *  Enables the camera controls
+         *  @method enableControls
+         */
+        enableControls : function () {
+            this.threeControls.enabled = true;
+        },
+
+
+        /**
+         *  The camera will look at the specified target
+         *  @method lookAt
+         *  @param {THREE.Object3D} The target
+         */
+        lookAt : function ( target ) {
+            this.threeCamera.lookAt( target );
+        },
+
+
+        /**
+         *  To set the camera controls
+         *  @method setControls
+         *  @param {function} The callback called when the controls change
+         *  @param {object} The object with the predefined options
+         */
+        setControls : function ( callback, options ) {
+
+            // Using received or default control options
+            options = options || PBDV.Constants.Camera.Controls;
+
+            // Creation of the Controls object
+            this.threeControls = new THREE.TrackballControls( this.threeCamera );
+            this.threeControls.addEventListener('change', callback);
+
+            // Some optional parameters
+            this.threeControls.noPan        = options.NO_PAN;           // Enables/disables pan, that is, the capability to move the camera
+            this.threeControls.rotateSpeed  = options.ROTATE_SPEED;
+            this.threeControls.zoomSpeed    = options.ZOOM_SPEED;
+            this.threeControls.staticMoving = options.STATIC_MOVING;
+            this.threeControls.keys         = options.KEYS;
+            // threeControls.noZoom = options.NO_ZOOM;                  // Enables/disables zoom, using the mouse wheel by default (can be changed)
+            // threeControls.dynamicDampingFactor = options.DYN_DAMP_FACT;
+            // threeControls.panSpeed = options.PAN_SPEED;
+
+        },
+
+
+        /**
+         *  To set the camera position
+         *  @method setPosition
+         *  @param {object} The object with the X, Y and Z coordinates
+         */
+        setPosition : function ( pos ) {
+
+            for (var coord in pos) {
+                if ( pos.hasOwnProperty(coord) ) {
+                    this.threeCamera.position[ coord ] = pos[ coord ];
+                }
+            }
+
+        },
+
+
+        /**
+         *  Updates the current camera aspect
+         *  @method updateAspect
+         *  @param {number} The new aspect
+         */
+        updateAspect : function ( aspect ) {
+
+            this.threeCamera.aspect = aspect;
+            this.threeCamera.updateProjectionMatrix();
+            
+        },
+
+
+        /**
+         *  To update the camera controls manually (this is perfomed automatically by the animation method)
+         *  @method updateControls
+         *  @param {object} The object with the X, Y and Z coordinates
+         */
+        updateControls : function () {
+
+            // If the controls were created, then we update them
+            if ( this.threeControls ) {
+                this.threeControls.update();
+            }
+
+        }
+            
+    }; // prototype
+
+
+    // Exported to the namespace
+    PBDV.Camera = Camera;
+
+
+})( window.PBDV = window.PBDV || {},    // Namespace
+    THREE);                             // Dependencies

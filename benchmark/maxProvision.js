@@ -3,25 +3,25 @@ var config = require('./config.js');
 var genProvision = require('./genProvision.js');
 var benchmark = require('./benchmark.js');
 var sender = require('./sender.js');
+var async = require('async');
 
 var version = 0;
 exports.version = version;
 
 
-var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, messageEmit, version) {
+var doNtimes_queues = function (numQueues, payload_length, callback, messageEmit, version) {
 
     var stopped = false;
-    var times = timesCall;
+    var times = 0;
 
     var continueTest = function () {
-        _doNtimes_queues(payload_length, callback, messageEmit);
+        agentsTime();
     }
 
     var pauseExecution = function (callback) {
         benchmark.webSocket.on('continueTest', function (data) {
             if (stopped && data.id === 0) {
                 stopped = false;
-                benchmark.webSocket.removeAllListeners('continueTest');
                 callback();
             }
         });
@@ -37,16 +37,44 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
         }
     });
 
+    var agentsTime = function () {
 
-    var _doNtimes_queues = function (payload_length, callback, messageEmit) {
+        var functionArray = [];
+        var functionParallel;
+
+        for (var i = 0; i < config.agentsHosts.length; i++) {
+            var provision = genProvision.genProvision(numQueues, payload_length);
+            var host = config.agentsHosts[i].host;
+            var port = config.agentsHosts[i].port;
+            if (numQueues <= config.maxProvision.max_queues) {
+                functionParallel = function (host, port, numQueues) {
+                    return function functionDoNTimes(cb){
+                        _doNtimes_queues(provision, payload_length, messageEmit, host, port, numQueues, cb);
+                    }
+                };
+                functionArray.push(functionParallel(host,port, numQueues));
+            }
+            numQueues += config.maxProvision.queues_inteval;
+        }
+        async.parallel(functionArray, function () {
+            if (numQueues <= config.maxProvision.max_queues) {
+                if (!stopped) {
+                    process.nextTick(agentsTime);
+                }
+            } else {
+                benchmark.webSocket.removeAllListeners('pauseTest');
+                callback();
+            }
+        });
+    };
+    var _doNtimes_queues = function (provision, payload_length, messageEmit, host, port, numQueues, endCallback) {
 
         'use strict';
-        var provision = genProvision.genProvision(numQueues, payload_length),
-            init = new Date().valueOf();
-        var agentIndex = Math.floor(times / config.slice) % config.agentsHosts.length;
-        var host = config.agentsHosts[agentIndex].host;
-        var port = config.agentsHosts[agentIndex].port;
 
+        var now, init, end, time, tps, message, nowToString, auxHost;
+
+        init = new Date().valueOf();
+        console.log(config.protocol + '://' + host + ':' + port + '/trans');
         rest.postJson(config.protocol + '://' + host + ':' + port + '/trans', provision).
             on('complete', function (data, response) {
 
@@ -54,16 +82,18 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
 
                     console.log('Finished with status 200');
 
-                    var end = new Date().valueOf();
-                    var time = end - init;
+                    end = new Date().valueOf();
+                    time = end - init;
 
-                    var now = new Date();
-                    var message = numQueues + ' inboxes have been provisioned with ' +
-                        payload_length + ' bytes of payload in ' + time + ' ms with no errors';
-                    var nowToString = now.toTimeString().slice(0,8);
+                    now = new Date();
+                    tps = Math.round((numQueues / time) * 1000);
+                    message = numQueues + ' inboxes have been provisioned with ' +
+                        payload_length + ' bytes of payload in ' + time + ' ms with no errors (' + tps + ' tps)' ;
+                    nowToString = now.toTimeString().slice(0, 8);
+                    auxHost = (host === 'localhost') ? '127.0.0.1' : host;
 
                     console.log(message);
-                    sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: message});
+                    sender.sendMessage(benchmark.webSocket, 'endLog', {host : benchmark.nameHost[auxHost], time: nowToString, message: message});
 
                     var point = [numQueues, time];
 
@@ -71,30 +101,28 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
                         messageEmit({time: nowToString, message: {id: 0, point: [numQueues, time, payload_length]}, version: version});
                     }
 
-                    // Increase the number of queues to be provisioned until the maximum is reached.
-                    if (numQueues < config.maxProvision.max_queues) {
-                        numQueues += config.maxProvision.queues_inteval;
-                        times++;
-                        if (!stopped) {
-                            _doNtimes_queues(payload_length, callback, messageEmit);
-                        }
-                    } else {
-                        benchmark.webSocket.removeAllListeners('pauseTest');
-                        callback();
-                    }
+                    endCallback();
 
 
                 } else {
-                    var now = new Date();
-                    var nowToString = now.toTimeString().slice(0,8);
-                    sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: JSON.stringify(data)});
-                    messageEmit({id: 0, err: true});
+
+                    auxHost = (host === 'localhost') ? '127.0.0.1' : host;
+
+                    if ( data.errors ) {
+                        for(var i=0; i < data.errors.length; i++){
+                            now = new Date();
+                            nowToString = now.toTimeString().slice(0, 8);
+                            sender.sendMessage(benchmark.webSocket, 'endLog', {host : benchmark.nameHost[auxHost], time: nowToString, message: "Error: " + data.errors[i]});
+                            messageEmit({id: 0, err: true});
+                        }
+                    }
+
                 }
             });
     };
 
-    _doNtimes_queues(payload_length, callback, messageEmit);
-}
+    agentsTime();
+};
 
 /**
  * The test to be run. This test introduces some provisions in the queues. payloadLength increase to
@@ -107,8 +135,8 @@ var doNtimes_queues = function (numQueues, payload_length, timesCall, callback, 
  * can store this data in a data base or send it through a socket.
  */
 var doNtimes = function (numQueues, payloadLength, messageEmit, version) {
-    console.log('version: '+ version);
-    doNtimes_queues(numQueues, payloadLength, 0, function () {
+    console.log('version: ' + version);
+    doNtimes_queues(numQueues, payloadLength,function () {
 
         //Increase the payload of the messages to be provisioned.
         if (payloadLength < config.maxProvision.max_payload) {

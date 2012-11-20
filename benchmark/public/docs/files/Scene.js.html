@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Scene.js</title>
+    <link rel="stylesheet" href="http:&#x2F;&#x2F;yui.yahooapis.com&#x2F;3.7.0&#x2F;build&#x2F;cssgrids&#x2F;cssgrids-min.css">
+    <link rel="stylesheet" href="..&#x2F;assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="..&#x2F;assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="..&#x2F;assets/favicon.png">
+    <script src="http:&#x2F;&#x2F;yui.yahooapis.com&#x2F;combo?3.7.0&#x2F;build&#x2F;yui&#x2F;yui-min.js"></script>
+</head>
+<body class="yui3-skin-sam">
+
+<div id="doc">
+    <div id="hd" class="yui3-g header">
+        <div class="yui3-u-3-4">
+            
+                <h1><img src="..&#x2F;assets/css/logo.png" title=""></h1>
+            
+        </div>
+        <div class="yui3-u-1-4 version">
+            <em>API Docs for: </em>
+        </div>
+    </div>
+    <div id="bd" class="yui3-g">
+
+        <div class="yui3-u-1-4">
+            <div id="docs-sidebar" class="sidebar apidocs">
+                <div id="api-list">
+    <h2 class="off-left">APIs</h2>
+    <div id="api-tabview" class="tabview">
+        <ul class="tabs">
+            <li><a href="#api-classes">Classes</a></li>
+            <li><a href="#api-modules">Modules</a></li>
+        </ul>
+
+        <div id="api-tabview-filter">
+            <input type="search" id="api-filter" placeholder="Type to filter APIs">
+        </div>
+
+        <div id="api-tabview-panel">
+            <ul id="api-classes" class="apis classes">
+            
+                <li><a href="..&#x2F;classes/Axis.html">Axis</a></li>
+            
+                <li><a href="..&#x2F;classes/Camera.html">Camera</a></li>
+            
+                <li><a href="..&#x2F;classes/Connector.html">Connector</a></li>
+            
+                <li><a href="..&#x2F;classes/Detector.html">Detector</a></li>
+            
+                <li><a href="..&#x2F;classes/Drawer.html">Drawer</a></li>
+            
+                <li><a href="..&#x2F;classes/Graph.html">Graph</a></li>
+            
+                <li><a href="..&#x2F;classes/Organizer.html">Organizer</a></li>
+            
+                <li><a href="..&#x2F;classes/Plane.html">Plane</a></li>
+            
+                <li><a href="..&#x2F;classes/Plot2D.html">Plot2D</a></li>
+            
+                <li><a href="..&#x2F;classes/Scene.html">Scene</a></li>
+            
+                <li><a href="..&#x2F;classes/Utils.html">Utils</a></li>
+            
+                <li><a href="..&#x2F;classes/ViewController.html">ViewController</a></li>
+            
+            </ul>
+
+            <ul id="api-modules" class="apis modules">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+
+            </div>
+        </div>
+        <div class="yui3-u-3-4">
+                <div id="api-options">
+        Show:
+        <label for="api-show-inherited">
+            <input type="checkbox" id="api-show-inherited" checked>
+            Inherited
+        </label>
+
+        <label for="api-show-protected">
+            <input type="checkbox" id="api-show-protected">
+            Protected
+        </label>
+
+        <label for="api-show-private">
+            <input type="checkbox" id="api-show-private">
+            Private
+        </label>
+        <label for="api-show-deprecated">
+            <input type="checkbox" id="api-show-deprecated">
+            Deprecated
+        </label>
+
+    </div>
+
+
+            <div class="apidocs">
+                <div id="docs-main">
+                    <div class="content">
+                        <h1 class="file-heading">File: Scene.js</h1>
+
+<div class="file">
+    <pre class="code prettyprint linenums">
+
+(function (PBDV, THREE, undefined) {
+
+    &quot;use strict&quot;;
+
+
+    &#x2F;**
+     * @class Scene
+     * @constructor
+     * @param options {object} The options required for the graph creation
+     *&#x2F;
+    var Scene = function ( options ) {
+
+        &#x2F;* Attributes *&#x2F;
+
+        &#x2F;**
+         * The actual scene object
+         * @property threeScene
+         * @type THREE.Scene
+         *&#x2F; 
+        this.threeScene = createScene.call( this );
+
+
+        &#x2F;**
+         * The contained graph
+         * @property graph
+         * @type THREE.Scene
+         *&#x2F; 
+        this.graph = this.createGraph( options );
+
+
+        &#x2F;* Initialization *&#x2F;
+
+        createLights.call(this);
+
+    };
+    
+
+
+    &#x2F;* Private Methods *&#x2F;
+
+    &#x2F;**
+     * Method that creates an instance of Scene and returns it
+     *
+     * @method createScene
+     * @private
+     * @return {Scene} the instantiated scene
+     * 
+     *&#x2F;
+    var createScene = function () {
+
+        var threeScene = new THREE.Scene();
+        return threeScene;
+
+    };
+
+
+    &#x2F;**
+     * This function creates the standard lights
+     *
+     * @method createLights
+     * @private
+     *&#x2F;
+
+    var createLights = function () {
+
+        var pos = {
+            x : 0,
+            y : 10,
+            z : 0
+        };
+
+        this.createLight( pos );
+        pos.y = -10;
+
+        this.createLight( pos );
+        pos.z = 10;
+        pos.y = 0;
+
+        this.createLight( pos );
+        pos.z = -10;
+
+        this.createLight( pos );
+        
+    };
+
+
+    &#x2F;* Public API *&#x2F;
+
+    Scene.prototype = {
+    
+        &#x2F;**
+         * This function adds a point to the Plane
+         *
+         * @method addDataToGraph
+         * @param {Object} point The coordinatesof the point
+         *&#x2F;
+        addDataToGraph : function ( point ) {
+            this.graph.addPoint( point );
+        },
+
+
+        &#x2F;**
+         * This method delegates the animate functions to the Graph
+         *
+         * @method animate
+         * @param threeCamera {THREE.PerspectiveCamera} the camera with which we are rendering
+         *&#x2F;
+        animate : function ( threeCamera ) {
+            this.graph.animate(threeCamera);
+        },
+
+
+        &#x2F;**
+         * This method adds one light to the ones that already exist
+         *
+         * @method createLight
+         * @param pos {Object} object that contains the position of the new Light
+         * @return {THREE.DirectionalLight} the created light
+         *&#x2F;
+        createLight : function ( pos ) {
+
+            &#x2F;&#x2F; Creation of the light with the defined position
+            var light = new THREE.DirectionalLight( 0xffffff, 0.95 );
+            light.position.set( pos.x, pos.y, pos.z );
+
+            &#x2F;&#x2F; Finally, we add the new light to the scene
+            this.threeScene.add(light);
+            return light;
+
+        },
+
+
+        &#x2F;**
+         * this method instantiates the Graph attribute
+         *
+         * @method createGraph
+         * @param  {Object} options the info needed by the Graph to be instantiated
+         * @return {Graph} the created Graph
+         *&#x2F;
+        createGraph : function ( options ) {
+
+            this.graph = new PBDV.Graph( options );
+            this.threeScene.add( this.graph.threeGraph );
+            return this.graph;
+
+        },
+
+
+        &#x2F;**
+         * This function delegates the restart behaviour to the Graph
+         *
+         * @method restart
+         *&#x2F;
+        restart : function () {
+            this.graph.restart();
+        }
+
+    }; &#x2F;&#x2F;prototype
+
+
+    &#x2F;&#x2F; Exported to the namespace
+    PBDV.Scene = Scene;
+
+
+})( window.PBDV = window.PBDV || {},    &#x2F;&#x2F; Namespace
+    THREE);                             &#x2F;&#x2F; Dependencies
+    </pre>
+</div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="..&#x2F;assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="..&#x2F;assets/js/yui-prettify.js"></script>
+<script src="..&#x2F;assets/../api.js"></script>
+<script src="..&#x2F;assets/js/api-filter.js"></script>
+<script src="..&#x2F;assets/js/api-list.js"></script>
+<script src="..&#x2F;assets/js/api-search.js"></script>
+<script src="..&#x2F;assets/js/apidocs.js"></script>
+</body>
+</html>

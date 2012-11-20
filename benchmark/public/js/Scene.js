@@ -1,73 +1,167 @@
 
-// Scene Class
-
 (function (PBDV, THREE, undefined) {
 
-	"use strict";
-
-	var Scene = function() {
-
-		// Private State
-
-		var threeScene,
-			graph;
-
-		var createLight = function( position ) {
-			var light = new THREE.DirectionalLight(0xffffff, 0.95);
-			light.position.set(position.x, position.y, position.z);
-			threeScene.add(light);
-		}
-
-		this.createGraph = function( options ) {
-			graph = new PBDV.Graph(options);
-			threeScene.add( graph.threeGraph );
-			this.graph = graph;
-		}
+    "use strict";
 
 
-		this.init = function() {
-			threeScene = new THREE.Scene();
+    /**
+     * @class Scene
+     * @constructor
+     * @param options {object} The options required for the graph creation
+     */
+    var Scene = function ( options ) {
 
-			var position = {
-				x: 0,
-				y: 10,
-				z: 0
-			}
-			createLight(position);
-			position.y = -10;
-			createLight(position);
-			position.z = 10;
-			position.y = 0;
-			createLight(position);
-			position.z = -10;
-			createLight(position);
-		}
+        /* Attributes */
 
-		this.animate = function( threeCamera ) {
-			graph.animate(threeCamera);
-		}
+        /**
+         * The actual scene object
+         * @property threeScene
+         * @type THREE.Scene
+         */ 
+        this.threeScene = createScene.call( this );
 
 
-		this.restart = function() {
-			this.graph.restart();
-		}
+        /**
+         * The contained graph
+         * @property graph
+         * @type THREE.Scene
+         */ 
+        this.graph = this.createGraph( options );
 
 
-		this.addDataToGraph = function( point, lastPoint ) {
-			this.graph.addPoint(point, lastPoint);
-		}
+        /* Initialization */
 
-		// Init
+        createLights.call(this);
 
-		this.init();
-		this.threeScene = threeScene;
-
-	}
+    };
+    
 
 
-	// Exported to the namespace
-	PBDV.Scene = Scene;
+    /* Private Methods */
+
+    /**
+     * Method that creates an instance of Scene and returns it
+     *
+     * @method createScene
+     * @private
+     * @return {Scene} the instantiated scene
+     * 
+     */
+    var createScene = function () {
+
+        var threeScene = new THREE.Scene();
+        return threeScene;
+
+    };
 
 
-})( window.PBDV = window.PBDV || {}, 	// Namespace
-	THREE);								// Dependencies
+    /**
+     * This function creates the standard lights
+     *
+     * @method createLights
+     * @private
+     */
+
+    var createLights = function () {
+
+        var pos = {
+            x : 0,
+            y : 10,
+            z : 0
+        };
+
+        this.createLight( pos );
+        pos.y = -10;
+
+        this.createLight( pos );
+        pos.z = 10;
+        pos.y = 0;
+
+        this.createLight( pos );
+        pos.z = -10;
+
+        this.createLight( pos );
+        
+    };
+
+
+    /* Public API */
+
+    Scene.prototype = {
+    
+        /**
+         * This function adds a point to the Plane
+         *
+         * @method addDataToGraph
+         * @param {Object} point The coordinatesof the point
+         */
+        addDataToGraph : function ( point ) {
+            this.graph.addPoint( point );
+        },
+
+
+        /**
+         * This method delegates the animate functions to the Graph
+         *
+         * @method animate
+         * @param threeCamera {THREE.PerspectiveCamera} the camera with which we are rendering
+         */
+        animate : function ( threeCamera ) {
+            this.graph.animate(threeCamera);
+        },
+
+
+        /**
+         * This method adds one light to the ones that already exist
+         *
+         * @method createLight
+         * @param pos {Object} object that contains the position of the new Light
+         * @return {THREE.DirectionalLight} the created light
+         */
+        createLight : function ( pos ) {
+
+            // Creation of the light with the defined position
+            var light = new THREE.DirectionalLight( 0xffffff, 0.95 );
+            light.position.set( pos.x, pos.y, pos.z );
+
+            // Finally, we add the new light to the scene
+            this.threeScene.add(light);
+            return light;
+
+        },
+
+
+        /**
+         * this method instantiates the Graph attribute
+         *
+         * @method createGraph
+         * @param  {Object} options the info needed by the Graph to be instantiated
+         * @return {Graph} the created Graph
+         */
+        createGraph : function ( options ) {
+
+            this.graph = new PBDV.Graph( options );
+            this.threeScene.add( this.graph.threeGraph );
+            return this.graph;
+
+        },
+
+
+        /**
+         * This function delegates the restart behaviour to the Graph
+         *
+         * @method restart
+         */
+        restart : function () {
+            this.graph.restart();
+        }
+
+    }; //prototype
+
+
+    // Exported to the namespace
+    PBDV.Scene = Scene;
+
+
+})( window.PBDV = window.PBDV || {},    // Namespace
+    THREE);                             // Dependencies

@@ -16,7 +16,9 @@ exports.launchWithDeployment = true;
 /**
  * @type {Array}
  */
-exports.agentsHosts = [{host:'localhost', port: 3001}];
+exports.agentsHosts = [
+	{host:'localhost', port: 3001},
+];
 
 /**
  * @type {Object}
@@ -111,7 +113,7 @@ exports.maxPop.queues_inteval = 1000;
 /**
  * @type {Number}
  */
-exports.maxPop.max_payload = 1000;
+exports.maxPop.max_payload = 5000;
 
 /**
  * @type {Number}

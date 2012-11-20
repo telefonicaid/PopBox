@@ -3,17 +3,20 @@ var maxPop = require('./maxPop.js');
 var sender = require('./sender.js');
 var config = require('./config.js');
 var net = require('net');
+var fs = require('fs');
+
 
 var webSocket;
+var nameHost = {};
 
 var receiveMessage = sender.receiveMessage;
 var sendMessage = sender.sendMessage;
 
 var initOptions = {
-    hosts : [],
+    hosts: [],
     agents: {
         nAgents: config.agentsHosts.length,
-        interval: 3
+        interval: 0.5
     },
     tests: {
         push: {
@@ -27,7 +30,7 @@ var initOptions = {
                 end: config.maxProvision.max_payload,
                 interval: config.maxProvision.payload_length_interval
             }
-            
+
         },
         pop: {
             queues: {
@@ -59,16 +62,26 @@ sender.createSocket(8090, function (socket) {
         //Once the agents are launched, the listener can be added to launch new tests...
         receiveMessage(webSocket, 'newTest', function (req) {
             console.log('version exportada:' + maxProvision.version);
-            webSocket.removeAllListeners('continueTest');
+            var date = new Date().toString();
             switch (req.id) {
                 case 0:
                     maxProvision.launchTest(config.maxProvision.start_number_provisions, config.payload_length, function (data) {
+                        var tps = Math.round((data.message.point[0] / data.message.point[1]) * 1000);
+                        var message = data.time + "\t" + data.message.point[0] + ' inboxes have been provisioned with ' +
+                            data.message.point[2] + ' bytes of payload in ' + data.message.point[1] + ' ms with no errors (' + tps + ' queues per second)\n';
+                        var log = fs.createWriteStream("ProvisionLog" + date + ".log", {'flags': 'a'});
+                        log.end(message);
                         sendMessage(webSocket, 'newPoint', data);
                     });
                     break;
 
                 case 1:
                     maxPop.launchTest(config.maxPop.start_number_pops, config.payload_length, function (data) {
+                        var tps = Math.round((data.message.point[0] / data.message.point[1]) * 1000);
+                        var message = data.time + "\t" + data.message.point[0] + ' pops with a provision of ' +
+                            data.message.point[2] + ' bytes in ' + data.message.point[1] + ' ms with no errors (' + tps + ' tps)\n';
+                        var log = fs.createWriteStream("PopLog" + date + ".log", {'flags': 'a'});
+                        log.end(message);
                         sendMessage(webSocket, 'newPoint', data);
                     });
                     break;
@@ -97,21 +110,27 @@ var createAndLaunchAgents = function (callback) {
                 monitorSockets.push(client);
                 client.on('data', function (data) {
 
-                    var JSONdata = JSON.parse(data);
+                    var splitted = data.toString().split('\n');
+                    var validData = splitted[splitted.length - 2];
+
+                    var JSONdata = JSON.parse(validData);
 
                     if (JSONdata.id === 1) {
+                        nameHost[client.remoteAddress] = JSONdata.host;
                         monitorHosts.push(JSONdata.host);
                         hostsRec++;
 
                         if (hostsRec === config.agentsHosts.length) {
                             initOptions.hosts = monitorHosts;
+                            exports.nameHost = nameHost;
+                            console.log(nameHost);
                             setTimeout(callback, 1000);
                         }
 
                     } else if (JSONdata.id === 2) {
 
                         sendMessage(webSocket, 'cpu', {host: JSONdata.host, cpu: JSONdata.cpu.percentage});
-                        sendMessage(webSocket, 'memory', {host: JSONdata.host, memory: JSONdata.memory.value});
+                        sendMessage(webSocket, 'memory', {host: JSONdata.host, memory: parseInt(JSONdata.memory.value)});
                     }
                 });
 
