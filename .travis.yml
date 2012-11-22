@@ -8,6 +8,9 @@ only:
  - unstable
  - master
 
+services:
+ - mongodb
+
 install:
  - sudo ./install.sh
 
