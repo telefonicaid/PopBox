@@ -1,0 +1,22 @@
+language: node_js
+node_js:
+ - 0.6
+ - 0.7
+
+branches:
+only:
+ - unstable
+ - master
+
+install:
+ - sudo ./install.sh
+
+before_script:
+ - cd ./utils
+ - openssl genrsa -des3 -passout pass:test1234 -out server.key 1024
+ - openssl req -new -key server.key -batch -passin pass:test1234 -out server.csr
+ - cp server.key server.key.org
+ - openssl rsa -in server.key.org -passin pass:test1234 -out server.key
+ - openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
+ - cd ..
+ - node src/Agent.js 2> /dev/null &
