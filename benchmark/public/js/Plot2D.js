@@ -1,182 +1,269 @@
 
-// Connector Class
+(function (PBDV, Flotr, undefined) {
 
-(function (PBDV, undefined) {
-
-  "use strict";
+    "use strict";
 
 
-  var Plot2D = function( _HTMLelement, _maxY) {
+    /**
+     * @class Plot2D
+     * @constructor
+     * @param name {String} The name of the plot component (cpu, memory, ...)
+     * @param limit {Integer} The limit of the plot (the top is 100%)
+     */
+    var Plot2D = function( name, limit ) {
 
-    // Private State
+        var widget = $( '#' + name );
 
-    var WIDGET_NAME = _HTMLelement,
-        widget      = $( '#' + _HTMLelement ),
-        container   = $( '#' + _HTMLelement + '-graph' ),
-        keys        = widget.find('.keys').find('tbody'),
 
-        template  = '<tr class="agent">                         \
-                        <td>                                    \
-                            <span class="square blue"></span>   \
-                            <p class="host"></p>                \
-                        </td>                                   \
-                        <td class="usage"></td>                 \
-                    </tr>',
-
+        /* Attributes */
         
-        max       = _maxY || null,
-        data      = [],
-        graph,
+        /** 
+         * The name which set the widget we are referring
+         * @property NAME
+         * @type String
+         */
+        this.NAME = name;
+        
+        /**
+         * The top limit of the graphic
+         * @property limit
+         * @type Number
+         */
+        this.limit = limit;
 
-        agents = [],
-        interval;
+        /**
+         * List whose length determines the number of agents involved in the test
+         * @property agents
+         * @type array
+         */
+        this.agents = null;
 
+        /**
+         * List of the points that will be drawn in the graphic
+         * @property data
+         * @type array 
+         */  
+        this.data = [];
 
-    // Constant Data
-    var Constants = {
-        ANIMATION_TIME : 500,
-        SECONDS        : 60000,
-        SECOND         : 1000,
-        MAX_X          : 60,
-        MIN_X          : 0
+        /**
+         * Graphic that will be drawn
+         * @property graph
+         * @type Flotr object
+         */ 
+        this.graph = null;
+
+        /**
+         * DOM object where the "name" graphics will be placed
+         * @property dom 
+         * @type DOM element
+         */
+        this.dom = widget.find( '#' + name + '-graph' )[0];
+
+        /**
+         * Key table
+         * @property keys
+         * @type DOM element
+         */ 
+        this.keys = widget.find('.keys').find('tbody');
+
+        /**
+         * Template for the key table
+         * @property template
+         */
+        this.template = '<tr class="agent">                     \
+                            <td class="host"></td>              \
+                            <td class="usage"></td>             \
+                        </tr>';
+
     };
 
 
-    // Private Methods
 
-    var draw = function() {
+    /* Private Methods */
 
-        // 
-        var dom = container[0];
+    /**
+     * Auxiliary method to set the keys in the DOM
+     * @method setupKeysHTML
+     * @private
+     */
+    var setupKeysHTML = function() {
 
-        // 
-        graph   = Flotr.draw( dom, data, {
-            yaxis : {   // Y-axis size
-                max : max,
-                min : 0
-            },
-            
-            xaxis : {   // X-axis size
-                max : Constants.MAX_X,
-                min : Constants.MIN_X
-            }
-        });
+        // Shortcut
+        var Colors = PBDV.Constants.KeyColors;
 
-    }
+        for (var i = 0; i < this.agents.length; i++) {
+            var hostname = this.agents[i];
+            var hostID   = this.NAME + '-' + hostname;
 
-
-    var setupLegendHTML = function( agents ) {
-
-        for (var i = 0; i < agents.length; i++) {
-            var hostname = agents[i];
-            var hostID   = WIDGET_NAME + '-' + hostname;
-
-            var html = $(template).attr({ 'id' : hostID });
+            // Using the template
+            var html = $( this.template ).attr({ 'id' : hostID });
             html.find('.host').text( hostname );
 
-            keys.append( html );
+            // If we still have a default color, add it to the style
+            if ( i < Colors.length ) {
+                html.addClass( Colors[i] );
+            }
+            
+            // Adding the new key to the list
+            this.keys.append( html );
         }
 
-    }
+    };
 
 
-    var updateAgentData = function( agent, time, value ) {
+    /**
+     * Method used for the update of the data for each agent
+     * @method updateAgentData
+     * @private
+     * @param agent {String} the name of the agent to be updated
+     * @param value {Number} the performance value
+     */
+    var updateAgentData = function( agent, value ) {
 
-    	if (typeof agent !== 'string') {
-            console.error(WIDGET_NAME + " - Error, the agent name must be a String");
+        // Shortcut
+        var Message = PBDV.Constants.Message;
+
+        // Checking if the agent parameter is a string or not
+        if ( agent && typeof agent !== 'string' ) {
+
+            var msg = Message.AGENT_NAME_NOT_STRING + ' (' + this.NAME + ')';
+            console.error( msg );
+            return;
         }
 
         // Update points for a particular agent
-        for (var i = 0; i < agents.length; i++) {
+        for (var i = 0; i < this.agents.length; i++) {
 
-            if (agent === agents[i]) {
-            	var d = data[i].data;
+            if ( agent === this.agents[i] ) {
+                var d = this.data[i].data;
 
-            	for (var j = d.length-1; j > 0 ; j--) {
-            	    d[j][1] = d[j-1][1];
-            	}
+                for (var j = d.length-1; j > 0; j--) {
+                    d[j][1] = d[j-1][1];
+                }
 
-            	// Introduce new data in the first position
-            	d[0][1] = value;
+                // Introduce new data in the first position
+                d[0][1] = value;
             }
 
         }
 
-    }
+    };
 
 
-    var updateLegend = function( host, value ) {
-        var hostID = '#' + WIDGET_NAME + '-' + host;
-        var agent = keys.find(hostID);
+    /**
+     * Method used for the update of the keys
+     * @method updateKeys
+     * @private
+     * @param host {String} the name of the agent to be updated
+     * @param value {Number} the performance value
+     */
+    var updateKeys = function( host, value ) {
         
-        var newValue = value;
+        var hostID = '#' + this.NAME + '-' + host;
+        var agent  = this.keys.find(hostID);
+        
+        var newValue = (value) ? value.toFixed(2) : 0;
 
-        switch ( WIDGET_NAME ) {
+        switch ( this.NAME ) {
             case 'cpu'    : newValue += "%";    break;
             case 'memory' : newValue += "MB";   break;
         }
         
         agent.find('.usage').text( newValue );
 
-    }
+    };
 
 
-    // Public API
 
-    this.init = function( agentsName, interval ) {
+    /* Public API */
 
-        // Rename
-        var SECONDS = Constants.SECONDS,
-            SECOND  = Constants.SECOND;
+    Plot2D.prototype = {
 
-        agents = agentsName;
+        /**
+         * Method to initialize the graphic 
+         * @method config
+         * @param interval {Number} The interval between points
+         * @param nagents {Number} The number of agents
+         * @param hostnames {array} The array with the agents names
+         */
+        config : function( interval, nagents, hostnames ) {
 
-        console.log(agents);
-        for (var i = 0; i < agents.length; i++){
-            var aux = [];
-            for (var j = 0; j <= SECONDS/interval; j++) {
-                aux.push( [j*interval/SECOND, 0] );
+            // Time Constants (in miliseconds)
+            var SECONDS = 60000,
+                SECOND  = 1000;
+
+            this.agents = hostnames;
+
+            for (var i = 0; i < nagents; i++) {
+
+                var aux = [];
+
+                for (var j = 0; j <= SECONDS / interval; j++) {
+                    var d = j * interval / SECOND;
+                    aux.push( [d, 0] );
+                }
+
+                this.data.push({ 'data' : aux });
             }
-            data.push({data : aux});
+
+            // If we received some list of agents names, then setup the keys
+            if ( this.agents.length ) {
+                setupKeysHTML.call( this );
+            }
+
+        },
+
+
+        /**
+         * Method to draw the graphic
+         * @method draw
+         */
+        draw : function() {
+
+            var Settings = PBDV.Constants.Plots.Settings;
+
+            // Drawing the graph with the updated data
+            this.graph = Flotr.draw( this.dom, this.data, {
+
+                yaxis : {   // Y-axis size
+                    max : this.limit,
+                    min : 0
+                },
+                
+                xaxis : {   // X-axis size
+                    max : Settings.MAX_X,
+                    min : Settings.MIN_X
+                }
+            });
+
+        },
+
+
+        /**
+         * Method to update the value of a particular agent
+         * @method update
+         * @param agent {String} the name of the agent to be updated
+         * @param value {Number} the performance value
+         */
+        update : function( agent, value ) {
+
+            if (!value) { value = 0; } 
+            updateAgentData.call( this, agent, value );
+
+            if ( this.agents.length ) {
+                updateKeys.call( this, agent, value );
+            }
+
+            this.draw();
+
         }
 
-        setupLegendHTML( agents );
-
-        // 
-        draw();
-    }
+    };
 
 
-    this.update = function( agent, time, value ) {
-
-        // 
-        updateAgentData(agent, time, value);
-
-        // 
-        updateLegend( agent, value );
-
-        // 
-        draw();
-    }
+    // Exported to the namespace
+    PBDV.Plot2D = Plot2D;
 
 
-
-
-    this.setAgentsNumber = function(_nagents) {
-    	nagents = _nagents;
-    }
-
-
-	this.setInterval = function( _interval ) {
-    	interval = _interval;
-    }
-
-
-  }
-
-
-  // Exported to the namespace
-  PBDV.Plot2D = Plot2D;
-
-
-})( window.PBDV = window.PBDV || {}); // Namespace
+})( window.PBDV = window.PBDV || {},    // Namespace
+    Flotr);                             // Dependencies

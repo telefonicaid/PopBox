@@ -8,24 +8,24 @@ var http = require('http');
 var fs = require('fs');
 var sender = require('./sender.js');
 
-http.globalAgent.maxSockets = 500;
+http.globalAgent.maxSockets = 100;
+
 
 var version = 0;
 exports.version = version;
 
-var doNtimes_queues = function (numQueues, provision, callback, messageEmit, version) {
+var doNtimes_queues = function (numPops, provision, callback, messageEmit, version) {
 
     var stopped = false;
 
     var continueTest = function () {
-        _doNtimes_queues(callback, messageEmit);
-    }
+        _doNtimes_queues();
+    };
 
     var pauseExecution = function (callback) {
         benchmark.webSocket.on('continueTest', function (data) {
             if (stopped && data.id === 1) {
                 stopped = false;
-                benchmark.webSocket.removeAllListeners('continueTest');
                 callback();
             }
         });
@@ -40,103 +40,106 @@ var doNtimes_queues = function (numQueues, provision, callback, messageEmit, ver
         }
     });
 
-
-    var _doNtimes_queues = function (callback, messageEmit) {
-
+    var _doNtimes_queues = function () {
         async.series([
 
             /**
              * Introduces numPops provisions in q0 contacting the data base directly
              * @param callback
              */
-                function (callback) {
+             function (callback) {
                 var contResponse = 0;
-
                 var fillQueue = function () {
 
                     dbPusher.pushTransaction('UNSEC:', provision, function (err, res) {
                         contResponse++;
 
-                        if (contResponse === numQueues) {
+                        if (contResponse === numPops) {
                             callback();
                         }
                     });
                 };
 
-                for (var i = 0; i < numQueues; i++) {
+                for (var i = 0; i < numPops; i++) {
                     setTimeout(function () {
                         fillQueue();
                     }, 0);
                 }
             },
 
-            /**
-             * Retrieves the provisions from q0 one by one.
-             * @param callback
-             */
-                function (callback) {
+            function (callback) {
+
+
                 var contResponse = 0;
-                var init = new Date().valueOf();
-                var agentIndex, host, port;
 
                 var pop = function (host, port) {
 
-                    rest.post(config.protocol + '://' + host + ':' + port + '/queue/q0/pop?max=1',
-                        { headers: {'Accept': 'application/json'}})
-                        .on('complete', function (data, response) {
+                    var now, end, time, tps, message, nowToString, auxHost;
 
-                            if (response) {
-                                contResponse++;
-                            } else {
-                                callback('Error, no response: ' + data, null);
-                            }
+                    var options = {
+                        host: host,
+                        port: port,
+                        path: '/queue/q0/pop?max=1',
+                        method: 'POST',
+                        headers: {'Accept': 'application/json'}
+                    };
+                    var req = http.request(options, function (res) {
+                        res.setEncoding('utf8');
 
-                            if (data.data === '[]') {
-                                callback('Error, empty queue: ' + data, null);
-                            }
+                        res.on('error', function (e) {
+                            callback('Error: ' + e.message);
+                        });
 
-                            if (contResponse === numQueues) {
-                                var end = new Date().valueOf();
-                                var time = end - init;
+                        res.on('end', function () {
+                            contResponse++;
+                            if (contResponse === numPops) {
+                                end = new Date().valueOf();
+                                time = end - init;
+                                tps = Math.round((numPops / time) * 1000);
+                                now = new Date();
+                                message = numPops + ' pops with a provision of ' + provision.payload.length +
+                                    ' bytes in ' + time + ' milliseconds without errors (' + tps + ' tps)';
+                                nowToString = now.toTimeString().slice(0, 8);
+                                auxHost = (host === 'localhost') ? '127.0.0.1' : host;
 
-                                var now = new Date();
-                                var message = numQueues + ' pops with a provision of ' + provision.payload.length +
-                                    ' bytes in ' + time + ' milliseconds without errors';
-                                var nowToString = now.toTimeString().slice(0,8);
-
-                                sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: message});
+                                sender.sendMessage(benchmark.webSocket, 'endLog', {host: benchmark.nameHost[auxHost], time: nowToString, message: message});
 
                                 if (messageEmit && typeof (messageEmit) === 'function') {
                                     console.log(message);
-                                    messageEmit({time: nowToString, message: {id: 1, point: [numQueues, time, provision.payload.length]}, version : version});
+                                    messageEmit({time: nowToString, message: {id: 1, point: [numPops, time, provision.payload.length]}, version: version});
                                 }
 
-                                callback(null, {numPops: numQueues, time: time});
+                                //setTimeout(callback, 30000);
+                                callback();
                             }
                         });
+                    });
+
+                    req.end();
+
                 };
 
+                function doPop(host, port) {
+                    process.nextTick(function () {
+                        pop(host, port);
+                    });
+                }
+
+                var agentIndex;
+                var init = new Date().valueOf();
+
+                for (var i = 0; i < numPops; i++) {
+                    agentIndex = Math.floor(i / config.slice) % config.agentsHosts.length;
+                    var host = config.agentsHosts[agentIndex].host;
+                    var port = config.agentsHosts[agentIndex].port;
+
+                    doPop(host, port);
+                }
                 /**
                  * Auxiliary function to do a pop. This function choose the agent to do the pop depending on numTimes
                  * (The number of times that the function has been executed).
                  * @param numTimes The number of times that the function has been executed
                  */
-                function doPop(numTimes) {
-
-                    agentIndex = Math.floor(numTimes / config.slice) % config.agentsHosts.length;
-                    host = config.agentsHosts[agentIndex].host;
-                    port = config.agentsHosts[agentIndex].port;
-
-                    if (numTimes < numQueues) {
-                        setTimeout(function () {
-                            pop(host, port);
-                            doPop(++numTimes);
-                        }, 0);
-                    }
-                }
-
-                //Start doing pops.
-                doPop(0);
             }
         ],
             /**
@@ -144,33 +147,32 @@ var doNtimes_queues = function (numQueues, provision, callback, messageEmit, ver
              * @param err
              * @param results
              */
-                function (err, results) {
+             function (err, results) {
                 if (err) {
                     console.log(err);
+                    var now = new Date();
+                    var nowToString = now.toTimeString().slice(0, 8);
+                    sender.sendMessage(benchmark.webSocket, 'endLog', {time: nowToString, message: err});
                 } else {
-
-                    dbPusher.flushBBDD();
-
-                    //Increase the number of pops until it reaches the maximum number of pops defined in the config file,
-                    if (numQueues < config.maxPop.max_pops) {
-
-                        numQueues += config.maxPop.queues_inteval;
-                        if (!stopped) {
-                            setTimeout(function () {
-                                //console.log('Trying with %d queues', numPops);
-                                _doNtimes_queues(callback, messageEmit);
-                            }, 5000);
+                    dbPusher.flushBBDD(function () {
+                        //Increase the number of pops until it reaches the maximum number of pops defined in the config file,
+                        if (numPops < config.maxPop.max_pops) {
+                            numPops += config.maxPop.queues_inteval;
+                            if (!stopped) {
+                                console.log('trying with %d queues', numPops);
+                                _doNtimes_queues(callback);
+                            }
+                        } else {
+                            benchmark.webSocket.removeAllListeners('pauseTest');
+                            callback();
                         }
-                    } else {
-                        benchmark.webSocket.removeAllListeners('pauseTest');
-                        callback();
-                    }
+                    });
                 }
             }
         );
     };
 
-    _doNtimes_queues(callback, messageEmit);
+    _doNtimes_queues();
 };
 
 /**
@@ -182,18 +184,18 @@ var doNtimes_queues = function (numQueues, provision, callback, messageEmit, ver
  * @param messageEmit The function that will process the generated data (times, ...). This function
  * can store this data in a data base or send it through a socket.
  */
-var doNtimes = function (numQueues, payloadLength, messageEmit, version) {
+var doNtimes = function (numPops, payloadLength, messageEmit, version) {
 
     var provision = genProvision.genProvision(1, payloadLength);
     console.log('Version actual' + version);
 
-    doNtimes_queues(numQueues, provision, function () {
+    doNtimes_queues(numPops, provision, function () {
 
         //Increase the payload until it reaches the maximum payload size defined in the config file.
         if (payloadLength < config.maxPop.max_payload) {
 
             payloadLength += config.maxPop.payload_length_interval;
-            doNtimes(numQueues, payloadLength, messageEmit, version);
+            doNtimes(numPops, payloadLength, messageEmit, version);
 
         } else {
 
@@ -203,8 +205,8 @@ var doNtimes = function (numQueues, payloadLength, messageEmit, version) {
     }, messageEmit, version);
 };
 
-var launchTest = function(numQueues, payloadLength, messageEmit){
-    doNtimes(numQueues, payloadLength, messageEmit, version);
+var launchTest = function (numPops, payloadLength, messageEmit) {
+    doNtimes(numPops, payloadLength, messageEmit, version);
     version++;
     exports.version = version;
 };

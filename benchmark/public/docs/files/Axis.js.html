@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Axis.js</title>
+    <link rel="stylesheet" href="http:&#x2F;&#x2F;yui.yahooapis.com&#x2F;3.7.0&#x2F;build&#x2F;cssgrids&#x2F;cssgrids-min.css">
+    <link rel="stylesheet" href="..&#x2F;assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="..&#x2F;assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="..&#x2F;assets/favicon.png">
+    <script src="http:&#x2F;&#x2F;yui.yahooapis.com&#x2F;combo?3.7.0&#x2F;build&#x2F;yui&#x2F;yui-min.js"></script>
+</head>
+<body class="yui3-skin-sam">
+
+<div id="doc">
+    <div id="hd" class="yui3-g header">
+        <div class="yui3-u-3-4">
+            
+                <h1><img src="..&#x2F;assets/css/logo.png" title=""></h1>
+            
+        </div>
+        <div class="yui3-u-1-4 version">
+            <em>API Docs for: </em>
+        </div>
+    </div>
+    <div id="bd" class="yui3-g">
+
+        <div class="yui3-u-1-4">
+            <div id="docs-sidebar" class="sidebar apidocs">
+                <div id="api-list">
+    <h2 class="off-left">APIs</h2>
+    <div id="api-tabview" class="tabview">
+        <ul class="tabs">
+            <li><a href="#api-classes">Classes</a></li>
+            <li><a href="#api-modules">Modules</a></li>
+        </ul>
+
+        <div id="api-tabview-filter">
+            <input type="search" id="api-filter" placeholder="Type to filter APIs">
+        </div>
+
+        <div id="api-tabview-panel">
+            <ul id="api-classes" class="apis classes">
+            
+                <li><a href="..&#x2F;classes/Axis.html">Axis</a></li>
+            
+                <li><a href="..&#x2F;classes/Camera.html">Camera</a></li>
+            
+                <li><a href="..&#x2F;classes/Connector.html">Connector</a></li>
+            
+                <li><a href="..&#x2F;classes/Detector.html">Detector</a></li>
+            
+                <li><a href="..&#x2F;classes/Drawer.html">Drawer</a></li>
+            
+                <li><a href="..&#x2F;classes/Graph.html">Graph</a></li>
+            
+                <li><a href="..&#x2F;classes/Organizer.html">Organizer</a></li>
+            
+                <li><a href="..&#x2F;classes/Plane.html">Plane</a></li>
+            
+                <li><a href="..&#x2F;classes/Plot2D.html">Plot2D</a></li>
+            
+                <li><a href="..&#x2F;classes/Scene.html">Scene</a></li>
+            
+                <li><a href="..&#x2F;classes/Utils.html">Utils</a></li>
+            
+                <li><a href="..&#x2F;classes/ViewController.html">ViewController</a></li>
+            
+            </ul>
+
+            <ul id="api-modules" class="apis modules">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+
+            </div>
+        </div>
+        <div class="yui3-u-3-4">
+                <div id="api-options">
+        Show:
+        <label for="api-show-inherited">
+            <input type="checkbox" id="api-show-inherited" checked>
+            Inherited
+        </label>
+
+        <label for="api-show-protected">
+            <input type="checkbox" id="api-show-protected">
+            Protected
+        </label>
+
+        <label for="api-show-private">
+            <input type="checkbox" id="api-show-private">
+            Private
+        </label>
+        <label for="api-show-deprecated">
+            <input type="checkbox" id="api-show-deprecated">
+            Deprecated
+        </label>
+
+    </div>
+
+
+            <div class="apidocs">
+                <div id="docs-main">
+                    <div class="content">
+                        <h1 class="file-heading">File: Axis.js</h1>
+
+<div class="file">
+    <pre class="code prettyprint linenums">
+
+&#x2F;&#x2F; Axis Class
+
+(function (PBDV, THREE, undefined) {
+
+    &quot;use strict&quot;;
+
+
+    &#x2F;**
+     *  @class Axis
+     *  @constructor
+     *&#x2F;
+    var Axis = function( size, titles, options ) {
+
+        &#x2F;* Poperties *&#x2F;
+        
+        &#x2F;**
+         *  Graph size
+         *  @property size
+         *  @type Object
+         *&#x2F;
+        this.size = size;
+
+        &#x2F;**
+         *  Set of options that condition the axis
+         *  @property options
+         *  @type Object
+         *&#x2F;
+        this.options = options;
+
+        &#x2F;**
+         *  Array of displayed messages
+         *  @property texts
+         *  @type Array
+         *&#x2F;
+        this.texts = [];
+
+        &#x2F;**
+         *  Axis frame
+         *  @property frame
+         *  @type Object
+         *&#x2F;
+        this.frame = createFrame.call( this, titles );
+
+        &#x2F;**
+         *  Divisions grid 
+         *  @property grid
+         *  @type Object
+         *&#x2F;
+        this.grid = createGrid.call(this);
+
+        &#x2F;**
+         *  Full 3D axis object
+         *  @property threeAxis
+         *  @type Object
+         *&#x2F;
+        this.threeAxis = createAxis.call(this);
+
+    };
+
+
+
+    &#x2F;* Private Methods *&#x2F;
+
+    &#x2F;**
+     *  Axis creation method (consists on the addition of the different parts and a position change)
+     *  @method createAxis
+     *  @private
+     *&#x2F;
+    var createAxis = function() {
+        &#x2F;&#x2F; Creation of the Three.js Axis 3D Object
+        var axis = new THREE.Object3D();
+        
+        &#x2F;&#x2F; Setting Axis properties
+        axis.add( this.frame );
+        axis.add( this.grid );
+
+        axis.position.x = -this.size.x&#x2F;2;
+        axis.position.y = -this.size.y&#x2F;2;
+        if (this.size.z &gt;= 0) { axis.position.z = -this.size.z&#x2F;2; }
+
+        return axis;
+        
+    };
+
+
+    &#x2F;**
+     *  Auxiliar method to reduce verbosity
+     *  @method v
+     *  @private
+     *&#x2F;
+    var v = function(x, y, z) {
+        return new THREE.Vector3(x, y, z);
+    };
+
+
+    &#x2F;**
+     *  Frame creation method (can make 2D or 3D axis depending on the input size)
+     *  @method createFrame
+     *  @private
+     *&#x2F;
+    var createFrame = function( titles ) {
+        var lineMat = new THREE.LineBasicMaterial({
+            color     : 0x424242,
+            linewidth : 2
+        });
+
+        var lineGeo = new THREE.Geometry();
+
+        &#x2F;&#x2F; If the size specified has just 2 components builds a 2D frame
+        lineGeo.vertices.push(
+            v(0,0,0),       v(this.size.x,0,0),
+            v(0,0,0),       v(0,this.size.y,0),
+
+            v(this.size.x,0,0), v(this.size.x,this.size.y,0),
+            v(0,this.size.y,0), v(this.size.x,this.size.y,0)
+            );
+
+        &#x2F;&#x2F; If the size specified has 3 components builds a 3D frame
+        if (this.size.z &gt;= 0) {
+            lineGeo.vertices.push(
+                v(0,0,0),                       v(0,0,this.size.z),
+                v(this.size.x,0,0),             v(this.size.x,0,this.size.z),
+                v(0,this.size.y,0),             v(0,this.size.y,this.size.z),
+                v(this.size.x,this.size.y,0),   v(this.size.x,this.size.y,this.size.z),
+
+                v(0,0,this.size.z),                     v(0,this.size.y,this.size.z),
+                v(0,this.size.y,this.size.z),           v(this.size.x,this.size.y,this.size.z),
+                v(this.size.x,this.size.y,this.size.z), v(this.size.x,0,this.size.z),
+                v(this.size.x,0,this.size.z),           v(0,0,this.size.z)
+
+            );
+        }
+
+        var frame = new THREE.Object3D();
+        var line = new THREE.Line(lineGeo,lineMat);
+        line.type = THREE.LinePieces;
+        frame.add(line);
+
+        setTitles.call( this, frame, titles );
+
+        return frame;
+    };
+
+
+    &#x2F;**
+     *  Grid creation method (can make 2D or 3D axis depending on the input size)
+     *  @method createGrid
+     *  @private
+     *&#x2F;
+    var createGrid = function() {
+        var grid = new THREE.Object3D();
+
+        for (var coord in this.size) {
+            if (this.size.hasOwnProperty(coord)){
+                var part = setPart.call( this, coord );
+                grid.add( part );
+            }
+        }
+
+        return grid;
+    };
+
+
+    &#x2F;**
+     *  This method helps the createGrid metho to create each part of the grid.
+     *  It&#x27;s also used to update said parts when rescaling the graph.
+     *  @method setPart
+     *  @private
+     *  @param coord {String}
+     *  @param maxHeight {number}
+     *&#x2F;
+    var setPart = function ( coord, maxHeight ) {
+
+        maxHeight = maxHeight || 10000;
+        var MaxDiv = PBDV.Constants.Axis.MaxDiv;
+
+        var divisions;
+
+        var part = new THREE.Object3D();
+
+        var lineMat = new THREE.LineBasicMaterial({
+            color     : 0x808080,
+            linewidth : 1
+        });
+
+        var lineGeo = new THREE.Geometry();
+        
+        var line = new THREE.Line(lineGeo,lineMat);
+        line.type = THREE.LinePieces;
+
+        var value, aux, d;
+
+        var position = {
+            x : 0,
+            y : 0,
+            z : 0
+        };
+
+        switch (coord) {
+
+                case &#x27;x&#x27; :  aux = this.options.queues;
+                            d = (aux.end - aux.start)&#x2F;aux.interval;
+                            divisions = (d &lt; MaxDiv.X) ? d : MaxDiv.X;
+                            position.y = -this.size.y&#x2F;50;
+                            if (this.size.z &gt;= 0) {position.z = this.size.z + this.size.z&#x2F;50;}
+                            part.name = &#x27;gridX&#x27;;
+                            break;
+
+                case &#x27;y&#x27; :  aux = {start : 0, end : maxHeight};
+                            divisions = MaxDiv.Y;
+                            position.x = -this.size.x&#x2F;50;
+                            if (this.size.z &gt;= 0) {position.z = this.size.z + this.size.z&#x2F;50;}
+                            part.name = &#x27;gridY&#x27;;
+                            break;
+
+                case &#x27;z&#x27; :  aux = this.options.payload;
+                            d = (aux.end - aux.start)&#x2F;aux.interval;
+                            divisions = (d &lt; MaxDiv.Z) ? d : MaxDiv.Z;
+                            position.x = this.size.x + this.size.x&#x2F;50;
+                            position.y = -this.size.y&#x2F;50;
+                            part.name = &#x27;gridZ&#x27;;
+                            break;
+            }
+
+        var amount = this.size[coord] &#x2F; divisions;
+        amount = amount + 0.0000000000000005; &#x2F;&#x2F;quickfix for precision
+        amount = amount.toFixed(16); 
+        amount = parseFloat(amount);
+
+        if (divisions === 0) {amount = this.size[coord];}
+
+        var a, b, c;
+        for (var i = amount; i &lt; this.size[coord]; i += amount) {
+
+            switch (coord) {
+
+                case &#x27;x&#x27; :  a = v(i, 0, 0);
+                            b = v(i, this.size.y, 0);
+                            c = v(i, 0, this.size.z);
+                            value = Math.round(aux.start + ((aux.end-aux.start)&#x2F;divisions)*i&#x2F;amount);
+                            position.x = i;
+                            break;
+
+                case &#x27;y&#x27; :  a = v(0, i, 0);
+                            b = v(this.size.x, i, 0);
+                            c = v(0, i, this.size.z);
+                            value = Math.round((maxHeight&#x2F;divisions)*i&#x2F;amount);
+                            position.y = i;
+                            break;
+
+                case &#x27;z&#x27; :  a = v(0, 0, i);
+                            b = v(this.size.x, 0, i);
+                            c = v(0, this.size.y, i);
+                            value = Math.round(aux.start + ((aux.end-aux.start)&#x2F;divisions)*i&#x2F;amount);
+                            position.z = i;
+                            break;
+            }
+
+            lineGeo.vertices.push(
+                a,  b
+            );
+            &#x2F;&#x2F; The code was first thought only for 3D, this part can use some improvement in performance
+            if (this.size.z &gt;= 0) {
+                lineGeo.vertices.push(
+                    a,  c
+                );
+            }
+
+            setValue.call( this, value, position, line );
+        }
+
+        value = aux.start;
+        position[coord] = 0;
+        setValue.call( this, value, position, line );
+
+        value = aux.end;
+        position[coord] = this.size[coord];
+        setValue.call( this, value, position, line );
+
+        part.add( line );
+
+        return part;
+
+    };
+
+
+    &#x2F;**
+     *  Method to put the axis titles
+     *  @method setTitles
+     *  @private
+     *  @param frame {Object}
+     *  @param titles {Object}
+     *&#x2F;
+    &#x2F;&#x2F; TODO: merge with the setValue
+    var setTitles = function( frame, titles ) {
+        var titleX;
+        titleX = PBDV.Utils.createText2D( titles.x );
+        titleX.position.x = frame.position.x + this.size.x&#x2F;2;
+        titleX.position.y = frame.position.y - this.size.y&#x2F;10;
+
+        var titleY;
+        titleY = PBDV.Utils.createText2D( titles.y );
+        titleY.position.x = frame.position.x - this.size.x&#x2F;10;
+        titleY.position.y = frame.position.y + this.size.y&#x2F;2;
+
+        if (this.size.z &gt;= 0) {
+            titleX.position.z = frame.position.z + this.size.z + this.size.z&#x2F;10;
+            titleY.position.z = frame.position.z + this.size.z +  this.size.z&#x2F;10;
+
+            var titleZ;
+            titleZ = PBDV.Utils.createText2D( titles.z );
+            titleZ.position.x = frame.position.x + this.size.x + this.size.x&#x2F;10;
+            titleZ.position.y = frame.position.y -  this.size.y&#x2F;10;
+            titleZ.position.z = frame.position.z + this.size.z&#x2F;2;
+            
+            this.texts.push(titleZ);
+            frame.add(titleZ);
+        }
+
+        this.texts.push(titleX);
+        frame.add(titleX);
+
+        this.texts.push(titleY);
+        frame.add(titleY);
+    };
+
+
+    &#x2F;**
+     *  Method to print and associate a value to an object in a given position
+     *  @method setTitles
+     *  @private
+     *  @param value {number}
+     *  @param position {Object}
+     *  @param part {Object}
+     *&#x2F;
+    var setValue = function ( value, position, part ) {
+        var text = PBDV.Utils.createText2D( value, 50 );
+        text.position.x = position.x;
+        text.position.y = position.y;
+        text.position.z = position.z;
+        this.texts.push(text);
+        part.add(text);
+    };
+
+
+    &#x2F;* Public API *&#x2F;
+
+    Axis.prototype = {
+    
+        &#x2F;**
+         *  Method which performs the animation loop
+         *  @method animate
+         *  @param camera {Object}
+         *&#x2F; 
+        animate : function ( camera ) {
+            if (this.texts) {
+                for (var i = 0; i &lt; this.texts.length; i++) {
+                    this.texts[i].lookAt(camera.position);
+                    this.texts[i].rotation = camera.rotation;
+                }
+            }
+        },
+
+
+        &#x2F;**
+         *  This method rescales all the points of the plane according to a new Ratio
+         *
+         *  @method  rescale
+         *  @param   maxHeight {number}
+         *&#x2F;
+        rescale : function ( maxHeight ) {
+            this.grid.remove(this.grid.getChildByName(&#x27;gridY&#x27;, true));
+            this.grid.add(setPart.call( this, &#x27;y&#x27;, maxHeight));
+        }
+    };
+
+
+&#x2F;&#x2F; Exported to the namespace
+PBDV.Axis = Axis;
+
+
+})( window.PBDV = window.PBDV || {},    &#x2F;&#x2F; Namespace
+THREE);                             &#x2F;&#x2F; Dependencies
+
+    </pre>
+</div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="..&#x2F;assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="..&#x2F;assets/js/yui-prettify.js"></script>
+<script src="..&#x2F;assets/../api.js"></script>
+<script src="..&#x2F;assets/js/api-filter.js"></script>
+<script src="..&#x2F;assets/js/api-list.js"></script>
+<script src="..&#x2F;assets/js/api-search.js"></script>
+<script src="..&#x2F;assets/js/apidocs.js"></script>
+</body>
+</html>

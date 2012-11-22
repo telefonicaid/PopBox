@@ -1,28 +1,43 @@
-//
-// Copyright (c) Telefonica I+D. All rights reserved.
-//
-//
+/*
+ Copyright 2012 Telefonica Investigación y Desarrollo, S.A.U
+
+ This file is part of PopBox.
+
+ PopBox is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ PopBox is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License along with PopBox
+ . If not, seehttp://www.gnu.org/licenses/.
+
+ For those usages not covered by the GNU Affero General Public License please contact with::dtc_support@tid.es
+ */
 
 
 var config = require('./config.js');
+
+var path = require('path');
+var log = require('PDITCLogger');
+
+log.setConfig(config.logger);
+var logger = log.newLogger();
+logger.prefix = path.basename(module.filename,'.js');
+
 var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
 var jade = require('jade');
 var crypto = require('crypto');
 
-var path = require('path');
-var log = require('PDITCLogger');
-var logger = log.newLogger();
-logger.prefix = path.basename(module.filename, '.js');
-logger.setLevel(config.logLevel);
-
 var dirModule = path.dirname(module.filename);
 
 var prefixer = require('./prefixer');
 var sendrender = require('./sendrender');
+var promoteSlave = require('./promoteExprMdwr.js');
 
 logger.info('Node version:', process.versions.node);
 logger.info('V8 version:', process.versions.v8);
+logger.info('Current directory: ' , process.cwd());
+logger.info('POPBOX_DIR_PREFIX: ' , process.env.POPBOX_DIR_PREFIX);
+
 
 if (config.cluster.numcpus >= 0 && config.cluster.numcpus < numCPUs) {
     numCPUs = config.cluster.numcpus;
@@ -58,15 +73,16 @@ if (cluster.isMaster && numCPUs !== 0) {
     app._backlog = 2048;
     servers.push(app);
 
+    var optionsDir;
     logger.info("config.enableSecure", config.enableSecure);
     if (config.enableSecure === true || config.enableSecure === "true" || config.enableSecure === 1) {
         if (!config.agent.crt_path) {
-            var options_dir = {
+            optionsDir = {
                 key: path.resolve(dirModule, '../utils/server.key'),
                 cert: path.resolve(dirModule, '../utils/server.crt')
             };
         } else {
-            var options_dir = {
+            optionsDir = {
                 key: path.resolve(config.agent.crt_path, 'server.key'),
                 cert: path.resolve(config.agent.crt_path, 'server.crt')
             };
@@ -75,18 +91,18 @@ if (cluster.isMaster && numCPUs !== 0) {
         /*checks whether the cert files exist or not
          and starts the appSec server*/
 
-        if (path.existsSync(options_dir.key) &&
-            path.existsSync(options_dir.cert) &&
-            fs.statSync(options_dir.key).isFile() &&
-            fs.statSync(options_dir.cert).isFile()) {
+        if (path.existsSync(optionsDir.key) &&
+            path.existsSync(optionsDir.cert) &&
+            fs.statSync(optionsDir.key).isFile() &&
+            fs.statSync(optionsDir.cert).isFile()) {
 
             var options = {
-                key: fs.readFileSync(options_dir.key),
-                cert: fs.readFileSync(options_dir.cert)
+                key: fs.readFileSync(optionsDir.key),
+                cert: fs.readFileSync(optionsDir.cert)
             };
             logger.info("valid certificates");
         } else {
-            logger.debug('certs not found', options_dir);
+            logger.debug('certs not found', optionsDir);
             throw new Error("No valid certificates were found in the given path");
         }
 
@@ -98,11 +114,13 @@ if (cluster.isMaster && numCPUs !== 0) {
     }
 
     servers.forEach(function (server) {
+        'use strict';
         server.use(express.query());
         server.use(express.bodyParser());
         server.use(express.limit(config.agent.max_req_size));
         server.use(prefixer.prefixer(server.prefix));
         server.use(sendrender.sendRender());
+        server.use(promoteSlave.checkAndPromote());
         server.use("/", express.static(__dirname + '/public'));
         server.del('/trans/:id_trans', logic.deleteTrans);
         //app.get('/trans/:id_trans/state/:state?', logic.transState);
@@ -111,33 +129,43 @@ if (cluster.isMaster && numCPUs !== 0) {
         server.post('/trans/:id_trans/payload', logic.payloadTrans);
         server.post('/trans/:id_trans/expirationDate', logic.expirationDate);
         server.post('/trans/:id_trans/callback', logic.callbackTrans);
-        server.post('/trans', logic.postTrans);
+        server.post('/trans', logic.postTransDelayed);
         server.get('/queue/:id', logic.getQueue);
         server.post('/queue/:id/pop', logic.popQueue);
+        server.get('/queue/:id/peek', logic.peekQueue);
     });
 
-
-//Add subscribers
-    async.parallel([evLsnr.init(emitter), cbLsnr.init(emitter)],
-        function onSubscribed() {
+    var evModules = config.evModules;
+    var evInitArray = evModules.map(function (x) {
+        'use strict';
+        return require(x.module).init(emitter, x.config);
+    });
+    
+    async.parallel(evInitArray,
+        function onSubscribed(err, results) {
             'use strict';
-            // logger.debug('onSubscribed()', []);
-            servers.forEach(function (server) {
-                server.listen(server.port);
-                logger.info('PopBox listening on', server.prefix+server.port);
-            });
+            logger.debug('onSubscribed(err, results)', [err, results]);
+            if(err){
+                logger.error('error subscribing event listener', err);
+                throw new Error(['error subscribing event listener', err]);
+            }
+            else {
+                servers.forEach(function (server) {
+                    server.listen(server.port);
+                    logger.info('PopBox listening on', server.prefix+server.port);
+                });
+            }
         });
-    /* servers.forEach(function (server) {
-     server.listen(server.port);
-     });*/
 }
 
-/*
+ 
  process.on('uncaughtException', function onUncaughtException (err) {
  'use strict';
  logger.warning('onUncaughtException', err);
+ if (err==='fatalError') {process.exit();}
  });
- */
+ 
+
 
 
 

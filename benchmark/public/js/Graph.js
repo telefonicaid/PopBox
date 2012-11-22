@@ -1,145 +1,153 @@
 
-// Graph Class
-
 (function (PBDV, THREE, undefined) {
 
-	"use strict";
+    "use strict";
 
 
-	//var Graph = function( sizeX, sizeY, sizeZ, divisions, titleX, titleY, titleZ ) {
-	var Graph = function(_options) {
+    /**
+     * @class Graph
+     * @Constructor
+     * @param       {Object}    options     the characteristics of the Graph
+     */
+    var Graph = function( options ) {
 
-		// Private State 
+        /* Attributes */
 
-		var options = _options,
-			threeScene,
-			axis,
-			plot,
-			position,	// borrar 
-			threeGraph,
-			center;
+        /**
+         * @property    axis
+         * @type        THREE.Axis
+         */
+        this.axis = this.createAxis( options );
 
+        /**
+         * @property    plot
+         * @type        THREE.Plane
+         */
+        this.plot = this.createPlot( options );
 
-		var maxPoint = options.size.y * 2/3;
-		var cota  = maxPoint * 2/3;
-		var ratio = maxPoint / cota;
+        /**
+         * @property    maxPoint
+         * @type        Int
+         */
+        this.maxPoint = options.size.y * 2/3;
 
-
-		// Private Methods
-
-		var createTextCanvas = function( text, size, color, font ) {
-		    var size = size || 140;
-
-		    var canvas = document.createElement('canvas');
-
-		    var ctx = canvas.getContext('2d');
-		    var fontStr = (size + 'px ') + (font || 'Arial');
-		    ctx.font = fontStr;
-		   	var w = ctx.measureText(text).width;
-		  	var h = Math.ceil(size);
-		    canvas.width = w;
-		    canvas.height = h;
-			ctx.font = fontStr;
-		    ctx.fillStyle = color || '#2E2E2E';
-		    ctx.fillText(text, 0, size-size/4.5, w);
-
-		    return canvas;
-		}
-
-		// Public API
-
-		this.createText2D = function( text, size, color, font ){
-		    var canvas = createTextCanvas(text, size, color, font);
-
-		    var tex = new THREE.Texture(canvas);
-		    tex.needsUpdate = true;
-
-		    var mat = new THREE.MeshBasicMaterial( {map: tex} );
-    		mat.transparent = true;
-
-    		var res = new THREE.Mesh(
-        		new THREE.PlaneGeometry( canvas.width, canvas.height ),
-       			mat
-      		);
-		    res.scale.set(0.001, 0.001, 0.001);
- 
-		    return res;
-		}
-
-		this.createAxis = function( options ) {
-			
-			//return new PBDV.Axis(this, options.size, options.test, options.titles);
-			return new PBDV.Axis( this, options.size, options.titles, options.test );
-		}
-
-		this.createPlot = function( options ) {
-			return new PBDV.Plane( options.test, options.size, ratio );
-		}
-
-		this.init = function() {
-			// Creation of the graph object
-			threeGraph = new THREE.Object3D();
-
-			// Creation of the Axis
-			axis = this.createAxis( options );
-			
-			// Creation of the Plane Map
-			plot = this.createPlot( options );
-
-			// Inclusion of both parts of the graph
-			threeGraph.add(axis.threeAxis);
-			threeGraph.add(plot.threePlot);
-		}
+        /**
+         * @property    cota
+         * @type        number
+         */
+        this.cota = 0;
 
 
-		this.addPoint = function( point ) {
+        /* Initialization */
 
-			var z = (point[0] / (point[1]/1000));
-
-			if ( z > cota ) {
-				cota = z;
-				
-				var ratio = maxPoint / cota;
-				axis.rescale( ratio );
-				plot.rescale( ratio );
-			}
-			
-			plot.addPoint( point, maxPoint );
-		}
-
-		this.animate = function( threeCamera ) {
-			axis.animate( threeCamera );
-			plot.animate();
-		}
-
-		this.restart = function() {
-			plot.restart();
-			cota = maxPoint * 2/3;
-			ratio = maxPoint / cota;
-		}
-
-		
-		this.init();
+        this.threeGraph = new THREE.Object3D();
+        this.threeGraph.add( this.axis.threeAxis );
+        this.threeGraph.add( this.plot.threePlot );
+    };
 
 
 
-		this.threeGraph = threeGraph;
+    /* Public API */
 
-		this.axis = function() {
-			return axis;
-		}
-		this.position = function() {
-			//return position;
-			return threeGraph.position;
-		}
+    Graph.prototype = {
 
-		return this;
-	}
+        /**
+         * adds a Point to the plane and checks if reescalation is needed
+         *
+         * @method  addPoint
+         * @param   {object}    point   the point that is going to be drawn
+         *
+         */
+        addPoint : function( point ) {
+
+            //
+            var z = (point[0] / (point[1]/1000));
+
+            // 
+            if ( z > this.cota ) {
+
+                //
+                this.cota = z;
+                var ratio = this.maxPoint / this.cota;
+                var round = Math.round(this.cota * 3/2);
+
+                //
+                this.axis.rescale( round );
+                this.plot.rescale( ratio );
+            }
+            
+            // Otherwise, we add the new point received
+            this.plot.addPoint( point );
+
+        },
 
 
-	// Exported to the namespace
-	PBDV.Graph = Graph;
+        /**
+         * this method delegates the animate to Axis and Plot implementations
+         *
+         *  @method animate
+         */
+        animate : function( threeCamera ) {
+
+            this.axis.animate( threeCamera );
+            this.plot.animate();
+
+        },
 
 
-})( window.PBDV = window.PBDV || {},	// Namespace
-	THREE);								// Dependencies
+        /**
+         * this method creates an instance of Axis
+         *
+         * @method  createAxis
+         * @param   {object}    options     the characteristics of the Axis
+         * @return  {THREE.Axis}            the created axis
+         */
+        createAxis : function( options ) {
+
+            // 
+            this.axis = new PBDV.Axis( options.size, options.titles, options.test );
+            return this.axis;
+
+        },
+
+
+        /**
+         * this method creates an instance of Plane
+         *
+         * @method  createPlot
+         * @param   {object}    options     the characteristics of the Plane
+         * @return  {THREE.Plane}           the created plane
+         */
+        createPlot : function( options ) {
+
+            // 
+            this.plot = new PBDV.Plane( options.test, options.size );
+            return this.plot;
+
+        },
+
+
+        position : function() {
+            return this.threeGraph.position;
+        },
+
+
+        /**
+         * This method delegates the restart behaviour to the implementation in Plot
+         *
+         * @method restart
+         */
+        restart : function() {
+            this.plot.restart();
+            this.cota = 0;
+        }
+        
+    }; // prototype
+
+
+    // Exported to the namespace
+    PBDV.Graph = Graph;
+
+
+})( window.PBDV = window.PBDV || {},    // Namespace
+    THREE);                             // Dependencies

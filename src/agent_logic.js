@@ -1,3 +1,17 @@
+/*
+ Copyright 2012 Telefonica Investigación y Desarrollo, S.A.U
+
+ This file is part of PopBox.
+
+ PopBox is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ PopBox is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License along with PopBox
+ . If not, seehttp://www.gnu.org/licenses/.
+
+ For those usages not covered by the GNU Affero General Public License please contact with::dtc_support@tid.es
+ */
+
 var dataSrv = require('./DataSrv');
 var validate = require('./validate');
 var emitter = require('./emitter_module').getEmitter();
@@ -61,11 +75,29 @@ function postTrans(req, res) {
         ]);
     }
 }
+
+function postTransDelayed(req, res) {
+    'use strict';
+    logger.debug('postTransDelayed(req, res)', [req, res]);
+    var delay = Number(req.param('delay'));
+    if(delay) {
+        setTimeout(function() {
+            postTrans(req, { send: function() {}});    
+        }, delay * 1000);
+        res.send({"ok":true,"data":"unknown-delayed"});
+    }
+    else {
+        postTrans(req, res);
+    }
+}
+
 function putTransMeta(req, res) {
+    'use strict';
     logger.debug('putTransMeta(req, res)', [req, res]);
     var id = req.param('id_trans', null),
         empty = true, filteredReq = {}, errorsP, errorsExpDate, errors = [];
 
+    
     filteredReq.payload = req.body.payload;
     filteredReq.callback = req.body.callback;
     filteredReq.expirationDate = req.body.expirationDate;
@@ -239,7 +271,7 @@ function expirationDate(req, res) {
     logger.debug("expirationDate - id  req.body", id, req.body);
     if (id) {
         errors = validate.errorsExpirationDate(req.body);
-        if (errors.length == 0) {
+        if (errors.length === 0) {
             logger.debug('putTransMeta - errors', errors);
             dataSrv.setExpirationDate(id, req.body, function (e) {
                 if (e) {
@@ -350,7 +382,7 @@ function popQueue(req, res) {
         } else {
             if (notifList) {
                 messageList = notifList.map(function (notif) {
-                    return notif.payload;
+                    return notif && notif.payload;
                 });
             }
             ev = {
@@ -366,10 +398,46 @@ function popQueue(req, res) {
     });
 }
 
+function peekQueue(req, res) {
+    'use strict';
+    logger.debug('peekQueue(req, res)', [req, res]);
+    var queueId = req.param('id');
+    var maxMsgs = req.param('max', config.agent.max_messages);
+    var appPrefix = req.prefix;
+
+    maxMsgs = parseInt(maxMsgs, 10);
+    if (isNaN(maxMsgs)) {
+        maxMsgs = config.agent.max_messages;
+    }
+
+    logger.debug('Peek: queueId, maxMsgs', [queueId, maxMsgs]);
+
+    dataSrv.peek(appPrefix, {id: queueId}, maxMsgs, function onPeek(err, notifList) {
+        logger.debug('onBlockingPop(err, notifList)', [err, notifList]);
+        var messageList = [];
+        var ev = {};
+        //stablish the timeout depending on blocking time
+
+        if (err) {
+            res.send({errors: [String(err)]}, 500);
+
+        } else {
+
+            if (notifList) {
+                messageList = notifList.map(function (notif) {
+                    return notif && notif.payload;
+                });
+            }
+
+            res.send({ok: true, data: messageList});
+        }
+    });
+}
+
 function checkPerm(req, res, cb) {
     'use strict';
     logger.debug('checkPerm(req, res, cb)', [req, res, cb]);
-    var header = req.headers['authorization'] || '', // get the header
+    var header = req.headers.authorization || '', // get the header
         token = header.split(/\s+/).pop() || '', // and the encoded auth token
         auth = new Buffer(token, 'base64').toString(), // convert from base64
         parts = auth.split(/:/), // split on colon
@@ -388,7 +456,7 @@ function checkPerm(req, res, cb) {
         if (err) {
             res.send('ERROR:' + err, {
                 'Content-Type': 'text/plain',
-                'WWW-Authenticate': 'Basic realm="EL MAL TE PERSIGUE"' }, 500);
+                'WWW-Authenticate': 'Basic realm="PopBox"' }, 500);
         }
 
         else if (value) {
@@ -398,15 +466,15 @@ function checkPerm(req, res, cb) {
                 }
             }
             else {
-                res.send('Unauthorized ' + username + "," + password, {
+                res.send('Unauthorized ' + username, {
                     'Content-Type': 'text/plain',
-                    'WWW-Authenticate': 'Basic realm="EL MAL TE PERSIGUE"' }, 401);
+                    'WWW-Authenticate': 'Basic realm="PopBox"' }, 401);
             }
         }
         else {
             res.send('ERROR: Secure Queue does not exist', {
                 'Content-Type': 'text/plain',
-                'WWW-Authenticate': 'Basic realm="EL MAL TE PERSIGUE"' }, 500);
+                'WWW-Authenticate': 'Basic realm="PopBox"' }, 500);
         }
     });
 
@@ -463,6 +531,7 @@ function transMeta(req, res) {
 
 exports.getQueue = getQueue;
 exports.popQueue = popQueue;
+exports.peekQueue = peekQueue;
 exports.transState = transState;
 exports.postTrans = postTrans;
 exports.deleteTrans = deleteTrans;
@@ -473,4 +542,5 @@ exports.postQueue = postQueue;
 exports.checkPerm = checkPerm;
 exports.transMeta = transMeta;
 exports.putTransMeta = putTransMeta;
+exports.postTransDelayed = postTransDelayed; 
 

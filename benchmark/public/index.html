@@ -38,8 +38,18 @@
 
 	<noscript>If you are reading this text is because your web browser does not allow JavaScript. In that case, the website will not be viewed perfect so please, try to enable it or just change to a better browser</noscript>
 
-	<div class="modal-backdrop"></div>
-	<div class="modal fade in" id="modal" tabindex="-1" role="dialog" aria-labelledby="WaitingModalBox" aria-hidden="true">
+
+	<div id="backdrop" class="modal-backdrop"></div>
+
+
+	<div id="no-webgl" class="modal fade in" tabindex="-1" role="dialog" aria-labelledby="ErrorWebGLModalBox" aria-hidden="false" style="display: none;">
+		<article class="modal-body">
+			<p id="error-description" class="center"></p>
+		</article>
+	</div>
+
+
+	<div id="waiting-modal" class="modal fade in" tabindex="-1" role="dialog" aria-labelledby="WaitingModalBox" aria-hidden="true" style="display: none;">
 		<article class="modal-body">
     		<div class="meter red">
     			<span></span>
@@ -51,7 +61,6 @@
 				<a href="#" id="modal-button" class="btn disabled">Loading...</a>
 			</div>
   		</article>
-
 	</div>
 
 
@@ -64,9 +73,7 @@
 		</header>
 			
 		<section id="visual" class="columns eight left">
-
-			
-			<div id="testing" class="total graph3D"></div>
+			<div id="visualizator" class="total"></div>
 		</section>
 
 
@@ -82,7 +89,7 @@
 						<nav id="tabs" class="navbar">
 							<ul class="navbar-inner">
 								<li class="center left tab columns six current">Provision</li>
-								<li class="center left tab columns six">Usage</li>
+								<li class="center left tab columns six">Pop</li>
 							</ul>
 						</nav>
 
@@ -100,8 +107,8 @@
 					<div class="graph-container">
 						<div id="cpu-graph" class="graph left"></div>
 
-						<div class="keys right">
-							<table class="table key">
+						<div class="keys left">
+							<table class="table">
 								<tbody></tbody>
 							</table>
 						</div>
@@ -117,8 +124,8 @@
 					<div class="graph-container">
 						<div id="memory-graph" class="graph left"></div>
 
-						<div class="keys right">
-							<table class="table key">
+						<div class="keys left">
+							<table class="table">
 								<tbody></tbody>
 							</table>
 						</div>
@@ -129,8 +136,11 @@
 				<section id="logger" class="widget">
 
 					<header>
-						<h3 class="headline">Data logged</h3>
-					</header>
+						<h3 class="headline">
+                            Data logged
+                            <a href="#" id="save-log" class="btn btn-primary btn-mini disabled">Save Log</a>
+                        </h3>
+                    </header>
 
 					<div class="border scrollContainer">
 						<div id="tableHeader">
@@ -149,9 +159,10 @@
 
 				<section id="buttons" class="auto widget">
 					<div class="auto center">
-						<a href="#" id="start" class="btn btn-primary btn-large">Start</a>
-						<a href="#" id="pause" class="btn btn-primary btn-large disabled">Pause</a>
-					</div>
+						<a href="#" id="start"     class="btn btn-primary btn-large">Start</a>
+						<a href="#" id="pause"     class="btn btn-primary btn-large disabled">Pause</a>
+						<a href="#" id="clear-log" class="btn btn-primary btn-large disabled">Clear Log</a>
+                    </div>
 				</section>
 
 			</div>
@@ -169,18 +180,22 @@
 	</div>
 
 
-
+	
 
 	<!-- JavaScript -->
 	<div id="scripts" style="display : none;">
+
+		<!-- Libraries used for the project -->
 		<script type="text/javascript" src="js/lib/jquery-1.8.1.min.js"></script>
 		<script type="text/javascript" src="js/lib/three.min.js"></script>
 		<script type="text/javascript" src="js/lib/flotr2.min.js"></script>
 		<script type="text/javascript" src="/socket.io/socket.io.js"></script>
 
-		<script type="text/javascript" src="js/Plot2D.js"></script>
-
+		<!-- Constants file -->
 		<script type="text/javascript" src="js/Constants.js"></script>
+
+		<!-- App's components -->
+		<script type="text/javascript" src="js/Plot2D.js"></script>
 		<script type="text/javascript" src="js/Axis.js"></script>
 		<script type="text/javascript" src="js/Plane.js"></script>
 		<script type="text/javascript" src="js/Graph.js"></script>
@@ -190,8 +205,14 @@
 		<script type="text/javascript" src="js/Organizer.js"></script>
 		<script type="text/javascript" src="js/Connector.js"></script>
 		<script type="text/javascript" src="js/ViewController.js"></script>
-		
-		<script type="text/javascript" src="js/WebGL_Main.js"></script>
+
+		<!-- Auxiliary Modules -->
+		<script type="text/javascript" src="js/Detector.js"></script>
+        <script type="text/javascript" src="js/Utils.js"></script>
+
+        <!-- Main -->
+        <script type="text/javascript" src="js/WebGL_Main.js"></script>
+        
 	</div>
 
 </body>

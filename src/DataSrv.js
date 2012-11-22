@@ -1,3 +1,17 @@
+/*
+ Copyright 2012 Telefonica Investigación y Desarrollo, S.A.U
+
+ This file is part of PopBox.
+
+ PopBox is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ PopBox is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License along with PopBox
+ . If not, seehttp://www.gnu.org/licenses/.
+
+ For those usages not covered by the GNU Affero General Public License please contact with::dtc_support@tid.es
+ */
+
 //Encapsulate DB/queue accesses
 //Deals with data clustering and scalability
 //SmartStub approach
@@ -234,106 +248,190 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback,
 
 
 var blockingPop = function (appPrefix, queue, maxElems, blockingTime, callback) {
-    'use strict';
-    logger.debug('blockingPop(appPrefix, queue, maxElems, blockingTime, callback)',
-        [appPrefix, queue, maxElems, blockingTime, callback]);
-    var queueId = queue.id, //
-        db = dbCluster.getOwnDb(queueId),
-        fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id, //
-        fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id, //
-        firstElem = null;
+  'use strict';
+  logger.debug('blockingPop(appPrefix, queue, maxElems, blockingTime, callback)',
+    [appPrefix, queue, maxElems, blockingTime, callback]);
+  var queueId = queue.id,
+    fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id,
+    fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id,
+    firstElem = null;
 
-    //Set the last PopAction over the queue
-    var popDate = Math.round(Date.now() / 1000);
+  //Set the last PopAction over the queue
+  var popDate = Math.round(Date.now() / 1000);
 
-    db.on('ready', blockingPop_aux);
-    db.on('error', function (err) {
-        dbCluster.free(db);
-        //db.end();
-        manageError(err, callback);
-    });
-
-
-    function blockingPop_aux() {
-        db.set(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
-            popDate);
-        //Do the blocking part (over the two lists)
-        db.blpop(fullQueueIdH, fullQueueIdL, blockingTime,
-            function onPopData(err, data) {
-                if (err) {
-                    dbCluster.free(db);
-                    manageError(err, callback);
-                } else {
-                    //data:: A two-element multi-bulk with the first element being
-                    // the name of the key where an element was popped and the second
-                    // element being the value of the popped element.
-                    //if data == null => timeout || empty queue --> nothing to do
-                    if (!data) {
-                        dbCluster.free(db);
-                        if (callback) {
-                            callback(null, null);
-                        }
-                    } else {
-                        //we got one elem -> need to check the rest
-                        firstElem = data;
-                        if (maxElems > 1) {
-                            popNotification(db, appPrefix, queue, maxElems - 1,
-                                function onPop(err, clean_data) {
-                                    dbCluster.free(db); //add free() when pool
-                                    if (err) {
-                                        if (callback) {
-                                            err.data = true; //flag for err+data
-                                            callback(err, firstElem); //weird
-                                        }
-                                    } else {
-                                        if (callback) {
-                                            callback(null, clean_data);
-                                        }
-                                    }
-                                }, firstElem); //last optional param
-                        } else {
-                            dbCluster.free(db);
-                            //just first_elem
-                            getPopData([
-                                firstElem[1]
-                            ], callback, queue);
-                        }
-                    }
-                }
-            });
+  dbCluster.getOwnDb(queueId, function(err, db){
+    if(err) {
+      manageError(err, callback);
     }
+    else {
+      blockingPopAux(db);
+    }
+  });
+
+  function blockingPopAux(db) {
+    db.set(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
+      popDate, function() {});
+    //Do the blocking part (over the two lists)
+    db.blpop(fullQueueIdH, fullQueueIdL, blockingTime,
+      function onPopData(err, data) {
+        if (err) {
+          dbCluster.free(db);
+          manageError(err, callback);
+        } else {
+          //data:: A two-element multi-bulk with the first element being
+          // the name of the key where an element was popped and the second
+          // element being the value of the popped element.
+          //if data == null => timeout || empty queue --> nothing to do
+          if (!data) {
+            dbCluster.free(db);
+            if (callback) {
+              callback(null, null);
+            }
+          } else {
+            //we got one elem -> need to check the rest
+            firstElem = data;
+            if (maxElems > 1) {
+              popNotification(db, appPrefix, queue, maxElems - 1,
+                function onPop(err, clean_data) {
+                  dbCluster.free(db); //add free() when pool
+                  if (err) {
+                    if (callback) {
+                      err.data = true; //flag for err+data
+                      callback(err, firstElem); //weird
+                    }
+                  } else {
+                    if (callback) {
+                      callback(null, clean_data);
+                    }
+                  }
+                }, firstElem); //last optional param
+            } else {
+              dbCluster.free(db);
+              //just first_elem
+              getPopData([
+                firstElem[1]
+              ], callback, queue);
+            }
+          }
+        }
+      });
+  }
 };
 
 function getPopData(dataH, callback, queue) {
-  'use strict';
-  logger.debug('getPopData(dataH, callback, queue)', [dataH, callback, queue]);
-  var newStateBatch = [
-  ], transactionId = null, dbTr = null, cleanData = null;
-  retrieveData(queue, dataH, function onData(err, payloadWithNulls) {
-    logger.debug('onData(err, payloadWithNulls)', [err, payloadWithNulls]);
-    if (err) {
-      manageError(err, callback);
-    } else {
-      //Handle post-pop behaviour (callback)
-      cleanData = payloadWithNulls.filter(function notNull(elem) {
-        return elem !== null;
-      });
-      //SET NEW STATE for Every popped transaction
-      newStateBatch = cleanData.map(function prepareStateBatch(elem) {
-        logger.debug('prepareStateBatch(elem)', [elem]);
-        transactionId = elem.transactionId;
-        dbTr = dbCluster.getTransactionDb(transactionId);
-        return helper.hsetHashParallel(dbTr, queue, transactionId, ':state',
-          'Delivered');
+    'use strict';
+    logger.debug('getPopData(dataH, callback, queue)', [dataH, callback, queue]);
+    var newStateBatch = [
+    ], transactionId = null, dbTr = null, cleanData = null;
+    retrieveData(queue, dataH, function onData(err, payloadWithNulls) {
+        logger.debug('onData(err, payloadWithNulls)', [err, payloadWithNulls]);
+        if (err) {
+            manageError(err, callback);
+        } else {
+            //Handle post-pop behaviour (callback)
+            cleanData = payloadWithNulls.filter(function notNull(elem) {
+                return elem !== null;
+            });
+            //SET NEW STATE for Every popped transaction
+            newStateBatch = cleanData.map(function prepareStateBatch(elem) {
+                logger.debug('prepareStateBatch(elem)', [elem]);
+                transactionId = elem.transactionId;
+                dbTr = dbCluster.getTransactionDb(transactionId);
+                return helper.hsetHashParallel(dbTr, queue, transactionId, ':state',
+                    'Delivered');
 
-      });
-      async.parallel(newStateBatch, function newStateAsyncEnd(err) {
-        if (callback) {
-          callback(err, cleanData);
+            });
+            async.parallel(newStateBatch, function newStateAsyncEnd(err) {
+                if (callback) {
+                    callback(err, payloadWithNulls);
+                }
+            });
         }
-      });
+    });
+}
+
+var peek = function (appPrefix, queue, maxElems, callback) {
+    'use strict';
+    logger.debug('peek(appPrefix, queue, maxElems, callback)',
+        [appPrefix, queue, maxElems, callback]);
+    var queueId = queue.id,
+        fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id,
+        fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id,
+        restElems = 0;
+
+    dbCluster.getOwnDb(queueId, function(err, db){
+        if(err) {
+            manageError(err, callback);
+        } else {
+            peekAux(db);
+        }
+    });
+
+    function peekAux(db) {
+        db.lrange(fullQueueIdH, 0, maxElems - 1, function onRangeH(errH, dataH) {
+
+            var dataHlength = dataH.length;
+            logger.debug('onRangeH(errH, dataH)', [ errH, dataH ]);
+
+            if (errH) {//errH
+                manageError(errH, callback);
+
+            } else {
+                if (dataHlength < maxElems) {
+
+                    restElems = maxElems - dataHlength;
+                    //Extract from both queues
+                    db.lrange(fullQueueIdL, 0, restElems - 1, function on_rangeL(errL, dataL) {
+
+                        if (errL) {
+
+                            //fail but we may have data of previous range
+                            if (dataH) {
+                                //if there is dataH dismiss the low priority error
+                                getPeekData(dataH, callback, queue);
+                            } else {
+                                manageError(errL, callback);
+                            }
+
+                        } else {
+
+                            if (dataL) {
+                                dataH = dataH.concat(dataL);
+                            }
+
+                            getPeekData(dataH, callback, queue);
+                        }
+                    });
+                } else {
+                    //just one queue used
+                    getPeekData(dataH, callback, queue);
+                }
+            }
+        });
     }
-  });
+};
+
+function getPeekData(dataH, callback, queue) {
+    'use strict';
+    logger.debug('getPopData(dataH, callback, queue)', [dataH, callback, queue]);
+    var transactionId = null, dbTr = null, cleanData = null;
+
+    retrieveData(queue, dataH, function onData(err, payloadWithNulls) {
+        logger.debug('onData(err, payloadWithNulls)', [err, payloadWithNulls]);
+        if (err) {
+            manageError(err, callback);
+
+        } else {
+            //Handle post-pop behaviour (callback)
+            cleanData = payloadWithNulls.filter(function notNull(elem) {
+                return elem !== null;
+            });
+
+            if (callback) {
+                callback(null, payloadWithNulls);
+            }
+        }
+    });
 }
 
 function retrieveData(queue, transactionList, callback) {
@@ -689,6 +787,14 @@ exports.getTransactionMeta = getTransactionMeta;
  * @param {function(Object, Array.Object)} callback takes (err, poppedData).
  */
 exports.blockingPop = blockingPop;
+
+/**
+ * @param {string} appPrefix For secure/non secure behaviour
+ * @param {PopBox.Queue} queue Object representing a queue.
+ * @param {number} maxElems maximun number of elements to be retrieved.
+ * @param {function(Object, Array.Object)} callback takes (err, peekedData).
+ */
+exports.peek = peek;
 
 /**
  *

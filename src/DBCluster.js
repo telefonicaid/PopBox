@@ -1,58 +1,103 @@
-//
-// Copyright (c) Telefonica I+D. All rights reserved.
-//
-//
+/*
+ Copyright 2012 Telefonica Investigación y Desarrollo, S.A.U
+
+ This file is part of PopBox.
+
+ PopBox is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ PopBox is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License along with PopBox
+ . If not, seehttp://www.gnu.org/licenses/.
+
+ For those usages not covered by the GNU Affero General Public License please contact with::dtc_support@tid.es
+ */
 
 //clustering and database management (object)
 
 var redisModule = require('redis');
 var config = require('./config.js');
+var poolMod = require('./Pool.js');
 
 var path = require('path');
 var log = require('PDITCLogger');
 var logger = log.newLogger();
+
+/**
+ *
+ * @param rc
+ * @param masterHost
+ * @param masterPort
+ */
+var slaveOf = function(rc, masterHost, masterPort){
+  "use strict";
+  logger.debug('slaveOf(rc, masterHost, masterPort)', [rc, masterHost, masterPort]);
+  if (!(masterHost && masterPort) ) {
+    logger.error('Masters must be defined in slave configuration. Look at configFile');
+    throw 'fatalError';
+  }
+
+  rc.slaveof(masterHost,masterPort, function(err){
+    if(err){
+      logger.error('slaveOf(rc, masterHost, masterPort):: '+ err);
+      throw 'fatalError';
+    }
+  });
+};
+
 logger.prefix = path.basename(module.filename, '.js');
 
-var rc = redisModule.createClient(config.tranRedisServer.port || redisModule.DEFAULT_PORT,
+var transactionDbClient = redisModule.createClient(config.tranRedisServer.port || redisModule.DEFAULT_PORT,
   config.tranRedisServer.host);
-rc.select(config.selected_db); //false pool for pushing
-var dbArray = [];
+if (config.slave) {
+  slaveOf(transactionDbClient, config.masterTranRedisServer.host, config.masterTranRedisServer.port);
+}
+
+transactionDbClient.select(config.selected_db); //false pool for pushing
+var queuesDbArray = [];
 for (var i = 0; i < config.redisServers.length; i++) {
   var port = config.redisServers[i].port || redisModule.DEFAULT_PORT;
   var host = config.redisServers[i].host;
   var cli = redisModule.createClient(port, host);
+  if (config.slave) {
+    slaveOf(cli, config.masterRedisServers[i].host, config.masterRedisServers[i].port);
+  }
+
   logger.info('Connected to REDIS ', host + ':' + port);
   cli.select(config.selected_db);
   cli.isOwn = false;
-  dbArray.push(cli);
+  queuesDbArray.push(cli);
+}
+
+//Create the pool array - One pool for each server
+var poolArray = [];
+for (var i = 0; i < config.redisServers.length; i++) {
+   var pool = poolMod.Pool(i);
+   poolArray.push(pool);
 }
 
 var getDb = function (queueId) {
   'use strict';
   logger.debug('getDb(queueId)', [queueId]);
   var hash = hashMe(queueId, config.redisServers.length);
-  return dbArray[hash];
+  return queuesDbArray[hash];
 };
 
-var getOwnDb = function (queueId) {
+var getOwnDb = function (queueId, callback) {
   'use strict';
   logger.debug('getOwnDb(queueId)', [queueId]);
   var hash = hashMe(queueId, config.redisServers.length);
-  var port = config.redisServers[hash].port || redisModule.DEFAULT_PORT;
-  var rc = redisModule.createClient(port,
-    config.redisServers[hash].host);
-  rc.select(config.selected_db);
-  rc.isOwn = true;
-  //returns a client from a cluster
-  return rc;
+  //get the pool
+  var pool = poolArray[hash];
+  pool.get(queueId, callback);
 };
+
 
 var getTransactionDb = function (transactionId) {
   'use strict';
   logger.debug('getTransactionDb(transactionId)', [transactionId]);
       
   //return a client for transactions
-  return rc;
+  return transactionDbClient;
 
 };
 
@@ -78,8 +123,16 @@ var free = function (db) {
   //return to the pool TechDebt
   logger.debug('free(db)', [db]);
   if (db.isOwn) {
-    db.end();
+    db.pool.free(db);
   }
+};
+
+var promoteMaster = function(){
+  "use strict";
+  transactionDbClient.slaveof('NO', 'ONE');
+  queuesDbArray.forEach(function(db){
+     db.slaveof('NO', 'ONE');
+  });
 };
 
 /**
@@ -107,4 +160,10 @@ exports.getTransactionDb = getTransactionDb;
  * @param {RedisClient} db Redis DB to be closed.
  */
 exports.free = free;
+
+/**
+ *
+ * @type {Function}
+ */
+exports.promoteMaster = promoteMaster;
 
