@@ -1,3 +1,6 @@
+
+[![Build Status](https://travis-ci.org/telefonicaid/PopBox.png)](https://travis-ci.org/telefonicaid/PopBox)
+
 POPBox
 ===
 ##Simple High-Performance High-Scalability Inbox Notification Service
