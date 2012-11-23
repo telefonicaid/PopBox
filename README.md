@@ -43,7 +43,7 @@ In this file it is mandatory to stablish where reside the Redis DBs by stabilisi
 ```
 exports.redisServers = [{host:'localhost'}, {host:'localhost', port:'6789'}];
 ```
-A list of Redis servers to manage the different queues of the system. Queues will be distributed among the nodes (non elastic yet). '''If you have more than one Agent it is important to keep the same redisServers list in all of them'''.
+A list of Redis servers to manage the different queues of the system. Queues will be distributed among the nodes (non elastic yet). **If you have more than one Agent it is important to keep the same redisServers list in all of them**.
 ###Transaction Servers
 ```
 exports.tranRedisServer = {'localhost' [, port:]};
