@@ -27,7 +27,7 @@ if(process.env.POPBOX_DIR_PREFIX) {
  * @type {String}
  */
 exports.logger = {};
-exports.logger.logLevel = 'debug';
+exports.logger.logLevel = 'info';
 exports.logger.inspectDepth = 1 ;
 exports.logger.Console = {
     level: 'debug', timestamp:true
