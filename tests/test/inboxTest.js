@@ -14,6 +14,10 @@ describe('Inbox', function () {
   "use strict";
 
   function onError(err, response){
+    console.log('error form restler');
+    console.dir(err);
+    console.log('error form PopBox');
+    console.dir(response);
     throw new Error({'err': err, 'response': response});
   }
 
