@@ -14,8 +14,6 @@ describe('Inbox', function () {
   "use strict";
 
   function onError(err, response){
-    console.dir(err);
-    console.dir(response);
     throw new Error({'err': err, 'response': response});
   }
 
