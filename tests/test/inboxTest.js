@@ -8,6 +8,7 @@ var host = config.hostname;
 var port = config.port;
 var protocol = config.protocol;
 
+
 var trans, trans1 = {};
 
 describe('Inbox', function () {
