@@ -366,6 +366,7 @@ function popQueue(req, res) {
     dataSrv.blockingPop(appPrefix, {id: queueId}, maxMsgs, tOut, function onBlockingPop(err, notifList) {
         logger.debug('onBlockingPop(err, notifList)', [err, notifList]);
         var messageList = [];
+        var transactionIdList = [];
         var ev = {};
         //stablish the timeout depending on blocking time
 
@@ -384,6 +385,9 @@ function popQueue(req, res) {
                 messageList = notifList.map(function (notif) {
                     return notif && notif.payload;
                 });
+                transactionIdList = notifList.map(function(notif){
+                   return notif && notif.transaction;
+                });
             }
             ev = {
                 'queue': queueId,
@@ -393,7 +397,7 @@ function popQueue(req, res) {
                 'timestamp': new Date()
             };
             emitter.emit('ACTION', ev);
-            res.send({ok: true, data: messageList});
+            res.send({ok: true, data: messageList, transactions: transactionIdList});
         }
     });
 }

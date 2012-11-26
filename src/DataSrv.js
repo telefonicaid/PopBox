@@ -465,7 +465,7 @@ function checkData(queue, dbTr, transactionId) {
         manageError(err, callback);
       } else {
         if (data && data.payload) {
-          data.transactionId = transactionId;
+          data.transactionId = extTransactionId;
           //EMIT Delivered
           ev = {
             'transaction': extTransactionId,
@@ -476,7 +476,10 @@ function checkData(queue, dbTr, transactionId) {
           };
           emitter.emit('NEWSTATE', ev);
         } else {
-          data = null;
+          data = {
+            'payload' : null,
+            'transaction': extTransactionId
+          };
           //EMIT Expired
           ev = {
             'transaction': extTransactionId,
