@@ -386,7 +386,7 @@ function popQueue(req, res) {
                     return notif && notif.payload;
                 });
                 transactionIdList = notifList.map(function(notif){
-                   return notif && notif.transaction;
+                   return notif && notif.transactionId;
                 });
             }
             ev = {

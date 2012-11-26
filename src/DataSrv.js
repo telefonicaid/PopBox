@@ -478,7 +478,7 @@ function checkData(queue, dbTr, transactionId) {
         } else {
           data = {
             'payload' : null,
-            'transaction': extTransactionId
+            'transactionId': extTransactionId
           };
           //EMIT Expired
           ev = {
