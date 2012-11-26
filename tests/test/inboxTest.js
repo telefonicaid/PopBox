@@ -49,7 +49,7 @@ describe('Inbox', function () {
             },
             function (callback) {
 
-                trans.payload='Test 2'
+                trans.payload='Test 2';
                 rest.postJson(protocol + '://' + host + ':' + port + '/trans',
                     trans).on('complete', function (data, response) {
                         callback();
@@ -61,13 +61,15 @@ describe('Inbox', function () {
                 var checkQueue = function (queue, callback) {
                     rest.post(protocol + '://' + host + ':' + port + '/queue/' + queue + '/pop')
                         .on('complete', function (data, response) {
+                            data.should.not.have.property('error');
+                            data.should.have.property('ok');
                             data.should.have.property('data');
                             data.data.length.should.be.equal(2);
                             data.data.should.include('Test');
                             data.data.should.include('Test 2');
                             callback();
                         });
-                }
+                };
 
                 checkQueue('q1', checkQueue.bind({}, 'q2', callback));
             }
@@ -113,8 +115,10 @@ describe('Inbox', function () {
             function (callback) {
                 rest.post(protocol + '://' + host + ':' + port + '/queue/q1/pop?max=1')
                     .on('complete', function (data, response) {
-                        data.should.have.property('data');
-                        data.data.length.should.be.equal(1);
+                    data.should.not.have.property('error');
+                    data.should.have.property('ok');
+                    data.should.have.property('data');
+                    data.data.length.should.be.equal(1);
                         (data.data.pop()).should.be.equal('High priority');
                         callback();
                     });
@@ -143,7 +147,10 @@ describe('Inbox', function () {
                     {headers: {'Accept': 'application/json'}})
                     .on('complete', function (data, response) {
                         //console.log(data);
-                        data.data.length.should.be.equal(0);
+                       data.should.not.have.property('error');
+                       data.should.have.property('ok');
+                       data.should.have.property('data');
+                       data.data.length.should.be.equal(0);
                         cb();
 
                     });
@@ -183,6 +190,9 @@ describe('Inbox', function () {
                 rest.post(protocol + '://' + host + ':' + port + '/queue/q1/pop?timeout=3',
                     {headers: {'Accept': 'application/json'}})
                     .on('complete', function (data, response) {
+                        data.should.not.have.property('error');
+                        data.should.have.property('ok');
+                        data.should.have.property('data');
                         data.data.length.should.be.equal(1);
                         data.data.should.include('Test timeout');
                         cb();
