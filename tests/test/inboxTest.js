@@ -141,7 +141,7 @@ describe('Inbox', function () {
         this.timeout(8000); //Mocha timeout
 
         var trans5 = {
-            'payload': 'Test timeout',
+            'payload': 'Test timeout - empty data',
             'priority': 'L',
             'callback': protocol + '://foo.bar',
             'queue': [
@@ -184,7 +184,7 @@ describe('Inbox', function () {
     it('Should not return empty data (timeout)', function (done) {
         this.timeout(8000); //Mocha timeout
         var trans6 = {
-            'payload': 'Test timeout',
+            'payload': 'Test timeout - NOT empty data',
             'priority': 'L',
             'callback': protocol + '://foo.bar',
             'queue': [
