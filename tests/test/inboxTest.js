@@ -202,7 +202,7 @@ describe('Inbox', function () {
                         data.should.have.property('ok');
                         data.should.have.property('data');
                         data.data.length.should.be.equal(1);
-                        data.data.should.include('Test timeout');
+                        data.data.should.include('Test timeout - NOT empty data');
                         cb();
                     }).on('error', onError);
             },
