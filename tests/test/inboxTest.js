@@ -169,7 +169,7 @@ describe('Inbox', function () {
                         trans5).on('success', function (data, response) {
                             cb();
                         }).on('error', onError);
-                }, 4000);
+                }, 2000);
 
             }
         ];
