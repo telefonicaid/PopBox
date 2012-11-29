@@ -33,6 +33,9 @@ var makeRequest = function (options, content, cb) {
         cb(e, null, null);
     });
     if (options.method === 'POST' || options.method === 'PUT') {
+        if (options.headers && options.headers['content-type'] === 'application/json'){
+            content = JSON.stringify(content);
+        }
         req.write(content);
     }
 

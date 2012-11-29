@@ -5,8 +5,6 @@ var redis = require("redis"),
     rc = redis.createClient(6379, 'localhost');
 var utils = require('./utils.js');
 
-var rest = require('restler');
-
 var trans, trans1 = {};
 
 var options = {};
@@ -22,15 +20,21 @@ describe('Bugs', function () {
 
     after(function (done) {
         this.timeout(8000);
-        rc.flushall();
-        rc.end();
-        done();
+
+        rc.flushall(function(res) {
+            rc.end();
+            done();
+        });
     });
+
     beforeEach(function (done) {
         this.timeout(8000);
-        rc.flushall();
-        done();
+
+        rc.flushall(function(res) {
+            done();
+        });
     });
+
     it('should return empty data', function (done) {
 
         var datos_PUT = {
@@ -42,13 +46,14 @@ describe('Bugs', function () {
                 options.method = 'PUT';
                 options.path = '/trans/fake';
 
-                utils.makeRequest(options, JSON.stringify(datos_PUT), function (err, response, data) {
+                utils.makeRequest(options, datos_PUT, function (err, response, data) {
                     should.not.exist(err);
                     response.statusCode.should.be.equal(200);
                     data.data.should.be.equal('empty data');
                     callback();
                 });
             },
+
             function (callback) {
                 options.method = 'GET';
                 options.path = '/trans/fake';
@@ -61,9 +66,10 @@ describe('Bugs', function () {
                 });
             }
         ],
-            function () {
-                done();
-            });
+
+        function () {
+            done();
+        });
 
     });
 
@@ -84,12 +90,15 @@ describe('Bugs', function () {
             ],
             'expirationDate': Math.round(new Date().getTime() / 1000 + 60)
         };
+
         var hash_code;
+
         async.series([
             function (callback) {
                 options.method = 'POST';
                 options.path = '/trans';
-                utils.makeRequest(options, JSON.stringify(datos_POST), function(err, response, data){
+
+                utils.makeRequest(options, datos_POST, function(err, response, data){
                     should.not.exist(err);
                     should.exist(data.data);
                     response.statusCode.should.be.equal(200);
@@ -97,10 +106,12 @@ describe('Bugs', function () {
                     callback();
                 });
             },
+
             function (callback) {
                 options.method = 'PUT';
                 options.path = '/trans/' + hash_code;
-                utils.makeRequest(options, JSON.stringify(datos_PUT), function(err, response, data){
+
+                utils.makeRequest(options, datos_PUT, function(err, response, data){
                     should.not.exist(err);
                     should.exist(data.errors);
 
@@ -113,6 +124,7 @@ describe('Bugs', function () {
             function (callback) {
                 options.method = 'GET';
                 options.path = '/trans/' + hash_code;
+
                 utils.makeRequest(options, null, function(err, response, data){
                     should.not.exist(err);
                     response.statusCode.should.be.equal(200);
@@ -121,27 +133,33 @@ describe('Bugs', function () {
                 });
             }
         ],
-            function () {
-                done();
-            });
+
+        function () {
+            done();
+        });
 
     });
 
     it('should return errors (does not exist [id])', function (done) {
+
         async.series([
+
             function (callback) {
                 options.method = 'POST';
                 options.path = '/trans/false/expirationDate';
-                utils.makeRequest(options, '2147483645', function(err, response, data){
+
+                utils.makeRequest(options, 2147483645, function(err, response, data){
                     should.not.exist(err);
                     response.statusCode.should.be.equal(400);
                     data.errors.pop().should.be.equal('false does not exist');
                     callback();
                 });
             },
+
             function (callback) {
                 options.method = 'GET';
                 options.path = '/trans/false';
+
                 utils.makeRequest(options, null, function(err, response, data){
                     should.not.exist(err);
                     response.statusCode.should.be.equal(200);
@@ -149,20 +167,24 @@ describe('Bugs', function () {
                     callback();
                 });
             },
+
             function (callback) {
                 options.method = 'POST';
                 options.path = '/trans/false/payload';
-                utils.makeRequest(options, JSON.stringify('hola'), function(err, response, data){
+
+                utils.makeRequest(options, 'hola', function(err, response, data){
                     should.not.exist(err);
                     response.statusCode.should.be.equal(400);
                     data.errors.pop().should.be.equal('false does not exist');
                     callback();
                 });
             },
+
             function (callback) {
                 options.method = 'GET';
                 options.path = '/trans/false';
-                utils.makeRequest(options, '2147483645', function(err, response, data){
+
+                utils.makeRequest(options, null, function(err, response, data){
                     should.not.exist(err);
                     response.statusCode.should.be.equal(200);
                     should.not.exist(data.data);
@@ -171,9 +193,10 @@ describe('Bugs', function () {
             }
 
         ],
-            function () {
-                done();
-            });
+
+        function () {
+            done();
+        });
 
     });
 });
