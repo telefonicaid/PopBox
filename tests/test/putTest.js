@@ -2,7 +2,7 @@ var should = require('should');
 var async = require('async');
 var config = require('./config.js');
 var utils = require('./utils');
-var redis = require("redis"),rc = redis.createClient(6379,'localhost');
+var redis = require('redis'), rc = redis.createClient(6379, 'localhost');
 
 
 var HOST = config.hostname;
@@ -29,21 +29,21 @@ describe('#PUT', function() {
         heads['content-type'] = 'application/json';
         var options = { host: HOST, port: PORT, path: '/trans/' , method: 'POST', headers: heads};
 
-        utils.makeRequest(options, JSON.stringify(trans1), function (error, response, data) {
+        utils.makeRequest(options, JSON.stringify(trans1), function(error, response, data) {
             data.should.have.property('data');
             trans = {id: data.data, value: trans1};
             done();
         });
     });
 
-    afterEach(function (done) {
+    afterEach(function(done) {
         this.timeout(8000);
         rc.flushall();
         rc.end();
         done();
     });
 
-    after(function (done) {
+    after(function(done) {
         this.timeout(8000);
         rc.flushall();
         rc.end();
@@ -60,7 +60,7 @@ describe('#PUT', function() {
             function(callback) {
 
                 var heads = {};
-                heads['content-type'] = 'application/json'
+                heads['content-type'] = 'application/json';
                 heads['accept'] = 'application/json';
                 var options = { host: HOST, port: PORT, path: '/trans/' + trans.id, method: 'PUT', headers: heads};
 
@@ -105,7 +105,7 @@ describe('#PUT', function() {
             function(callback) {
 
                 var heads = {};
-                heads['content-type'] = 'application/json'
+                heads['content-type'] = 'application/json';
                 heads['accept'] = 'application/json';
                 var options = { host: HOST, port: PORT, path: '/trans/' + trans.id, method: 'PUT', headers: heads};
 

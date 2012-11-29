@@ -1,7 +1,7 @@
 var should = require('should');
 var async = require('async');
 var config = require('./config.js');
-var utils = require('./utils.js')
+var utils = require('./utils.js');
 
 var HOST = config.hostname;
 var PORT = config.port;
@@ -22,7 +22,7 @@ var retrieveAllTranstactions = function(ids, done) {
 
         var completed = 0;
 
-        for (var i = 0; i < N_TRANS; i++ ) {
+        for (var i = 0; i < N_TRANS; i++) {
             data.data.should.include(MESSAGE_INDEX + i);
 
             //Test the state of the queue
@@ -45,7 +45,7 @@ var retrieveAllTranstactions = function(ids, done) {
         }
     });
 
-}
+};
 
 var retrieveSomeTransactions = function(N_PETS, done) {
 
@@ -58,16 +58,16 @@ var retrieveSomeTransactions = function(N_PETS, done) {
         data.should.have.property('data');
         data.data.should.have.lengthOf(N_PETS);
 
-        for (var i = 0; i < N_PETS; i++ ) {
+        for (var i = 0; i < N_PETS; i++) {
             data.data[i].substring(0, MESSAGE_INDEX.length).should.be.equal(MESSAGE_INDEX);
         }
 
         done();
 
     });
-}
+};
 
-var afterAll = function (rc, done) {
+var afterAll = function(rc, done) {
 
     var heads = {};
     heads['accept'] = 'application/json';
@@ -87,7 +87,7 @@ var afterAll = function (rc, done) {
         //Test completed
         done();
     });
-}
+};
 
 describe('Peek from High Priority Queue', function() {
 
@@ -228,7 +228,7 @@ describe('Peek from High and Low Priority Queue', function() {
         }
     });
 
-    after(function (done) {
+    after(function(done) {
 
         var heads = {};
         heads['accept'] = 'application/json';
@@ -270,7 +270,7 @@ describe('Peek from High and Low Priority Queue', function() {
             data.should.have.property('data');
             data.data.should.have.lengthOf(N_PETS);
 
-            for (var i = 0; i < N_TRANS; i +=2) {
+            for (var i = 0; i < N_TRANS; i += 2) {
                 data.data.should.include(MESSAGE_INDEX + i);
             }
 
@@ -293,7 +293,7 @@ describe('Peek from High and Low Priority Queue', function() {
             data.should.have.property('data');
             data.data.should.have.lengthOf(N_PETS);
 
-            for (var i = 0; i < N_TRANS; i +=2) {
+            for (var i = 0; i < N_TRANS; i += 2) {
                 data.data.should.include(MESSAGE_INDEX + i);
             }
 
@@ -329,7 +329,7 @@ describe('Peek from High and Low Priority Queue', function() {
 
 describe('Peek from an empty queue', function() {
 
-    it ('Should return an empty response immediately when the queue is empty', function(done) {
+    it('Should return an empty response immediately when the queue is empty', function(done) {
 
         this.timeout(1000);
 
@@ -343,4 +343,4 @@ describe('Peek from an empty queue', function() {
             done();
         });
     });
-})
+});

@@ -2,7 +2,7 @@ var should = require('should');
 var async = require('async');
 var config = require('./config.js');
 var utils = require('./utils.js');
-var redis = require("redis"),rc = redis.createClient(6379,'localhost');
+var redis = require('redis'), rc = redis.createClient(6379, 'localhost');
 
 
 var HOST = config.hostname;
@@ -26,7 +26,7 @@ describe('Provision', function() {
         };
 
         var heads = {};
-        heads['content-type'] = 'application/json'
+        heads['content-type'] = 'application/json';
         var options = { host: HOST, port: PORT, path: '/trans/', method: 'POST', headers: heads};
         utils.makeRequest(options, JSON.stringify(trans1), function(error, response, data) {
             response.statusCode.should.be.equal(200);
@@ -38,15 +38,15 @@ describe('Provision', function() {
 
             done();
 
-        })
+        });
     });
-    afterEach(function (done) {
+    afterEach(function(done) {
         this.timeout(8000);
         rc.flushall();
         rc.end();
         done();
     });
-    after(function (done) {
+    after(function(done) {
         this.timeout(8000);
         rc.flushall();
         rc.end();
@@ -61,7 +61,7 @@ describe('Provision', function() {
                 Math.round(new Date().getTime() / 1000 + 2);
 
             var heads = {};
-            heads['content-type'] = 'application/json'
+            heads['content-type'] = 'application/json';
             var options = { host: HOST, port: PORT, path: '/trans/', method: 'POST', headers: heads};
             utils.makeRequest(options, JSON.stringify(trans1), function(error, response, data) {
 
@@ -87,9 +87,9 @@ describe('Provision', function() {
                     utils.makeRequest(options, null, function(error, response, data) {
                         data.should.eql({});
                         done();
-                    })
+                    });
                 }, 6000);
-            }
+            };
         });
     });
 
