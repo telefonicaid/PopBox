@@ -29,7 +29,7 @@ describe('#PUT', function() {
         heads['content-type'] = 'application/json';
         var options = { host: HOST, port: PORT, path: '/trans/' , method: 'POST', headers: heads};
 
-        utils.makeRequest(options, JSON.stringify(trans1), function(error, response, data) {
+        utils.makeRequest(options, trans1, function(error, response, data) {
             data.should.have.property('data');
             trans = {id: data.data, value: trans1};
             done();
@@ -38,25 +38,32 @@ describe('#PUT', function() {
 
     afterEach(function(done) {
         this.timeout(8000);
+
         rc.flushall();
         rc.end();
+
         done();
     });
 
     after(function(done) {
         this.timeout(8000);
+
         rc.flushall();
         rc.end();
+
         done();
     });
 
     it('should change payload,callback and expirationDate', function(done) {
+
         var datos_PUT = {
             'payload': 'MESSAGE 1',
             'callback': 'www.fi.upm.es',
             'expirationDate': 1447483646
         };
+
         async.series([
+
             function(callback) {
 
                 var heads = {};
@@ -64,7 +71,7 @@ describe('#PUT', function() {
                 heads['accept'] = 'application/json';
                 var options = { host: HOST, port: PORT, path: '/trans/' + trans.id, method: 'PUT', headers: heads};
 
-                utils.makeRequest(options, JSON.stringify(datos_PUT), function(error, response, data) {
+                utils.makeRequest(options, datos_PUT, function(error, response, data) {
                     response.statusCode.should.be.equal(200);
                     callback();
                 });
@@ -90,18 +97,22 @@ describe('#PUT', function() {
                 });
             }
         ],
-            function() {
-                done();
-            });
+
+        function() {
+            done();
+        });
     });
 
     it('should not change priority', function(done) {
+
         var datos_PUT = {
             'payload': 'MESSAGE 2',
             'priority': 'L',
             'expirationDate': 1447483646
         };
+
         async.series([
+
             function(callback) {
 
                 var heads = {};
@@ -109,7 +120,7 @@ describe('#PUT', function() {
                 heads['accept'] = 'application/json';
                 var options = { host: HOST, port: PORT, path: '/trans/' + trans.id, method: 'PUT', headers: heads};
 
-                utils.makeRequest(options, JSON.stringify(datos_PUT), function(error, response, data) {
+                utils.makeRequest(options, datos_PUT, function(error, response, data) {
                     response.statusCode.should.be.equal(200);
                     callback();
                 });
@@ -137,9 +148,10 @@ describe('#PUT', function() {
 
             }
         ],
-            function() {
-                done();
-            });
+
+        function() {
+            done();
+        });
     });
 
 });

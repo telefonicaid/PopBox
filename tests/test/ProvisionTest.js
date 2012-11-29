@@ -28,7 +28,8 @@ describe('Provision', function() {
         var heads = {};
         heads['content-type'] = 'application/json';
         var options = { host: HOST, port: PORT, path: '/trans/', method: 'POST', headers: heads};
-        utils.makeRequest(options, JSON.stringify(trans1), function(error, response, data) {
+
+        utils.makeRequest(options, trans1, function(error, response, data) {
             response.statusCode.should.be.equal(200);
             should.not.exist(error);
 
@@ -40,30 +41,38 @@ describe('Provision', function() {
 
         });
     });
+
     afterEach(function(done) {
         this.timeout(8000);
+
         rc.flushall();
         rc.end();
+
         done();
     });
+
     after(function(done) {
         this.timeout(8000);
+
         rc.flushall();
         rc.end();
+
         done();
     });
+
     describe('Expiration times:', function() {
 
-        it('Should return an empty responses ' +
-            'for expired transactions', function(done) {
+        it('Should return an empty responses for expired transactions', function(done) {
             this.timeout(10000); //Mocha timeout
+
             trans.value.expirationDate =
                 Math.round(new Date().getTime() / 1000 + 2);
 
             var heads = {};
             heads['content-type'] = 'application/json';
             var options = { host: HOST, port: PORT, path: '/trans/', method: 'POST', headers: heads};
-            utils.makeRequest(options, JSON.stringify(trans1), function(error, response, data) {
+
+            utils.makeRequest(options, trans1, function(error, response, data) {
 
                 should.not.exist(error);
 

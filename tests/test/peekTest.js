@@ -30,6 +30,7 @@ var retrieveAllTranstactions = function(ids, done) {
             heads['accept'] = 'application/json';
             var optionsState = { host: HOST, port: PORT, path: '/trans/' + ids[i] + '?queues=Pending',
                 headers: heads };
+
             utils.makeRequest(optionsState, null, function(error, response, data) {
                 should.not.exist(error);
 
@@ -113,7 +114,7 @@ describe('Peek from High Priority Queue', function() {
             var options = { port: PORT, host: HOST, path: '/trans', method: 'POST',
                 headers: heads};
 
-            utils.makeRequest(options, JSON.stringify(trans), function(err, response, data) {
+            utils.makeRequest(options, trans, function(err, response, data) {
 
                 data.should.have.property('data');
                 ids[completed] = data.data;
@@ -164,7 +165,7 @@ describe('Peek from Low Priority Queue', function() {
             var options = { port: PORT, host: HOST, path: '/trans', method: 'POST',
                 headers: heads};
 
-            utils.makeRequest(options, JSON.stringify(trans), function(err, response, data) {
+            utils.makeRequest(options, trans, function(err, response, data) {
 
                 data.should.have.property('data');
                 ids[completed] = data.data;
@@ -215,7 +216,7 @@ describe('Peek from High and Low Priority Queue', function() {
             var options = { port: PORT, host: HOST, path: '/trans', method: 'POST',
                 headers: heads};
 
-            utils.makeRequest(options, JSON.stringify(trans), function(err, response, data) {
+            utils.makeRequest(options, trans, function(err, response, data) {
 
                 data.should.have.property('data');
                 ids[completed] = data.data;

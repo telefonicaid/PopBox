@@ -20,15 +20,21 @@ describe('Bugs', function () {
 
     after(function (done) {
         this.timeout(8000);
+
         rc.flushall();
         rc.end();
+
         done();
     });
+
     beforeEach(function (done) {
         this.timeout(8000);
+
         rc.flushall();
+
         done();
     });
+
     it('should return empty data', function (done) {
 
         var datos_PUT = {
@@ -47,6 +53,7 @@ describe('Bugs', function () {
                     callback();
                 });
             },
+
             function (callback) {
                 options.method = 'GET';
                 options.path = '/trans/fake';
@@ -59,9 +66,10 @@ describe('Bugs', function () {
                 });
             }
         ],
-            function () {
-                done();
-            });
+
+        function () {
+            done();
+        });
 
     });
 
@@ -82,11 +90,14 @@ describe('Bugs', function () {
             ],
             'expirationDate': Math.round(new Date().getTime() / 1000 + 60)
         };
+
         var hash_code;
+
         async.series([
             function (callback) {
                 options.method = 'POST';
                 options.path = '/trans';
+
                 utils.makeRequest(options, datos_POST, function(err, response, data){
                     should.not.exist(err);
                     should.exist(data.data);
@@ -95,9 +106,11 @@ describe('Bugs', function () {
                     callback();
                 });
             },
+
             function (callback) {
                 options.method = 'PUT';
                 options.path = '/trans/' + hash_code;
+
                 utils.makeRequest(options, datos_PUT, function(err, response, data){
                     should.not.exist(err);
                     should.exist(data.errors);
@@ -111,6 +124,7 @@ describe('Bugs', function () {
             function (callback) {
                 options.method = 'GET';
                 options.path = '/trans/' + hash_code;
+
                 utils.makeRequest(options, null, function(err, response, data){
                     should.not.exist(err);
                     response.statusCode.should.be.equal(200);
@@ -119,17 +133,21 @@ describe('Bugs', function () {
                 });
             }
         ],
-            function () {
-                done();
-            });
+
+        function () {
+            done();
+        });
 
     });
 
     it('should return errors (does not exist [id])', function (done) {
+
         async.series([
+
             function (callback) {
                 options.method = 'POST';
                 options.path = '/trans/false/expirationDate';
+
                 utils.makeRequest(options, 2147483645, function(err, response, data){
                     should.not.exist(err);
                     response.statusCode.should.be.equal(400);
@@ -137,9 +155,11 @@ describe('Bugs', function () {
                     callback();
                 });
             },
+
             function (callback) {
                 options.method = 'GET';
                 options.path = '/trans/false';
+
                 utils.makeRequest(options, null, function(err, response, data){
                     should.not.exist(err);
                     response.statusCode.should.be.equal(200);
@@ -147,9 +167,11 @@ describe('Bugs', function () {
                     callback();
                 });
             },
+
             function (callback) {
                 options.method = 'POST';
                 options.path = '/trans/false/payload';
+
                 utils.makeRequest(options, 'hola', function(err, response, data){
                     should.not.exist(err);
                     response.statusCode.should.be.equal(400);
@@ -157,9 +179,11 @@ describe('Bugs', function () {
                     callback();
                 });
             },
+
             function (callback) {
                 options.method = 'GET';
                 options.path = '/trans/false';
+
                 utils.makeRequest(options, null, function(err, response, data){
                     should.not.exist(err);
                     response.statusCode.should.be.equal(200);
@@ -169,9 +193,10 @@ describe('Bugs', function () {
             }
 
         ],
-            function () {
-                done();
-            });
+
+        function () {
+            done();
+        });
 
     });
 });
