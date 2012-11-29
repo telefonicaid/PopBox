@@ -4,9 +4,9 @@ node_js:
  - 0.7
 
 branches:
-only:
- - unstable
- - master
+ only:
+  - unstable
+  - master
 
 install:
  - sudo ./install.sh
