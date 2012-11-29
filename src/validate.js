@@ -17,7 +17,7 @@ var config = require('./config.js');
 var path = require('path');
 var log = require('PDITCLogger');
 var logger = log.newLogger();
-logger.prefix = path.basename(module.filename,'.js');
+logger.prefix = path.basename(module.filename, '.js');
 
 var MAX_TIMESTAMP = config.MAX_TIMESTAMP;
 
@@ -41,21 +41,21 @@ function errorsTrans(trans) {
     else if (trans.queue.constructor !== Array) {
         errors.push('invalid queue type');
     }
-    else if (trans.queue.length >maxNumQueues) {
+    else if (trans.queue.length > maxNumQueues) {
         errors.push('too many queues: maximum ' + '' + maxNumQueues + ')');
     }
     else {
-        if (!trans.queue.every(function (value) {
-            return (value && "id" in value);
+        if (!trans.queue.every(function(value) {
+            return (value && 'id' in value);
         })) {
             errors.push('invalid queue element');
         }
     }
 
-   
+
     errorsP = errorsPayload(trans.payload, true);
     errors = errors.concat(errorsP);
-    
+
     errorsExpDate = errorsExpirationDate(trans.expirationDate);
     errors = errors.concat(errorsExpDate);
     return errors;
@@ -125,7 +125,7 @@ exports.errorsExpirationDate = errorsExpirationDate;
 /**
  *
  * @param {string} payload.
- * @param {boolean} required if the payload is required
+ * @param {boolean} required if the payload is required.
  * @return {Array.String} return array with error information.
  */
 exports.errorsPayload = errorsPayload;
