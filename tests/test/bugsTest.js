@@ -1,16 +1,24 @@
 var should = require('should');
-var rest = require('restler');
 var async = require('async');
 var config = require('./config.js');
-var redis = require("redis"),rc = redis.createClient(6379,'localhost');
+var redis = require("redis"),
+    rc = redis.createClient(6379, 'localhost');
+var utils = require('./utils.js');
 
-var host = config.hostname;
-var port = config.port;
-var protocol = config.protocol;
+var rest = require('restler');
 
 var trans, trans1 = {};
 
-describe('Bugs', function() {
+var options = {};
+options.host = config.hostname;
+options.hostname = config.hostname;
+options.port = config.port;
+
+options.headers = {};
+options.headers['content-type'] = 'application/json';
+options.headers['accept'] = 'application/json';
+
+describe('Bugs', function () {
 
     after(function (done) {
         this.timeout(8000);
@@ -23,146 +31,149 @@ describe('Bugs', function() {
         rc.flushall();
         done();
     });
-        it('should return empty data', function(done) {
+    it('should return empty data', function (done) {
 
-            var datos_PUT = {
-                'priority': 'L'
-            };
+        var datos_PUT = {
+            'priority': 'L'
+        };
 
-            async.series([
-                function(callback) {
-                    rest.put(protocol + '://' + host + ':' + port + '/trans/' + 'false',
-                        {headers: {'Content-Type': 'application/json',
-                            'Accept': 'application/json'},
-                            data: JSON.stringify(datos_PUT)})
-                        .on('complete', function(data, response) {
-                            //console.log(data.data+'\n')
-                            response.statusCode.should.be.equal(200);
-                            data.data.should.be.equal('empty data');
-                            callback();
-                        });
-                },
+        async.series([
+            function (callback) {
+                options.method = 'PUT';
+                options.path = '/trans/fake';
 
-                function(callback) {
-                    rest.get(protocol + '://' + host + ':' + port + '/trans/' + 'false',
-                        {headers: {'Accept': 'application/json'}}).on('complete',
-                        function(data, response) {
-                            response.statusCode.should.be.equal(200);
-                            true.should.be.equal(data.data == null);
-                            callback();
-                        });
-                }
-            ],
-                function() {
-                    done();
+                utils.makeRequest(options, JSON.stringify(datos_PUT), function (err, response, data) {
+                    should.not.exist(err);
+                    response.statusCode.should.be.equal(200);
+                    data.data.should.be.equal('empty data');
+                    callback();
                 });
+            },
+            function (callback) {
+                options.method = 'GET';
+                options.path = '/trans/fake';
 
-        });
-
-        it('should not modify the expirationDate (out of range)', function(done) {
-
-            var datos_PUT = {
-                'expirationDate': 11111111111111
-            };
-
-            var datos_POST = {
-                'payload': '{\"spanish\": \"prueba1\", \"english\": ' +
-                    '\"test1\", \"to\": \"Mr Lopez\"}',
-                'priority': 'H',
-                'callback': protocol + '://foo.bar',
-                'queue': [
-                    { 'id': 'q1' },
-                    { 'id': 'q2' }
-                ],
-                'expirationDate': Math.round(new Date().getTime() / 1000 + 60)
-            };
-            var hash_code;
-            async.series([
-                function(callback) {
-                    rest.post(protocol + '://' + host + ':' + port + '/trans/',
-                        {headers: {'Content-Type': 'application/json',
-                            'Accept': 'application/json'},
-                            data: JSON.stringify(datos_POST)})
-                        .on('complete', function(data, response) {
-                            response.statusCode.should.be.equal(200);
-                            hash_code = data.data;
-                            // console.log(hash_code);
-                            callback();
-                        });
-                },
-                function(callback) {
-                    rest.put(protocol + '://' + host + ':' + port + '/trans/' + hash_code,
-                        {headers: {'Content-Type': 'application/json',
-                            'Accept': 'application/json'},
-                            data: JSON.stringify(datos_PUT)})
-                        .on('complete', function(data, response) {
-                            response.statusCode.should.be.equal(400);
-                            data.errors.pop().should.be.equal('expirationDate out of range');
-                            callback();
-                        });
-                },
-
-                function(callback) {
-                    rest.get(protocol + '://' + host + ':' + port + '/trans/' + hash_code,
-                        {headers: {'Accept': 'application/json'}}).on('complete',
-                        function(data, response) {
-                            response.statusCode.should.be.equal(200);
-                            data.expirationDate.should.not.be.equal(1111111111111);
-                            callback();
-                        });
-                }
-            ],
-                function() {
-                    done();
+                utils.makeRequest(options, null, function (err, response, data) {
+                    should.not.exist(err);
+                    response.statusCode.should.be.equal(200);
+                    should.not.exist(data.data);
+                    callback();
                 });
+            }
+        ],
+            function () {
+                done();
+            });
 
-        });
+    });
 
-        it('should return errors (does not exist [id])', function(done) {
-            async.series([
-                function(callback) {
-                    rest.post(protocol + '://' + host + ':' + port + '/trans/' + 'false/' + 'expirationDate', {headers: {'Content-Type': 'application/json',
-                        'Accept': 'application/json'},
-                        data: 2147483645})
-                        .on('complete', function(data, response) {
-                            //response.statusCode.should.be.equal(400);
-                            data.errors.pop().should.be.equal('false does not exist');
-                            callback();
-                        });
-                },
-                function(callback) {
-                    rest.get(protocol + '://' + host + ':' + port + '/trans/' + 'false',
-                        {headers: {'Accept': 'application/json'}}).on('complete',
-                        function(data, response) {
-                            response.statusCode.should.be.equal(200);
-                            true.should.be.equal(data.data == null);
-                            callback();
-                        });
-                },
-                function(callback) {
-                    rest.post(protocol + '://' + host + ':' + port + '/trans/' + 'false/' + 'payload', {headers: {'Content-Type': 'application/json',
-                        'Accept': 'application/json'},
-                        data: '\"Hola\"'})
-                        .on('complete', function(data, response) {
-                            response.statusCode.should.be.equal(400);
-                            data.errors.pop().should.be.equal('false does not exist');
-                            callback();
-                        });
-                },
-                function(callback) {
-                    rest.get(protocol + '://' + host + ':' + port + '/trans/' + 'false',
-                        {headers: {'Accept': 'application/json'}}).on('complete',
-                        function(data, response) {
-                            response.statusCode.should.be.equal(200);
-                            true.should.be.equal(data.data == null);
-                            callback();
-                        });
-                }
+    it('should not modify the expirationDate (out of range)', function (done) {
 
+        var datos_PUT = {
+            'expirationDate': 11111111111111
+        };
+
+        var datos_POST = {
+            'payload': '{\"spanish\": \"prueba1\", \"english\": ' +
+                '\"test1\", \"to\": \"Mr Lopez\"}',
+            'priority': 'H',
+            'callback': 'http://foo.bar',
+            'queue': [
+                { 'id': 'q1' },
+                { 'id': 'q2' }
             ],
-                function() {
-                    done();
+            'expirationDate': Math.round(new Date().getTime() / 1000 + 60)
+        };
+        var hash_code;
+        async.series([
+            function (callback) {
+                options.method = 'POST';
+                options.path = '/trans';
+                utils.makeRequest(options, JSON.stringify(datos_POST), function(err, response, data){
+                    should.not.exist(err);
+                    should.exist(data.data);
+                    response.statusCode.should.be.equal(200);
+                    hash_code = data.data;
+                    callback();
                 });
+            },
+            function (callback) {
+                options.method = 'PUT';
+                options.path = '/trans/' + hash_code;
+                utils.makeRequest(options, JSON.stringify(datos_PUT), function(err, response, data){
+                    should.not.exist(err);
+                    should.exist(data.errors);
 
-        });
+                    response.statusCode.should.be.equal(400);
+                    data.errors.should.include('expirationDate out of range');
+                    callback();
+                });
+            },
+
+            function (callback) {
+                options.method = 'GET';
+                options.path = '/trans/' + hash_code;
+                utils.makeRequest(options, null, function(err, response, data){
+                    should.not.exist(err);
+                    response.statusCode.should.be.equal(200);
+                    data.expirationDate.should.not.be.equal(1111111111111);
+                    callback();
+                });
+            }
+        ],
+            function () {
+                done();
+            });
+
+    });
+
+    it('should return errors (does not exist [id])', function (done) {
+        async.series([
+            function (callback) {
+                options.method = 'POST';
+                options.path = '/trans/false/expirationDate';
+                utils.makeRequest(options, '2147483645', function(err, response, data){
+                    should.not.exist(err);
+                    response.statusCode.should.be.equal(400);
+                    data.errors.pop().should.be.equal('false does not exist');
+                    callback();
+                });
+            },
+            function (callback) {
+                options.method = 'GET';
+                options.path = '/trans/false';
+                utils.makeRequest(options, null, function(err, response, data){
+                    should.not.exist(err);
+                    response.statusCode.should.be.equal(200);
+                    should.not.exist(data.data);
+                    callback();
+                });
+            },
+            function (callback) {
+                options.method = 'POST';
+                options.path = '/trans/false/payload';
+                utils.makeRequest(options, JSON.stringify('hola'), function(err, response, data){
+                    should.not.exist(err);
+                    response.statusCode.should.be.equal(400);
+                    data.errors.pop().should.be.equal('false does not exist');
+                    callback();
+                });
+            },
+            function (callback) {
+                options.method = 'GET';
+                options.path = '/trans/false';
+                utils.makeRequest(options, '2147483645', function(err, response, data){
+                    should.not.exist(err);
+                    response.statusCode.should.be.equal(200);
+                    should.not.exist(data.data);
+                    callback();
+                });
+            }
+
+        ],
+            function () {
+                done();
+            });
+
+    });
 });

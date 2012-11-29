@@ -1,5 +1,14 @@
 http = require('http');
 
+Array.prototype.contains = function (element) {
+    'use strict';
+    for (var i = 0; i < this.length; i++) {
+        if (this[i] == element) {
+            return true;
+        }
+    }
+};
+
 var makeRequest = function (options, content, cb) {
     'use strict';
     var data = '';
@@ -13,6 +22,9 @@ var makeRequest = function (options, content, cb) {
             data += chunk;
         });
         res.on('end', function () {
+            if (res.headers['content-type'].split(';').contains('application/json')){
+                data = JSON.parse(data);
+            }
             cb(null, res, data);
         });
     });
