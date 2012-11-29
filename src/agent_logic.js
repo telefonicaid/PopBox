@@ -48,7 +48,6 @@ function postTrans(req, res) {
                 };
                 emitter.emit('ACTION', ev);
                 res.send({errors: [err]}, 500);
-                logger.warning('onPushedTrans', err);
                 logger.info('postTrans', [
                     {error: [err]},
                     500
@@ -75,11 +74,30 @@ function postTrans(req, res) {
         ]);
     }
 }
+
+function postTransDelayed(req, res) {
+    'use strict';
+    logger.debug('postTransDelayed(req, res)', [req, res]);
+    var delay = Number(req.param('delay'));
+    if(delay) {
+        setTimeout(function() {
+            postTrans(req, { send: function() {}});    
+        }, delay * 1000);
+        logger.info('postTransDelayed', {"ok":true,"data":"unknown-delayed"});
+        res.send({"ok":true,"data":"unknown-delayed"});
+    }
+    else {
+        postTrans(req, res);
+    }
+}
+
 function putTransMeta(req, res) {
+    'use strict';
     logger.debug('putTransMeta(req, res)', [req, res]);
     var id = req.param('id_trans', null),
         empty = true, filteredReq = {}, errorsP, errorsExpDate, errors = [];
 
+    
     filteredReq.payload = req.body.payload;
     filteredReq.callback = req.body.callback;
     filteredReq.expirationDate = req.body.expirationDate;
@@ -89,6 +107,7 @@ function putTransMeta(req, res) {
         (filteredReq.expirationDate === undefined);
 
     if (empty) {
+        logger.info('putTransMeta',{ok: true, data: "empty data"});
         res.send({ok: true, data: "empty data"});
     }
     else {
@@ -102,13 +121,16 @@ function putTransMeta(req, res) {
         errors = errors.concat(errorsExpDate);
 
         if (errors.length > 0) {
+            logger.info('putTransMeta',{errors: errors}, 400);
             res.send({errors: errors}, 400);
         }
         else {
             dataSrv.updateTransMeta(id, req.body, function (e, data) {
                 if (e) {
+                    logger.info('putTransMeta',[{errors: [String(e)]}, 400]);
                     res.send({errors: [String(e)]}, 400);
                 } else {
+                    logger.info('putTransMeta',{ok: true, data: data});
                     res.send({ok: true, data: data});
                 }
             });
@@ -138,8 +160,8 @@ function postQueue(req, res) {
                     'error': err
                 };
                 emitter.emit('ACTION', ev);
-
-                res.send({errors: [err]}, 500);
+                logger.info('putTransMeta',[{errors: [String(err)]}, 400]);
+                res.send([{errors: [err]}, 500]);
             } else {
                 ev = {
                     'queue': queue,
@@ -148,10 +170,12 @@ function postQueue(req, res) {
                     'timestamp': new Date()
                 };
                 emitter.emit('ACTION', ev);
+                logger.info('putTransMeta',{ok: true});
                 res.send({ok: true});
             }
         });
     } else {
+        logger.info('putTransMeta',[{errors: errors}, 400]);
         res.send({errors: errors}, 400);
     }
 }
@@ -170,12 +194,15 @@ function transState(req, res) {
     if (id) {
         dataSrv.getTransaction(id, state, summary, function (e, data) {
             if (e) {
+                logger.info('transState',[{errors: [e]}, 400]);
                 res.send({errors: [e]}, 400);
             } else {
+                logger.info('transState',[{ok: true, data: data}]);
                 res.send({ok: true, data: data});
             }
         });
     } else {
+        logger.info('transState',[{errors: ['missing id']}, 400]);
         res.send({errors: ['missing id']}, 400);
     }
 }
@@ -188,12 +215,15 @@ function deleteTrans(req, res) {
     if (id) {
         dataSrv.deleteTrans(id, function (e) {
             if (e) {
+                logger.info('deleteTrans',[{errors: [e]}, 400]);
                 res.send({errors: [e]}, 400);
             } else {
+                logger.info('deleteTrans',{ok: true});
                 res.send({ok: true});
             }
         });
     } else {
+        logger.info('deleteTrans',[{errors: ['missing id']}, 400]);
         res.send({errors: ['missing id']}, 400);
     }
 }
@@ -206,16 +236,20 @@ function payloadTrans(req, res) {
 
 
     if (!id) {
+        logger.info('payloadTrans',[{errors: ['missing id']}, 400]);
         res.send({errors: ['missing id']}, 400);
     }
     else if (!req.body) {
+        logger.info('payloadTrans',[{errors: ['missing body']}, 400]);
         res.send({errors: ['missing body']}, 400);
     }
     else {
         dataSrv.setPayload(id, req.body, function (e) {
             if (e) {
+                logger.info('payloadTrans',[{errors: [String(e)]}, 400]);
                 res.send({errors: [String(e)]}, 400);
             } else {
+                logger.info('payloadTrans',{ok: true});
                 res.send({ok: true});
             }
         });
@@ -230,16 +264,20 @@ function callbackTrans(req, res) {
 
 
     if (!id) {
+        logger.info('callbackTrans',[{errors: ['missing id']}, 400]);
         res.send({errors: ['missing id']}, 400);
     }
     else if (!req.body) {
+        logger.info('callbackTrans',[{errors: ['missing body']}, 400]);
         res.send({errors: ['missing body']}, 400);
     }
     else {
         dataSrv.setUrlCallback(id, req.body, function (e) {
             if (e) {
+                logger.info('callbackTrans',[{errors: [String(e)]}, 400]);
                 res.send({errors: [String(e)]}, 400);
             } else {
+                logger.info('callbackTrans',{ok: true});
                 res.send({ok: true});
             }
         });
@@ -253,20 +291,24 @@ function expirationDate(req, res) {
     logger.debug("expirationDate - id  req.body", id, req.body);
     if (id) {
         errors = validate.errorsExpirationDate(req.body);
-        if (errors.length == 0) {
+        if (errors.length === 0) {
             logger.debug('putTransMeta - errors', errors);
             dataSrv.setExpirationDate(id, req.body, function (e) {
                 if (e) {
+                    logger.info('expirationDate',[{errors: [String(e)]}, 400]);
                     res.send({errors: [String(e)]}, 400);
                 } else {
+                    logger.info('expirationDate',{ok: true});
                     res.send({ok: true});
                 }
             });
         }
         else {
+            logger.info('expirationDate',[{errors: errors}, 400]);
             res.send({errors: errors}, 400);
         }
     } else {
+        logger.info('expirationDate',[{errors: ['missing id']}, 400]);
         res.send({errors: ['missing id']}, 400);
     }
 }
@@ -300,7 +342,7 @@ function getQueue(req, res) {
         logger.debug('onGetQueue(err, hQ, lQ, lastPop)', [err, hQ, lQ, lastPop]);
         if (err) {
             logger.info('onGetQueue', [String(err), 500]);
-            res.sendCond({errors: [String(err)]}, 500);
+            res.send({errors: [String(err)]}, 500);
         } else {
             var mapTrans = function (v) {
                 var id = v.split("|")[1];
@@ -311,6 +353,8 @@ function getQueue(req, res) {
             };
             hQ = hQ.map(mapTrans);
             lQ = lQ.map(mapTrans);
+            logger.info('onGetQueue', {ok: true, host: req.headers.host, lastPop: lastPop,
+                size: hQ.length + lQ.length, high: hQ, low: lQ  });
             res.send({ok: true, host: req.headers.host, lastPop: lastPop,
                 size: hQ.length + lQ.length, high: hQ, low: lQ  });
         }
@@ -348,6 +392,7 @@ function popQueue(req, res) {
     dataSrv.blockingPop(appPrefix, {id: queueId}, maxMsgs, tOut, function onBlockingPop(err, notifList) {
         logger.debug('onBlockingPop(err, notifList)', [err, notifList]);
         var messageList = [];
+        var transactionIdList = [];
         var ev = {};
         //stablish the timeout depending on blocking time
 
@@ -360,11 +405,15 @@ function popQueue(req, res) {
                 'error': err
             };
             emitter.emit('ACTION', ev);
+            logger.info('popQueue', [String(err), 500]);
             res.send({errors: [String(err)]}, 500);
         } else {
             if (notifList) {
                 messageList = notifList.map(function (notif) {
                     return notif && notif.payload;
+                });
+                transactionIdList = notifList.map(function(notif){
+                   return notif && notif.transactionId;
                 });
             }
             ev = {
@@ -375,7 +424,8 @@ function popQueue(req, res) {
                 'timestamp': new Date()
             };
             emitter.emit('ACTION', ev);
-            res.send({ok: true, data: messageList});
+            logger.info('popQueue', {ok: true, data: messageList, transactions: transactionIdList});
+            res.send({ok: true, data: messageList, transactions: transactionIdList});
         }
     });
 }
@@ -401,6 +451,7 @@ function peekQueue(req, res) {
         //stablish the timeout depending on blocking time
 
         if (err) {
+            logger.info('peekQueue', [String(err), 500]);
             res.send({errors: [String(err)]}, 500);
 
         } else {
@@ -410,7 +461,7 @@ function peekQueue(req, res) {
                     return notif && notif.payload;
                 });
             }
-
+            logger.info('peekQueue', {ok: true, data: messageList});
             res.send({ok: true, data: messageList});
         }
     });
@@ -419,7 +470,7 @@ function peekQueue(req, res) {
 function checkPerm(req, res, cb) {
     'use strict';
     logger.debug('checkPerm(req, res, cb)', [req, res, cb]);
-    var header = req.headers['authorization'] || '', // get the header
+    var header = req.headers.authorization || '', // get the header
         token = header.split(/\s+/).pop() || '', // and the encoded auth token
         auth = new Buffer(token, 'base64').toString(), // convert from base64
         parts = auth.split(/:/), // split on colon
@@ -438,7 +489,7 @@ function checkPerm(req, res, cb) {
         if (err) {
             res.send('ERROR:' + err, {
                 'Content-Type': 'text/plain',
-                'WWW-Authenticate': 'Basic realm="EL MAL TE PERSIGUE"' }, 500);
+                'WWW-Authenticate': 'Basic realm="PopBox"' }, 500);
         }
 
         else if (value) {
@@ -448,15 +499,15 @@ function checkPerm(req, res, cb) {
                 }
             }
             else {
-                res.send('Unauthorized ' + username + "," + password, {
+                res.send('Unauthorized ' + username, {
                     'Content-Type': 'text/plain',
-                    'WWW-Authenticate': 'Basic realm="EL MAL TE PERSIGUE"' }, 401);
+                    'WWW-Authenticate': 'Basic realm="PopBox"' }, 401);
             }
         }
         else {
             res.send('ERROR: Secure Queue does not exist', {
                 'Content-Type': 'text/plain',
-                'WWW-Authenticate': 'Basic realm="EL MAL TE PERSIGUE"' }, 500);
+                'WWW-Authenticate': 'Basic realm="PopBox"' }, 500);
         }
     });
 
@@ -477,15 +528,18 @@ function transMeta(req, res) {
         queues = 'All';
     }
     if (id === null) {
+        logger.info('transMeta', [{errors: ["missing id"]}, 400] );
         res.send({errors: ["missing id"]}, 400);
     } else {
         dataSrv.getTransactionMeta(id, function (errM, dataM) {
             if (errM) {
+                logger.info('transMeta', [{errors: [errM]}, 400] );
                 res.send({errors: [errM]}, 400);
             } else {
                 if (queues !== null) {
                     dataSrv.getTransaction(id, queues, summary, function (errQ, dataQ) {
                         if (errQ) {
+                            logger.info('transMeta', [{errors: [errQ]}, 400] );
                             res.send({errors: [errQ]}, 400);
                         } else {
                             dataM.queues = dataQ;
@@ -497,12 +551,14 @@ function transMeta(req, res) {
                                 }
                             }
                             //res.send({ok:true, data:dataM});
+                            logger.info('transMeta', dataM );
                             res.send(dataM);
                         }
                     });
                 }
                 else {
                     //res.send({ok:true, data:dataM});
+                    logger.info('transMeta', dataM);
                     res.send(dataM);
                 }
             }
@@ -524,4 +580,5 @@ exports.postQueue = postQueue;
 exports.checkPerm = checkPerm;
 exports.transMeta = transMeta;
 exports.putTransMeta = putTransMeta;
+exports.postTransDelayed = postTransDelayed; 
 

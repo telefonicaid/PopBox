@@ -13,6 +13,7 @@
  */
 
 function sendRender() {
+    'use strict';
     return function (req, res, next) {
         res.trueSend = res.send;
         res.send = function (body, headers, status ) {
@@ -35,7 +36,7 @@ function sendRender() {
             }
         };
         next();
-    }
+    };
 }
 
 exports.sendRender = sendRender;

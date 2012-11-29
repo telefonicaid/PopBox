@@ -264,13 +264,13 @@ var blockingPop = function (appPrefix, queue, maxElems, blockingTime, callback) 
       manageError(err, callback);
     }
     else {
-      blockingPop_aux(db);
+      blockingPopAux(db);
     }
   });
 
-  function blockingPop_aux(db) {
+  function blockingPopAux(db) {
     db.set(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
-      popDate);
+      popDate, function() {});
     //Do the blocking part (over the two lists)
     db.blpop(fullQueueIdH, fullQueueIdL, blockingTime,
       function onPopData(err, data) {
@@ -363,11 +363,11 @@ var peek = function (appPrefix, queue, maxElems, callback) {
         if(err) {
             manageError(err, callback);
         } else {
-            peek_aux(db);
+            peekAux(db);
         }
     });
 
-    function peek_aux(db) {
+    function peekAux(db) {
         db.lrange(fullQueueIdH, 0, maxElems - 1, function onRangeH(errH, dataH) {
 
             var dataHlength = dataH.length;
@@ -465,7 +465,7 @@ function checkData(queue, dbTr, transactionId) {
         manageError(err, callback);
       } else {
         if (data && data.payload) {
-          data.transactionId = transactionId;
+          data.transactionId = extTransactionId;
           //EMIT Delivered
           ev = {
             'transaction': extTransactionId,
@@ -476,7 +476,10 @@ function checkData(queue, dbTr, transactionId) {
           };
           emitter.emit('NEWSTATE', ev);
         } else {
-          data = null;
+          data = {
+            'payload' : null,
+            'transactionId': extTransactionId
+          };
           //EMIT Expired
           ev = {
             'transaction': extTransactionId,

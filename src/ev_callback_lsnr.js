@@ -23,6 +23,7 @@ logger.prefix = path.basename(module.filename,'.js');
 
 var init = function(emitter) {
   'use strict';
+    
   return function asyncInit(callback) {
     emitter.on('NEWSTATE', function onNewState(data) {
       logger.debug('onNewState(data)', [data]);
@@ -32,7 +33,7 @@ var init = function(emitter) {
       }
     });
     if (callback) {
-      callback(null);
+        callback(null, "ev_callback OK");
     }
   };
 };

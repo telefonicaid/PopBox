@@ -23,7 +23,7 @@ logger.prefix = path.basename(module.filename, '.js');
 
 exports.Pool = function Pool(poolIndex){
   "use strict";
-  var max_elems =  config.pool.max_elems || 1000;
+  var maxElems =  config.pool.max_elems || 1000;
   var connections = [];
   var currentConnections = 0;
   var index = poolIndex;
@@ -36,12 +36,12 @@ exports.Pool = function Pool(poolIndex){
 
     function get(queueId, callback) {
         var con = connections.pop();
-        logger.info('get', connections.toString());
+        logger.debug('get', connections.toString());
         if (con) {
             callback(null, con);
 
         }
-        else if (!con && currentConnections < max_elems) {
+        else if (!con && currentConnections < maxElems) {
             //we will create a new connection
             var port = config.redisServers[index].port || redisModule.DEFAULT_PORT;
             con = redisModule.createClient(port,
@@ -50,7 +50,7 @@ exports.Pool = function Pool(poolIndex){
             con.isOwn = true;
             con.pool = pool; //add pool reference
             currentConnections++;
-            con.on('error', function(err) {console.log("error - redis", err)});
+            con.on('error', function(err) {console.log("error - redis", err);});
             callback(null, con);
 
         }
@@ -63,6 +63,6 @@ exports.Pool = function Pool(poolIndex){
     //get back to the pool
      
       connections.push(con);
-      logger.info('free', connections.toString());
+      logger.debug('free', connections.toString());
   }
 };
