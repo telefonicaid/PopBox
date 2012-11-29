@@ -82,11 +82,12 @@ var afterAll = function(rc, done) {
         data.should.have.property('size', N_TRANS);
 
         //Clean BBDD
-        rc.flushall();
-        rc.end();
+        rc.flushall(function(res) {
+            rc.end();
 
-        //Test completed
-        done();
+            //Test completed
+            done();
+        });
     });
 };
 
@@ -243,11 +244,12 @@ describe('Peek from High and Low Priority Queue', function() {
             data.should.have.property('size', N_TRANS);
 
             //Clean BBDD
-            rc.flushall();
-            rc.end();
+            rc.flushall(function(res) {
+                rc.end();
 
-            //Test completed
-            done();
+                //Test completed
+                done();
+            });
         });
 
     });

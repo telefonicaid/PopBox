@@ -45,19 +45,9 @@ describe('Provision', function() {
     afterEach(function(done) {
         this.timeout(8000);
 
-        rc.flushall();
-        rc.end();
-
-        done();
-    });
-
-    after(function(done) {
-        this.timeout(8000);
-
-        rc.flushall();
-        rc.end();
-
-        done();
+        rc.flushall(function(res) {
+            done();
+        });
     });
 
     describe('Expiration times:', function() {

@@ -14,17 +14,18 @@ describe('Inbox', function () {
     after(function (done) {
         this.timeout(8000);
 
-        rc.flushall();
-        rc.end();
-
-        done();
+        rc.flushall(function(res) {
+            rc.end();
+            done();
+        });
     });
+
     beforeEach(function (done) {
         this.timeout(8000);
 
-        rc.flushall();
-
-        done();
+        rc.flushall(function(res) {
+            done();
+        });
     });
 
 
