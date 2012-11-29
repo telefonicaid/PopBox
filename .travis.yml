@@ -5,9 +5,9 @@ node_js:
  - 0.8
 
 branches:
-only:
- - unstable
- - master
+ only:
+  - unstable
+  - master
 
 services:
  - mongodb
