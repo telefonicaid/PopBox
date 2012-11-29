@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/telefonicaid/PopBox.png)](https://travis-ci.org/telefonicaid/PopBox)
+
 POPBox
 ===
 ##Simple High-Performance High-Scalability Inbox Notification Service
@@ -41,7 +43,7 @@ In this file it is mandatory to stablish where reside the Redis DBs by stabilisi
 ```
 exports.redisServers = [{host:'localhost'}, {host:'localhost', port:'6789'}];
 ```
-A list of Redis servers to manage the different queues of the system. Queues will be distributed among the nodes (non elastic yet). '''If you have more than one Agent it is important to keep the same redisServers list in all of them'''.
+A list of Redis servers to manage the different queues of the system. Queues will be distributed among the nodes (non elastic yet). **If you have more than one Agent it is important to keep the same redisServers list in all of them**.
 ###Transaction Servers
 ```
 exports.tranRedisServer = {'localhost' [, port:]};
@@ -105,3 +107,37 @@ At this point you should be able to start all the processes:
 Redis 
 External Systems (Optional)
 Agents (node Agent.js)
+
+##PopBox HA current approach
+Several PopBox replicas Master-SlaveChain may be deployed. To do so we must specify several properties in the config.js file:
+
+```
+exports.slave = false; //true
+```
+Enables the slave behaviour
+
+```
+exports.masterRedisServers = [{host: xx, port:yy},{…}];
+```
+When slave===true this property must define a one to one relationship between exports.redisServers and their masters  
+
+```
+exports.masterTranRedisServer = {};
+```
+When slave===true this property must define a one to one relationship between exports.tranRedisServers and their master.
+
+####Deployment architecture for HA 
+```
+(Agent->node Agent.js, Ri->Redis server)
+
+Agent(slave===false) --> {R1,..,Rn}
+
+Agent'(slave===true)  --> {R1'(slave of R1),…, Rn'(slave of Rn)}
+
+Agent''(slave===true)  --> {R1''(slave of R1'),…, Rn''(slave of Rn')}
+```
+Slave Rx' and Rx'' nodes contain a replica of their master Rx datasets. On master node (Agent) fail over new request MUST be redirected to the Agent'(slave===true) entry point (you should configure you balancing mechanism to do so). 
+
+Once a slave Agent node receives a request it will be promoted to master, getting disconnected from previous master node and continuing processing incoming requests.
+
+At this point we should restart the first Agent as a slave of the last one (Agent'') then sync mechanism between Rx'' and Rx will be triggered (with no impact over the new master Redis node Rx'). It's recommended to establish a cyclic relationship among the different PopBox instances Rx<-Rx'<-Rx''<-(Rx).

@@ -27,13 +27,13 @@ if(process.env.POPBOX_DIR_PREFIX) {
  * @type {String}
  */
 exports.logger = {};
-exports.logger.logLevel = 'debug';
+exports.logger.logLevel = 'info';
 exports.logger.inspectDepth = 1 ;
 exports.logger.Console = {
-    level: 'debug', timestamp:true
+    level: 'info', timestamp:true
 };
 exports.logger.File ={
-    level:'debug', filename: dir_prefix +'/popbox.log', timestamp:true, json:false ,
+    level:'info', filename: dir_prefix +'/popbox.log', timestamp:true, json:false ,
     maxsize: 10*1024*1024,
     maxFiles: 3
 };

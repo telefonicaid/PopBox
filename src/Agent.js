@@ -147,7 +147,7 @@ if (cluster.isMaster && numCPUs !== 0) {
             logger.debug('onSubscribed(err, results)', [err, results]);
             if(err){
                 logger.error('error subscribing event listener', err);
-                throw new Error(['error subscribing event listener', err]);
+                throw new InitError(['error subscribing event listener', err]);
             }
             else {
                 servers.forEach(function (server) {
@@ -156,14 +156,28 @@ if (cluster.isMaster && numCPUs !== 0) {
                 });
             }
         });
+    
+    
 }
 
- 
- process.on('uncaughtException', function onUncaughtException (err) {
- 'use strict';
- logger.warning('onUncaughtException', err);
- if (err==='fatalError') {process.exit();}
- });
+
+function InitError(message) {
+    'use strict';
+    this.name = "InitError";
+    this.message = message || "(no message)";
+}
+InitError.prototype = new Error();
+
+
+process.on('uncaughtException', function onUncaughtException(err) {
+    'use strict';
+    logger.warning('onUncaughtException', err);
+    
+    if (err instanceof InitError) {
+        process.stdout.end();      
+        setTimeout(function() {process.exit();}, 1000);
+    }
+});
  
 
 
