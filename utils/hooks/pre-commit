@@ -3,7 +3,7 @@
 
 flag_error=false;
 
-for js in $(git diff-index --name-only --cached HEAD -- | grep '\.js$'); do
+for js in $(git diff-index --name-only  HEAD -- | grep '\.js$'); do
 
 	err_log=`gjslint $js`
 	errors=`echo $err_log | grep -c 'E:*:'`
@@ -19,7 +19,7 @@ for js in $(git diff-index --name-only --cached HEAD -- | grep '\.js$'); do
 			echo
 			echo "$err_log"
 			echo
-		else "$js succesfuly fixed"
+		else "$js successfully fixed"
 		fi
     else
         echo "$js validated"
@@ -27,18 +27,18 @@ for js in $(git diff-index --name-only --cached HEAD -- | grep '\.js$'); do
 done
 
 if $flag_error; then
-echo "files to be commited contain style errors"
+echo "files to be committed contain style errors"
 	read -p "do you want to commit anyway? y/n " yno
 	case $yno in
 
         [yY]* )
-        		echo "commiting"
+        		echo "committing"
                 exit 0;
                 break
                 ;;
 
         [nN]* )
-        		echo "commiting"
+        		echo "aborting"
                 exit 1
                 break
                 ;;
