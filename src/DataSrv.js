@@ -87,6 +87,9 @@ var pushTransaction = function(appPrefix, provision, callback) {
           logger.debug('pushEnd(err)', [err]);
           //MAIN Exit point
           if (err) {
+            //some of the queues could be populated
+            //remove the transaction
+            deleteTrans(extTransactionId);
             manageError(err, callback);
           } else {
             if (callback) {
