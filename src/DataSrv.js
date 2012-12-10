@@ -58,6 +58,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
   helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',provision)(function (err){
     if(err){
       manageError(err, callback);
+      return;
     }
     else{
       //Set expires for :meta and :state collections
@@ -73,28 +74,29 @@ var pushTransaction = function(appPrefix, provision, callback) {
             logger.warning('expirationDateMetaEnd', err);
           }
         });
+
+      for (i = 0; i < queues.length; i += 1) {
+        queue = queues[i];
+        //launch push/sets/expire in parallel for one ID
+        processBatch.push(processOneId(dbTr, transactionId, queue, priority));
+      }
+
+      logger.debug('pushTransaction- processBatch', processBatch);
+      async.parallel(processBatch,
+        function pushEnd(err) {   //parallel execution may apply also
+          logger.debug('pushEnd(err)', [err]);
+          //MAIN Exit point
+          if (err) {
+            manageError(err, callback);
+          } else {
+            if (callback) {
+              callback(null, extTransactionId);
+            }
+          }
+        });
     }
   });
 
-  for (i = 0; i < queues.length; i += 1) {
-    queue = queues[i];
-    //launch push/sets/expire in parallel for one ID
-    processBatch.push(processOneId(dbTr, transactionId, queue, priority));
-  }
-
-  logger.debug('pushTransaction- processBatch', processBatch);
-  async.parallel(processBatch,
-    function pushEnd(err) {   //parallel execution may apply also
-      logger.debug('pushEnd(err)', [err]);
-      //MAIN Exit point
-      if (err) {
-        manageError(err, callback);
-      } else {
-        if (callback) {
-          callback(null, extTransactionId);
-        }
-      }
-    });
 
   function processOneId(dbTr, transactionId, queue, priority) {
     logger.debug('processOneId(dbTr, transactionId, queue, priority)',
