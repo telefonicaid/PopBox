@@ -55,14 +55,33 @@ var pushTransaction = function(appPrefix, provision, callback) {
       Math.round(Date.now() / 1000) + config.defaultExpireDelay;
   }
 
-  processBatch.push(helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',
-    provision));
+  helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',provision)(function (err){
+    if(err){
+      manageError(err, callback);
+    }
+    else{
+      //Set expires for :meta and :state collections
+      helper.setExpirationDate(dbTr, transactionId + ':state', provision,
+        function expirationDateStateEnd(err) {
+          if (err) {
+            logger.warning('expirationDateStateEnd', err);
+          }
+        });
+      helper.setExpirationDate(dbTr, transactionId + ':meta', provision,
+        function expirationDateMetaEnd(err) {
+          if (err) {
+            logger.warning('expirationDateMetaEnd', err);
+          }
+        });
+    }
+  });
+
   for (i = 0; i < queues.length; i += 1) {
     queue = queues[i];
-
     //launch push/sets/expire in parallel for one ID
     processBatch.push(processOneId(dbTr, transactionId, queue, priority));
   }
+
   logger.debug('pushTransaction- processBatch', processBatch);
   async.parallel(processBatch,
     function pushEnd(err) {   //parallel execution may apply also
@@ -71,25 +90,12 @@ var pushTransaction = function(appPrefix, provision, callback) {
       if (err) {
         manageError(err, callback);
       } else {
-
-        //Set expires for :meta and :state collections
-        helper.setExpirationDate(dbTr, transactionId + ':state', provision,
-          function expirationDateStateEnd(err) {
-            if (err) {
-              logger.warning('expirationDateStateEnd', err);
-            }
-          });
-        helper.setExpirationDate(dbTr, transactionId + ':meta', provision,
-          function expirationDateMetaEnd(err) {
-            if (err) {
-              logger.warning('expirationDateMetaEnd', err);
-            }
-          });
         if (callback) {
           callback(null, extTransactionId);
         }
       }
     });
+
   function processOneId(dbTr, transactionId, queue, priority) {
     logger.debug('processOneId(dbTr, transactionId, queue, priority)',
       [dbTr, transactionId, queue, priority]);
