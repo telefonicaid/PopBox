@@ -1,46 +1,41 @@
 var should = require('should');
-var rest = require('restler');
 var async = require('async');
 var config = require('./config.js');
+var utils = require('./utils');
 var redis = require("redis"),rc = redis.createClient(6379,'localhost');
 
-var host = config.hostname;
-var port = config.port;
-var protocol = config.protocol;
-
+var HOST = config.hostname;
+var PORT = config.port;
 
 var trans, trans1 = {};
 
 describe('Inbox', function () {
-  "use strict";
-
-  function onError(err, response){
-    console.log('error form restler');
-    console.dir(err);
-    console.log('error form PopBox');
-    console.dir(response);
-    throw new Error({'err': err, 'response': response});
-  }
 
     after(function (done) {
         this.timeout(8000);
-        rc.flushall();
-        rc.end();
-        done();
+
+        rc.flushall(function(res) {
+            rc.end();
+            done();
+        });
     });
+
     beforeEach(function (done) {
         this.timeout(8000);
-        rc.flushall();
-        done();
+
+        rc.flushall(function(res) {
+            done();
+        });
     });
 
 
     it('Should return all the transactions', function (done) {
         this.timeout(8000); //Mocha timeout
+
         var trans = {
             'payload': 'Test',
             'priority': 'H',
-            'callback': protocol + '://foo.bar',
+            'callback': 'http' + '://foo.bar',
             'queue': [
                 { 'id': 'q1' },
                 { 'id': 'q2' }
@@ -50,39 +45,55 @@ describe('Inbox', function () {
         async.series([
             function (callback) {
 
-                rest.postJson(protocol + '://' + host + ':' + port + '/trans',
-                    trans).on('success', function (data, response) {
-                        callback();
-                    }).on('error', onError);
+                var heads = {};
+                heads['content-type'] = 'application/json';
+                var options = { host: HOST, port: PORT, path: '/trans/', method: 'POST', headers: heads};
+                utils.makeRequest(options, trans, function(error, response, data) {
+                    callback();
+                });
 
             },
+
             function (callback) {
 
-                trans.payload='Test 2';
-                rest.postJson(protocol + '://' + host + ':' + port + '/trans',
-                    trans).on('success', function (data, response) {
-                        callback();
-                    }).on('error', onError);
+                trans.payload='Test 2'
+
+                var heads = {};
+                heads['content-type'] = 'application/json';
+                var options = { host: HOST, port: PORT, path: '/trans/', method: 'POST', headers: heads};
+                utils.makeRequest(options, trans, function(error, response, data) {
+                    callback();
+                });
 
             },
+
             function (callback) {
 
                 var checkQueue = function (queue, callback) {
-                    rest.post(protocol + '://' + host + ':' + port + '/queue/' + queue + '/pop')
-                        .on('success', function (data, response) {
-                            data.should.not.have.property('error');
-                            data.should.have.property('ok');
-                            data.should.have.property('data');
-                            data.data.length.should.be.equal(2);
-                            data.data.should.include('Test');
-                            data.data.should.include('Test 2');
-                            callback();
-                        }).on('error', onError);
-                };
+
+                    var heads = {};
+                    heads['accept'] = 'application/json';
+                    var options = { host: HOST, port: PORT, path: '/queue/' + queue + '/pop', method: 'POST',
+                        headers: heads};
+                    utils.makeRequest(options, '', function(error, response, data) {
+                        should.not.exist(error);
+
+                        data.should.not.have.property('error');
+                        data.should.have.property('ok');
+                        data.should.have.property('data');
+                        data.data.length.should.be.equal(2);
+                        data.data.should.include('Test');
+                        data.data.should.include('Test 2');
+
+                        callback();
+                    });
+                }
 
                 checkQueue('q1', checkQueue.bind({}, 'q2', callback));
             }
-        ], function () {
+        ],
+
+        function () {
             done();
         });
     });
@@ -92,7 +103,7 @@ describe('Inbox', function () {
         var transLow = {
             'payload': 'Low priority',
             'priority': 'L',
-            'callback': protocol + '://foo.bar',
+            'callback': 'http' + '://foo.bar',
             'queue': [
                 { 'id': 'q1' },
                 { 'id': 'q2' }
@@ -102,7 +113,7 @@ describe('Inbox', function () {
         var transHigh = {
             'payload': 'High priority',
             'priority': 'H',
-            'callback': protocol + '://foo.bar',
+            'callback': 'http' + '://foo.bar',
             'queue': [
                 { 'id': 'q1' }
             ]
@@ -110,29 +121,43 @@ describe('Inbox', function () {
 
         async.series([
             function (callback) {
-                rest.postJson(protocol + '://' + host + ':' + port + '/trans',
-                    transLow).on('success', function (data, response) {
-                        callback();
-                    }).on('error', onError);
+                var heads = {};
+                heads['content-type'] = 'application/json';
+                var options = { host: HOST, port: PORT, path: '/trans/', method: 'POST', headers: heads};
+                utils.makeRequest(options, transLow, function(error, response, data) {
+                    callback();
+                });
             },
+
             function (callback) {
-                rest.postJson(protocol + '://' + host + ':' + port + '/trans',
-                    transHigh).on('success', function (data, response) {
-                        callback();
-                    }).on('error', onError);
+                var heads = {};
+                heads['content-type'] = 'application/json';
+                var options = { host: HOST, port: PORT, path: '/trans/', method: 'POST', headers: heads};
+                utils.makeRequest(options, transHigh, function(error, response, data) {
+                    callback();
+                });
             },
+
             function (callback) {
-                rest.post(protocol + '://' + host + ':' + port + '/queue/q1/pop?max=1')
-                    .on('success', function (data, response) {
+
+                var heads = {};
+                heads['accept'] = 'application/json';
+                var options = { host: HOST, port: PORT, path: '/queue/q1/pop?max=1', method: 'POST', headers: heads};
+                utils.makeRequest(options, '', function(error, response, data) {
+                    should.not.exist(error);
+
                     data.should.not.have.property('error');
                     data.should.have.property('ok');
                     data.should.have.property('data');
                     data.data.length.should.be.equal(1);
-                        (data.data.pop()).should.be.equal('High priority');
-                        callback();
-                    }).on('error', onError);
+                    (data.data.pop()).should.be.equal('High priority');
+
+                    callback();
+                });
             }
-        ], function () {
+        ],
+
+        function () {
             done();
         });
     });
@@ -141,35 +166,44 @@ describe('Inbox', function () {
         this.timeout(8000); //Mocha timeout
 
         var trans5 = {
-            'payload': 'Test timeout - empty data',
+            'payload': 'Test timeout',
             'priority': 'L',
-            'callback': protocol + '://foo.bar',
+            'callback': 'http' + '://foo.bar',
             'queue': [
                 { 'id': 'q1' }
             ]
         };
 
-
         var funcs = [
             function (cb) {
-                rest.post(protocol + '://' + host + ':' + port + '/queue/q1/pop?timeout=1',
-                    {headers: {'Accept': 'application/json'}})
-                    .on('success', function (data, response) {
-                        //console.log(data);
-                       data.should.not.have.property('error');
-                       data.should.have.property('ok');
-                       data.should.have.property('data');
-                       data.data.length.should.be.equal(0);
-                        cb();
-                    }).on('error', onError);
+
+                var heads = {};
+                heads['accept'] = 'application/json';
+                var options = { host: HOST, port: PORT, path: '/queue/q1/pop?timeout=1', method: 'POST',
+                    headers: heads};
+                utils.makeRequest(options, '', function(error, response, data) {
+                    should.not.exist(error);
+
+                    data.should.not.have.property('error');
+                    data.should.have.property('ok');
+                    data.should.have.property('data');
+                    data.data.length.should.be.equal(0);
+
+                    cb();
+                });
             },
+
             function (cb) {
                 setTimeout(function () {
-                    rest.postJson(protocol + '://' + host + ':' + port + '/trans',
-                        trans5).on('success', function (data, response) {
-                            cb();
-                        }).on('error', onError);
-                }, 4000);
+
+                    var heads = {};
+                    heads['content-type'] = 'application/json';
+                    var options = { host: HOST, port: PORT, path: '/trans/', method: 'POST', headers: heads};
+                    utils.makeRequest(options, trans5, function(error, response, data) {
+                        cb();
+                    });
+
+                }, 2000);
 
             }
         ];
@@ -183,37 +217,47 @@ describe('Inbox', function () {
 
     it('Should not return empty data (timeout)', function (done) {
         this.timeout(8000); //Mocha timeout
+
         var trans6 = {
             'payload': 'Test timeout - NOT empty data',
             'priority': 'L',
-            'callback': protocol + '://foo.bar',
+            'callback': 'http' + '://foo.bar',
             'queue': [
                 { 'id': 'q1' }
             ]
         };
 
-
         var funcs = [
             function (cb) {
-                rest.post(protocol + '://' + host + ':' + port + '/queue/q1/pop?timeout=3',
-                    {headers: {'Accept': 'application/json'}})
-                    .on('success', function (data, response) {
-                        data.should.not.have.property('error');
-                        data.should.have.property('ok');
-                        data.should.have.property('data');
-                        data.data.length.should.be.equal(1);
-                        data.data.should.include('Test timeout - NOT empty data');
-                        cb();
-                    }).on('error', onError);
+
+                var heads = {};
+                heads['accept'] = 'application/json';
+                var options = { host: HOST, port: PORT, path: '/queue/q1/pop?timeout=3', method: 'POST',
+                    headers: heads};
+
+                utils.makeRequest(options, '', function(error, response, data) {
+                    should.not.exist(error);
+
+                    data.should.not.have.property('error');
+                    data.should.have.property('ok');
+                    data.should.have.property('data');
+                    data.data.length.should.be.equal(1);
+                    data.data.should.include('Test timeout - NOT empty data');
+
+                    cb();
+                });
             },
+
             function (cb) {
                 setTimeout(function () {
-                    rest.postJson(protocol + '://' + host + ':' + port + '/trans',
-                        trans6).on('success', function (data, response) {
-                            cb();
-                        }).on('error', onError);
-                }, 1000);
 
+                    var heads = {};
+                    heads['content-type'] = 'application/json';
+                    var options = { host: HOST, port: PORT, path: '/trans/', method: 'POST', headers: heads};
+                    utils.makeRequest(options, trans6, function(error, response, data) {
+                        cb();
+                    });
+                }, 1000);
             }
         ];
 
