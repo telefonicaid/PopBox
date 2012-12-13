@@ -34,7 +34,7 @@ if(process.env.POPBOX_DIR_PREFIX) {
  * @type {String}
  */
 exports.logger = {};
-exports.logger.logLevel = 'info';
+exports.logger.logLevel = 'error';
 exports.logger.inspectDepth = 1 ;
 exports.logger.Console = {
     level: 'info', timestamp:true
@@ -266,6 +266,11 @@ exports.evModules = [{ module:'./ev_callback_lsnr'},
                     { module:'./gevlsnr', config: gevlsnr},
                     { module:'./gevlsnr', config: gevlsnr_action}
                     ];
+
+
+exports.connectLogger = {
+    format: 'short'
+};
 
 
 
