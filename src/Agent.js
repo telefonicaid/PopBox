@@ -188,7 +188,6 @@ process.on('uncaughtException', function onUncaughtException(err) {
     logger.warning('onUncaughtException', err);
 
     if (err instanceof InitError) {
-        process.stdout.end();
         setTimeout(function() {process.exit();}, 1000);
     }
 });
