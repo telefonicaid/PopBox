@@ -269,7 +269,7 @@ exports.evModules = [{ module:'./ev_callback_lsnr'},
 
 
 exports.connectLogger = {
-    format: 'short'
+    format: '[:date] :remote-addr - :method :url HTTP/:http-version :status :res[content-length] - :response-time ms'
 };
 
 
