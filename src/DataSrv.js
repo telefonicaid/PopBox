@@ -61,13 +61,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
       return;
     }
     else{
-      //Set expires for :meta and :state collections
-      helper.setExpirationDate(dbTr, transactionId + ':state', provision,
-        function expirationDateStateEnd(err) {
-          if (err) {
-            logger.warning('expirationDateStateEnd', err);
-          }
-        });
+      //Set expires for :meta collection
       helper.setExpirationDate(dbTr, transactionId + ':meta', provision,
         function expirationDateMetaEnd(err) {
           if (err) {
@@ -92,6 +86,12 @@ var pushTransaction = function(appPrefix, provision, callback) {
             deleteTrans(extTransactionId);
             manageError(err, callback);
           } else {
+            helper.setExpirationDate(dbTr, transactionId + ':state', provision,
+              function expirationDateStateEnd(err) {
+                if (err) {
+                  logger.warning('expirationDateStateEnd', err);
+                }
+              });
             if (callback) {
               callback(null, extTransactionId);
             }
