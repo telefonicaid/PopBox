@@ -125,6 +125,9 @@ if (cluster.isMaster && numCPUs !== 0) {
     servers.forEach(function(server) {
         'use strict';
 
+        if (config.connectLogger) {
+            server.use(express.logger(config.connectLogger)); 
+        }
         server.use(express.query());
         server.use(express.bodyParser());
         server.use(express.limit(config.agent.max_req_size));
