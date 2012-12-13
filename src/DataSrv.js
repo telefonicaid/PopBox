@@ -45,10 +45,13 @@ var pushTransaction = function(appPrefix, provision, callback) {
   //handles a new transaction  (N ids involved)
   var priority = provision.priority + ':', //contains "H" || "L"
     queues = provision.queue, //[{},{}]   //list of ids
-    extTransactionId = uuid.v4(), transactionId = config.dbKeyTransPrefix +
-      extTransactionId, //setting up the bach proceses for async module.
-    processBatch = [], //feeding the process batch
-    dbTr = dbCluster.getTransactionDb(transactionId), i , queue;
+    extTransactionId = uuid.v4(),
+    transactionId = config.dbKeyTransPrefix + extTransactionId,
+    //setting up the bach proceses for async module.
+    processBatch = [],
+    dbTr = dbCluster.getTransactionDb(transactionId),
+    i ,
+    queue;
 
   if (!provision.expirationDate) {
     provision.expirationDate =
@@ -71,13 +74,12 @@ var pushTransaction = function(appPrefix, provision, callback) {
 
       for (i = 0; i < queues.length; i += 1) {
         queue = queues[i];
-        //launch push/sets/expire in parallel for one ID
+        //launch push/set:state in parallel for one ID
         processBatch.push(processOneId(dbTr, transactionId, queue, priority));
       }
-
       logger.debug('pushTransaction- processBatch', processBatch);
       async.parallel(processBatch,
-        function pushEnd(err) {   //parallel execution may apply also
+        function pushEnd(err) {
           logger.debug('pushEnd(err)', [err]);
           //MAIN Exit point
           if (err) {
