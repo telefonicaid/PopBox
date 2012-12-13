@@ -33,7 +33,7 @@ logger.prefix = path.basename(module.filename, '.js');
 
 function postTrans(req, res) {
     'use strict';
-    logger.debug('postTrans (req, res)', [ req, res]);
+    logger.debug('postTrans (req, res)', [req, res]);
     var errors = validate.errorsTrans(req.body);
     logger.debug('postTrans - errors', errors);
     var ev = {};
@@ -57,7 +57,7 @@ function postTrans(req, res) {
                 res.send({errors: [err]}, 500);
                 logger.info('postTrans', [
                     {error: [err]},
-                    500
+                    500 , req.info
                 ]);
             } else {
                 ev = {
@@ -69,7 +69,7 @@ function postTrans(req, res) {
                 emitter.emit('ACTION', ev);
                 res.send({ok: true, data: trans_id});
                 logger.info('postTrans', [
-                    {id: trans_id}
+                    {id: trans_id} ,req.info
                 ]);
             }
         });
@@ -77,7 +77,7 @@ function postTrans(req, res) {
         res.send({errors: errors}, 400);
         logger.info('postTrans', [
             {errors: errors},
-            400
+            400 , req.info
         ]);
     }
 }
@@ -86,12 +86,12 @@ function postTransDelayed(req, res) {
     'use strict';
     logger.debug('postTransDelayed(req, res)', [req, res]);
     var delay = Number(req.param('delay'));
-    if(delay) {
+    if (delay) {
         setTimeout(function() {
-            postTrans(req, { send: function() {}});    
+            postTrans(req, { send: function() {}});
         }, delay * 1000);
-        logger.info('postTransDelayed', {"ok":true,"data":"unknown-delayed"});
-        res.send({"ok":true,"data":"unknown-delayed"});
+        logger.info('postTransDelayed', [{'ok': true, 'data': 'unknown-delayed'},req.info]);
+        res.send({'ok': true, 'data': 'unknown-delayed'});
     }
     else {
         postTrans(req, res);
@@ -104,7 +104,7 @@ function putTransMeta(req, res) {
     var id = req.param('id_trans', null),
         empty = true, filteredReq = {}, errorsP, errorsExpDate, errors = [];
 
-    
+
     filteredReq.payload = req.body.payload;
     filteredReq.callback = req.body.callback;
     filteredReq.expirationDate = req.body.expirationDate;
@@ -114,8 +114,8 @@ function putTransMeta(req, res) {
         (filteredReq.expirationDate === undefined);
 
     if (empty) {
-        logger.info('putTransMeta',{ok: true, data: "empty data"});
-        res.send({ok: true, data: "empty data"});
+        logger.info('putTransMeta', [{ok: true, data: 'empty data'},req.info]);
+        res.send({ok: true, data: 'empty data'});
     }
     else {
         if (id === null) {
@@ -128,16 +128,16 @@ function putTransMeta(req, res) {
         errors = errors.concat(errorsExpDate);
 
         if (errors.length > 0) {
-            logger.info('putTransMeta',{errors: errors}, 400);
+            logger.info('putTransMeta', [req.info, {errors: errors}, 400]);
             res.send({errors: errors}, 400);
         }
         else {
-            dataSrv.updateTransMeta(id, req.body, function (e, data) {
+            dataSrv.updateTransMeta(id, req.body, function(e, data) {
                 if (e) {
-                    logger.info('putTransMeta',[{errors: [String(e)]}, 400]);
+                    logger.info('putTransMeta', [{errors: [String(e)]}, 400, req.info]);
                     res.send({errors: [String(e)]}, 400);
                 } else {
-                    logger.info('putTransMeta',{ok: true, data: data});
+                    logger.info('putTransMeta', [{ok: true, data: data},req.info]);
                     res.send({ok: true, data: data});
                 }
             });
@@ -157,7 +157,7 @@ function postQueue(req, res) {
     var appPrefix = req.prefix;
 
     if (errors.length === 0) {
-        dataSrv.setSecHash(appPrefix, queue, user, passwd, function (err) {
+        dataSrv.setSecHash(appPrefix, queue, user, passwd, function(err) {
             if (err) {
                 ev = {
                     'queue': queue,
@@ -167,7 +167,7 @@ function postQueue(req, res) {
                     'error': err
                 };
                 emitter.emit('ACTION', ev);
-                logger.info('putTransMeta',[{errors: [String(err)]}, 400]);
+                logger.info('putTransMeta', [{errors: [String(err)]}, 400, req.info]);
                 res.send([{errors: [err]}, 500]);
             } else {
                 ev = {
@@ -177,12 +177,12 @@ function postQueue(req, res) {
                     'timestamp': new Date()
                 };
                 emitter.emit('ACTION', ev);
-                logger.info('putTransMeta',{ok: true});
+                logger.info('putTransMeta', [{ok: true},req.info]);
                 res.send({ok: true});
             }
         });
     } else {
-        logger.info('putTransMeta',[{errors: errors}, 400]);
+        logger.info('putTransMeta', [{errors: errors}, 400, req.info]);
         res.send({errors: errors}, 400);
     }
 }
@@ -199,17 +199,17 @@ function transState(req, res) {
         state = 'All';
     }
     if (id) {
-        dataSrv.getTransaction(id, state, summary, function (e, data) {
+        dataSrv.getTransaction(id, state, summary, function(e, data) {
             if (e) {
-                logger.info('transState',[{errors: [e]}, 400]);
+                logger.info('transState', [{errors: [e]}, 400, req.info]);
                 res.send({errors: [e]}, 400);
             } else {
-                logger.info('transState',[{ok: true, data: data}]);
+                logger.info('transState', [{ok: true, data: data},req.info]);
                 res.send({ok: true, data: data});
             }
         });
     } else {
-        logger.info('transState',[{errors: ['missing id']}, 400]);
+        logger.info('transState', [{errors: ['missing id']}, 400, req.info]);
         res.send({errors: ['missing id']}, 400);
     }
 }
@@ -220,17 +220,17 @@ function deleteTrans(req, res) {
     var id = req.param('id_trans', null);
 
     if (id) {
-        dataSrv.deleteTrans(id, function (e) {
+        dataSrv.deleteTrans(id, function(e) {
             if (e) {
-                logger.info('deleteTrans',[{errors: [e]}, 400]);
+                logger.info('deleteTrans', [{errors: [e]}, 400, req.info]);
                 res.send({errors: [e]}, 400);
             } else {
-                logger.info('deleteTrans',{ok: true});
+                logger.info('deleteTrans', [{ok: true}, req.info]);
                 res.send({ok: true});
             }
         });
     } else {
-        logger.info('deleteTrans',[{errors: ['missing id']}, 400]);
+        logger.info('deleteTrans', [{errors: ['missing id']}, 400], req.info);
         res.send({errors: ['missing id']}, 400);
     }
 }
@@ -243,20 +243,20 @@ function payloadTrans(req, res) {
 
 
     if (!id) {
-        logger.info('payloadTrans',[{errors: ['missing id']}, 400]);
+        logger.info('payloadTrans', [{errors: ['missing id']}, 400, req.info]);
         res.send({errors: ['missing id']}, 400);
     }
     else if (!req.body) {
-        logger.info('payloadTrans',[{errors: ['missing body']}, 400]);
+        logger.info('payloadTrans', [{errors: ['missing body']}, 400, req.info]);
         res.send({errors: ['missing body']}, 400);
     }
     else {
-        dataSrv.setPayload(id, req.body, function (e) {
+        dataSrv.setPayload(id, req.body, function(e) {
             if (e) {
-                logger.info('payloadTrans',[{errors: [String(e)]}, 400]);
+                logger.info('payloadTrans', [{errors: [String(e)]}, 400, req.info]);
                 res.send({errors: [String(e)]}, 400);
             } else {
-                logger.info('payloadTrans',{ok: true});
+                logger.info('payloadTrans', [{ok: true},req.info]);
                 res.send({ok: true});
             }
         });
@@ -271,20 +271,20 @@ function callbackTrans(req, res) {
 
 
     if (!id) {
-        logger.info('callbackTrans',[{errors: ['missing id']}, 400]);
+        logger.info('callbackTrans', [{errors: ['missing id']}, 400, req.info]);
         res.send({errors: ['missing id']}, 400);
     }
     else if (!req.body) {
-        logger.info('callbackTrans',[{errors: ['missing body']}, 400]);
+        logger.info('callbackTrans', [{errors: ['missing body']}, 400, req.info]);
         res.send({errors: ['missing body']}, 400);
     }
     else {
-        dataSrv.setUrlCallback(id, req.body, function (e) {
+        dataSrv.setUrlCallback(id, req.body, function(e) {
             if (e) {
-                logger.info('callbackTrans',[{errors: [String(e)]}, 400]);
+                logger.info('callbackTrans', [{errors: [String(e)]}, 400, req.info]);
                 res.send({errors: [String(e)]}, 400);
             } else {
-                logger.info('callbackTrans',{ok: true});
+                logger.info('callbackTrans', [{ok: true}, req.info]);
                 res.send({ok: true});
             }
         });
@@ -295,27 +295,27 @@ function expirationDate(req, res) {
     logger.debug('expirationDate(req, res)', [req, res]);
     var id = req.param('id_trans', null),
         errors;
-    logger.debug("expirationDate - id  req.body", id, req.body);
+    logger.debug('expirationDate - id  req.body', id, req.body);
     if (id) {
         errors = validate.errorsExpirationDate(req.body);
         if (errors.length === 0) {
             logger.debug('putTransMeta - errors', errors);
-            dataSrv.setExpirationDate(id, req.body, function (e) {
+            dataSrv.setExpirationDate(id, req.body, function(e) {
                 if (e) {
-                    logger.info('expirationDate',[{errors: [String(e)]}, 400]);
+                    logger.info('expirationDate', [{errors: [String(e)]}, 400, req.info]);
                     res.send({errors: [String(e)]}, 400);
                 } else {
-                    logger.info('expirationDate',{ok: true});
+                    logger.info('expirationDate', [{ok: true},req.info]);
                     res.send({ok: true});
                 }
             });
         }
         else {
-            logger.info('expirationDate',[{errors: errors}, 400]);
+            logger.info('expirationDate', [{errors: errors}, 400, req.info]);
             res.send({errors: errors}, 400);
         }
     } else {
-        logger.info('expirationDate',[{errors: ['missing id']}, 400]);
+        logger.info('expirationDate', [{errors: ['missing id']}, 400, req.info]);
         res.send({errors: ['missing id']}, 400);
     }
 }
@@ -328,10 +328,10 @@ function queueSize(req, res) {
     dataSrv.queueSize(prefix, queueId, function onQueueSize(err, length) {
         logger.debug('onQueueSize(err, length)', [err, length]);
         if (err) {
-            logger.info('onQueueSize', [String(err), 500]);
+            logger.info('onQueueSize', [String(err), 500, req.info]);
             res.send({errors: [String(err)]}, 500);
         } else {
-            logger.info('onQueueSize', [String(length)]);
+            logger.info('onQueueSize', [String(length), req.info]);
             res.send({ok: true, data: String(length)});
         }
     });
@@ -348,22 +348,22 @@ function getQueue(req, res) {
     dataSrv.getQueue(prefix, queueId, function onGetQueue(err, hQ, lQ, lastPop) {
         logger.debug('onGetQueue(err, hQ, lQ, lastPop)', [err, hQ, lQ, lastPop]);
         if (err) {
-            logger.info('onGetQueue', [String(err), 500]);
+            logger.info('onGetQueue', [String(err), 500, req.info]);
             res.send({errors: [String(err)]}, 500);
         } else {
-            var mapTrans = function (v) {
-                var id = v.split("|")[1];
+            var mapTrans = function(v) {
+                var id = v.split('|')[1];
                 return {
                     id: id,
-                    href: 'http://' + req.headers.host + '/trans/' + id + "?queues=All"
+                    href: 'http://' + req.headers.host + '/trans/' + id + '?queues=All'
                 };
             };
             hQ = hQ.map(mapTrans);
             lQ = lQ.map(mapTrans);
-            logger.info('onGetQueue', {ok: true, host: req.headers.host, lastPop: lastPop,
-                size: hQ.length + lQ.length, high: hQ, low: lQ  });
+            logger.info('onGetQueue', [{ok: true, host: req.headers.host, lastPop: lastPop,
+                size: hQ.length + lQ.length, high: hQ, low: lQ } ,req.info]);
             res.send({ok: true, host: req.headers.host, lastPop: lastPop,
-                size: hQ.length + lQ.length, high: hQ, low: lQ  });
+                size: hQ.length + lQ.length, high: hQ, low: lQ });
         }
     });
 }
@@ -412,14 +412,14 @@ function popQueue(req, res) {
                 'error': err
             };
             emitter.emit('ACTION', ev);
-            logger.info('popQueue', [String(err), 500]);
+            logger.info('popQueue', [String(err), 500, req.info]);
             res.send({errors: [String(err)]}, 500);
         } else {
             if (notifList) {
-                messageList = notifList.map(function (notif) {
+                messageList = notifList.map(function(notif) {
                     return notif && notif.payload;
                 });
-                transactionIdList = notifList.map(function(notif){
+                transactionIdList = notifList.map(function(notif) {
                    return notif && notif.transactionId;
                 });
             }
@@ -431,7 +431,8 @@ function popQueue(req, res) {
                 'timestamp': new Date()
             };
             emitter.emit('ACTION', ev);
-            logger.info('popQueue', {ok: true, data: messageList, transactions: transactionIdList});
+            logger.info('popQueue', [
+                {ok: true, data: messageList, transactions: transactionIdList}, req.info]);
             res.send({ok: true, data: messageList, transactions: transactionIdList});
         }
     });
@@ -458,17 +459,17 @@ function peekQueue(req, res) {
         //stablish the timeout depending on blocking time
 
         if (err) {
-            logger.info('peekQueue', [String(err), 500]);
+            logger.info('peekQueue', [String(err), 500, req.info]);
             res.send({errors: [String(err)]}, 500);
 
         } else {
 
             if (notifList) {
-                messageList = notifList.map(function (notif) {
+                messageList = notifList.map(function(notif) {
                     return notif && notif.payload;
                 });
             }
-            logger.info('peekQueue', {ok: true, data: messageList});
+            logger.info('peekQueue', [{ok: true, data: messageList} ,req.info]);
             res.send({ok: true, data: messageList});
         }
     });
@@ -491,7 +492,7 @@ function checkPerm(req, res, cb) {
     shasum.update(username + password);
     digest = shasum.digest();
 
-    dataSrv.getSecHash(appPrefix, req.param('id'), function (err, value) {
+    dataSrv.getSecHash(appPrefix, req.param('id'), function(err, value) {
 
         if (err) {
             res.send('ERROR:' + err, {
@@ -535,18 +536,18 @@ function transMeta(req, res) {
         queues = 'All';
     }
     if (id === null) {
-        logger.info('transMeta', [{errors: ["missing id"]}, 400] );
-        res.send({errors: ["missing id"]}, 400);
+        logger.info('transMeta', [{errors: ['missing id']}, 400, req.info]);
+        res.send({errors: ['missing id']}, 400);
     } else {
-        dataSrv.getTransactionMeta(id, function (errM, dataM) {
+        dataSrv.getTransactionMeta(id, function(errM, dataM) {
             if (errM) {
-                logger.info('transMeta', [{errors: [errM]}, 400] );
+                logger.info('transMeta', [{errors: [errM]}, 400, req.info]);
                 res.send({errors: [errM]}, 400);
             } else {
                 if (queues !== null) {
-                    dataSrv.getTransaction(id, queues, summary, function (errQ, dataQ) {
+                    dataSrv.getTransaction(id, queues, summary, function(errQ, dataQ) {
                         if (errQ) {
-                            logger.info('transMeta', [{errors: [errQ]}, 400] );
+                            logger.info('transMeta', [{errors: [errQ]}, 400, req.info]);
                             res.send({errors: [errQ]}, 400);
                         } else {
                             dataM.queues = dataQ;
@@ -558,14 +559,14 @@ function transMeta(req, res) {
                                 }
                             }
                             //res.send({ok:true, data:dataM});
-                            logger.info('transMeta', dataM );
+                            logger.info('transMeta', [dataM, req.info]);
                             res.send(dataM);
                         }
                     });
                 }
                 else {
                     //res.send({ok:true, data:dataM});
-                    logger.info('transMeta', dataM);
+                    logger.info('transMeta', [dataM, req.info]);
                     res.send(dataM);
                 }
             }
@@ -587,5 +588,5 @@ exports.postQueue = postQueue;
 exports.checkPerm = checkPerm;
 exports.transMeta = transMeta;
 exports.putTransMeta = putTransMeta;
-exports.postTransDelayed = postTransDelayed; 
+exports.postTransDelayed = postTransDelayed;
 

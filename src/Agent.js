@@ -27,7 +27,7 @@ var log = require('PDITCLogger');
 
 log.setConfig(config.logger);
 var logger = log.newLogger();
-logger.prefix = path.basename(module.filename,'.js');
+logger.prefix = path.basename(module.filename, '.js');
 
 var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
@@ -38,6 +38,8 @@ var dirModule = path.dirname(module.filename);
 
 var prefixer = require('./prefixer');
 var sendrender = require('./sendrender');
+var pdilogger = require('./pdilogger');
+
 var promoteSlave = require('./promoteExprMdwr.js');
 
 logger.info('Node version:', process.versions.node);
@@ -58,7 +60,7 @@ if (cluster.isMaster && numCPUs !== 0) {
         cluster.fork();
     }
 
-    cluster.on('death', function (worker) {
+    cluster.on('death', function(worker) {
         'use strict';
         logger.warning('worker ' + worker.pid + ' died');
     });
@@ -75,14 +77,14 @@ if (cluster.isMaster && numCPUs !== 0) {
 
     var servers = [];
     var app = express.createServer();
-    app.prefix = "UNSEC:";
+    app.prefix = 'UNSEC:';
     app.port = config.agent.port;
     app._backlog = 2048;
     servers.push(app);
 
     var optionsDir;
-    logger.info("config.enableSecure", config.enableSecure);
-    if (config.enableSecure === true || config.enableSecure === "true" || config.enableSecure === 1) {
+    logger.info('config.enableSecure', config.enableSecure);
+    if (config.enableSecure === true || config.enableSecure === 'true' || config.enableSecure === 1) {
         if (!config.agent.crt_path) {
             optionsDir = {
                 key: path.resolve(dirModule, '../utils/server.key'),
@@ -107,28 +109,30 @@ if (cluster.isMaster && numCPUs !== 0) {
                 key: fs.readFileSync(optionsDir.key),
                 cert: fs.readFileSync(optionsDir.cert)
             };
-            logger.info("valid certificates");
+            logger.info('valid certificates');
         } else {
             logger.debug('certs not found', optionsDir);
-            throw new Error("No valid certificates were found in the given path");
+            throw new Error('No valid certificates were found in the given path');
         }
 
         var appSec = express.createServer(options);
-        appSec.prefix = "SEC:";
+        appSec.prefix = 'SEC:';
         appSec.port = Number(config.agent.port) + 1;
 
         servers.push(appSec);
     }
 
-    servers.forEach(function (server) {
+    servers.forEach(function(server) {
         'use strict';
+
         server.use(express.query());
         server.use(express.bodyParser());
         server.use(express.limit(config.agent.max_req_size));
         server.use(prefixer.prefixer(server.prefix));
         server.use(sendrender.sendRender());
+        server.use(pdilogger.pdiLogger());
         server.use(promoteSlave.checkAndPromote());
-        server.use("/", express.static(__dirname + '/public'));
+        server.use('/', express.static(__dirname + '/public'));
         server.del('/trans/:id_trans', logic.deleteTrans);
         //app.get('/trans/:id_trans/state/:state?', logic.transState);
         server.get('/trans/:id_trans', logic.transMeta);
@@ -143,35 +147,35 @@ if (cluster.isMaster && numCPUs !== 0) {
     });
 
     var evModules = config.evModules;
-    var evInitArray = evModules.map(function (x) {
+    var evInitArray = evModules.map(function(x) {
         'use strict';
         return require(x.module).init(emitter, x.config);
     });
-    
+
     async.parallel(evInitArray,
         function onSubscribed(err, results) {
             'use strict';
             logger.debug('onSubscribed(err, results)', [err, results]);
-            if(err){
+            if (err) {
                 logger.error('error subscribing event listener', err);
                 throw new InitError(['error subscribing event listener', err]);
             }
             else {
-                servers.forEach(function (server) {
+                servers.forEach(function(server) {
                     server.listen(server.port);
-                    logger.info('PopBox listening on', server.prefix+server.port);
+                    logger.info('PopBox listening on', server.prefix + server.port);
                 });
             }
         });
-    
-    
+
+
 }
 
 
 function InitError(message) {
     'use strict';
-    this.name = "InitError";
-    this.message = message || "(no message)";
+    this.name = 'InitError';
+    this.message = message || '(no message)';
 }
 InitError.prototype = new Error();
 
@@ -179,13 +183,13 @@ InitError.prototype = new Error();
 process.on('uncaughtException', function onUncaughtException(err) {
     'use strict';
     logger.warning('onUncaughtException', err);
-    
+
     if (err instanceof InitError) {
-        process.stdout.end();      
+        process.stdout.end();
         setTimeout(function() {process.exit();}, 1000);
     }
 });
- 
+
 
 
 
