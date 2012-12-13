@@ -45,51 +45,64 @@ var pushTransaction = function(appPrefix, provision, callback) {
   //handles a new transaction  (N ids involved)
   var priority = provision.priority + ':', //contains "H" || "L"
     queues = provision.queue, //[{},{}]   //list of ids
-    extTransactionId = uuid.v4(), transactionId = config.dbKeyTransPrefix +
-      extTransactionId, //setting up the bach proceses for async module.
-    processBatch = [], //feeding the process batch
-    dbTr = dbCluster.getTransactionDb(transactionId), i , queue;
+    extTransactionId = uuid.v4(),
+    transactionId = config.dbKeyTransPrefix + extTransactionId,
+    //setting up the bach proceses for async module.
+    processBatch = [],
+    dbTr = dbCluster.getTransactionDb(transactionId),
+    i ,
+    queue;
 
   if (!provision.expirationDate) {
     provision.expirationDate =
       Math.round(Date.now() / 1000) + config.defaultExpireDelay;
   }
 
-  processBatch.push(helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',
-    provision));
-  for (i = 0; i < queues.length; i += 1) {
-    queue = queues[i];
+  helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',provision)(function (err){
+    if(err){
+      manageError(err, callback);
+      return;
+    }
+    else{
+      //Set expires for :meta collection
+      helper.setExpirationDate(dbTr, transactionId + ':meta', provision,
+        function expirationDateMetaEnd(err) {
+          if (err) {
+            logger.warning('expirationDateMetaEnd', err);
+          }
+        });
 
-    //launch push/sets/expire in parallel for one ID
-    processBatch.push(processOneId(dbTr, transactionId, queue, priority));
-  }
-  logger.debug('pushTransaction- processBatch', processBatch);
-  async.parallel(processBatch,
-    function pushEnd(err) {   //parallel execution may apply also
-      logger.debug('pushEnd(err)', [err]);
-      //MAIN Exit point
-      if (err) {
-        manageError(err, callback);
-      } else {
-
-        //Set expires for :meta and :state collections
-        helper.setExpirationDate(dbTr, transactionId + ':state', provision,
-          function expirationDateStateEnd(err) {
-            if (err) {
-              logger.warning('expirationDateStateEnd', err);
-            }
-          });
-        helper.setExpirationDate(dbTr, transactionId + ':meta', provision,
-          function expirationDateMetaEnd(err) {
-            if (err) {
-              logger.warning('expirationDateMetaEnd', err);
-            }
-          });
-        if (callback) {
-          callback(null, extTransactionId);
-        }
+      for (i = 0; i < queues.length; i += 1) {
+        queue = queues[i];
+        //launch push/set:state in parallel for one ID
+        processBatch.push(processOneId(dbTr, transactionId, queue, priority));
       }
-    });
+      logger.debug('pushTransaction- processBatch', processBatch);
+      async.parallel(processBatch,
+        function pushEnd(err) {
+          logger.debug('pushEnd(err)', [err]);
+          //MAIN Exit point
+          if (err) {
+            //some of the queues could be populated
+            //remove the transaction
+            deleteTrans(extTransactionId);
+            manageError(err, callback);
+          } else {
+            helper.setExpirationDate(dbTr, transactionId + ':state', provision,
+              function expirationDateStateEnd(err) {
+                if (err) {
+                  logger.warning('expirationDateStateEnd', err);
+                }
+              });
+            if (callback) {
+              callback(null, extTransactionId);
+            }
+          }
+        });
+    }
+  });
+
+
   function processOneId(dbTr, transactionId, queue, priority) {
     logger.debug('processOneId(dbTr, transactionId, queue, priority)',
       [dbTr, transactionId, queue, priority]);
