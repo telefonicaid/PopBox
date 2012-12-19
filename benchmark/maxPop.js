@@ -26,7 +26,7 @@ var doNtimes_queues = function (startNumPops, provision, callback) {
                  * Introduces numPops provisions in q0 contacting the data base directly
                  * @param callback
                  */
-                    function (callback) {
+                 function (callback) {
                     var contResponse = 0;
                     var fillQueue = function () {
 
@@ -48,11 +48,11 @@ var doNtimes_queues = function (startNumPops, provision, callback) {
 
                 function (callback) {
 
-                    var contResponse = 0;
+                    var contResponse = 0,
+                        numCon = 0,
+                        numMaxCon = 0;
 
                     var pop = function (host, port) {
-
-                        var now, end, time, tps, message, nowToString, auxHost;
 
                         var options = {
                             host: host,
@@ -66,25 +66,27 @@ var doNtimes_queues = function (startNumPops, provision, callback) {
                             res.setEncoding('utf8');
 
                             res.on('error', function (e) {
-
                                 callback('Error: ' + e.message);
                             });
 
                             res.on('end', function () {
+
+                                var end, time, tps, message;
+
+                                numCon--;
                                 contResponse++;
+
                                 if (contResponse === numPops) {
+
                                     end = new Date().valueOf();
                                     time = end - init;
                                     tps = Math.round((numPops / time) * 1000);
-                                    now = new Date();
                                     message = numPops + ' pops with a provision of ' + provision.payload.length +
-                                        ' bytes in ' + time + ' milliseconds without errors (' + tps + ' tps)';
-                                    nowToString = now.toTimeString().slice(0, 8);
-                                    auxHost = (host === 'localhost') ? '127.0.0.1' : host;
-
-                                    console.log(message);
+                                        ' bytes in ' + time + ' milliseconds without errors (' + tps + ' tps).' +
+                                        ' Simultaneous Connections: ' + numMaxCon;
 
                                     //Add point to the graphic...
+                                    console.log(message);
                                     log(message);
                                     point(numPops, time);
 
@@ -93,15 +95,14 @@ var doNtimes_queues = function (startNumPops, provision, callback) {
                             });
                         });
 
+                        req.on('socket', function(e) {
+                            numCon++;
+                            numMaxCon = (numCon > numMaxCon) ? numCon : numMaxCon;
+                        });
+
                         req.end();
 
                     };
-
-                    function doPop(host, port) {
-                        process.nextTick(function () {
-                            pop(host, port);
-                        });
-                    }
 
                     var agentIndex;
                     var init = new Date().valueOf();
@@ -111,38 +112,34 @@ var doNtimes_queues = function (startNumPops, provision, callback) {
                         var host = config.agentsHosts[agentIndex].host;
                         var port = config.agentsHosts[agentIndex].port;
 
-                        doPop(host, port);
+                        pop(host, port);
                     }
-                    /**
-                     * Auxiliary function to do a pop. This function choose the agent to do the pop depending on numTimes
-                     * (The number of times that the function has been executed).
-                     * @param numTimes The number of times that the function has been executed
-                     */
                 }
             ],
-                /**
-                 * Function that is called when all pops has been completed (or when an error arises).
-                 * @param err
-                 * @param results
-                 */
-                    function (err, results) {
-                    if (err) {
-                        callback();
-                    } else {
-                        dbPusher.flushBBDD(function () {
-                            //Increase the number of pops until it reaches the maximum number of pops defined in the config file,
-                            if (numPops < config.maxPop.max_pops) {
+            /**
+             * Function that is called when all pops has been completed (or when an error arises).
+             * @param err
+             * @param results
+             */
+             function (err, results) {
 
-                                numPops += config.maxPop.queues_inteval;
-                                _doNtimes_queues(callback);
+                if (err) {
+                    callback();
+                } else {
 
-                            } else {
-                                callback();
-                            }
-                        });
-                    }
+                    dbPusher.flushBBDD(function () {
+                        //Increase the number of pops until it reaches the maximum number of pops defined in the config file,
+                        if (numPops < config.maxPop.max_pops) {
+
+                            numPops += config.maxPop.queues_inteval;
+                            _doNtimes_queues(callback);
+
+                        } else {
+                            callback();
+                        }
+                    });
                 }
-            );
+            });
         };
 
 
@@ -176,6 +173,4 @@ var doNtimes = function (numPops, payloadLength) {
     });
 };
 
-setTimeout(function() {
-    doNtimes(config.maxPop.start_number_pops, config.payload_length);
-}, 3000);   //Wait till the agent is running
+doNtimes(config.maxPop.start_number_pops, config.payload_length);

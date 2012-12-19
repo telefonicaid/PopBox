@@ -19,22 +19,28 @@ var doNtimes_queues = function(numQueues, payload_length, callback) {
             var functionParallel;
 
             for (var i = 0; i < config.agentsHosts.length; i++) {
-                var provision = genProvision.genProvision(numQueues, payload_length);
-                var host = config.agentsHosts[i].host;
-                var port = config.agentsHosts[i].port;
+
+                var provision = genProvision.genProvision(numQueues, payload_length),
+                    host = config.agentsHosts[i].host,
+                    port = config.agentsHosts[i].port;
+
                 if (numQueues <= config.maxProvision.max_queues) {
+
                     functionParallel = function(host, port, numQueues) {
                         return function functionDoNTimes(cb) {
                             _doNtimes_queues(provision, payload_length, host, port, numQueues, cb);
                         }
                     };
+
                     functionArray.push(functionParallel(host, port, numQueues));
                 }
+
                 numQueues += config.maxProvision.queues_inteval;
             }
-            async.parallel(functionArray, function() {
-                dbPusher.flushBBDD(function() {
 
+            async.parallel(functionArray, function() {
+
+                dbPusher.flushBBDD(function() {
                     if (numQueues <= config.maxProvision.max_queues) {
                         process.nextTick(agentsTime);
                     } else {
@@ -47,9 +53,8 @@ var doNtimes_queues = function(numQueues, payload_length, callback) {
         var _doNtimes_queues = function(provision, payload_length, host, port, numQueues, endCallback) {
             'use strict';
 
-            var now, init, end, time, tps, message, nowToString, auxHost;
+            var init = new Date().valueOf(), end, time, qps, message;
 
-            init = new Date().valueOf();
             rest.postJson(config.protocol + '://' + host + ':' + port + '/trans', provision).
                 on('complete', function(data, response) {
 
@@ -58,12 +63,9 @@ var doNtimes_queues = function(numQueues, payload_length, callback) {
                         end = new Date().valueOf();
                         time = end - init;
 
-                        now = new Date();
-                        tps = Math.round((numQueues / time) * 1000);
+                        qps = Math.round((numQueues / time) * 1000);
                         message = numQueues + ' inboxes have been provisioned with ' +
-                            payload_length + ' bytes of payload in ' + time + ' ms with no errors (' + tps + ' tps)';
-                        nowToString = now.toTimeString().slice(0, 8);
-                        auxHost = (host === 'localhost') ? '127.0.0.1' : host;
+                            payload_length + ' bytes of payload in ' + time + ' ms with no errors (' + qps + ' qps)';
 
                         console.log(message);
 
