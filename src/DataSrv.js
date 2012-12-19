@@ -646,15 +646,18 @@ var queueSize = function(appPrefix, queueId, callback) {
 };
 var getQueue = function(appPrefix, queueId, callback) {
   'use strict';
+    
+    var maxMessages = config.agent.max_messages;
+    
   logger.debug('popQueue(appPrefix, queueId, callback)',
     [appPrefix, queueId, callback]);
   var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
     queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
     queueId, db = dbCluster.getDb(queueId);
 
-  db.lrange(fullQueueIdH, 0, -1, function onHRange(err, hQueue) {
+  db.lrange(fullQueueIdH, 0, maxMessages, function onHRange(err, hQueue) {
     logger.debug('onHRange(err, hQueue)', [err, hQueue]);
-    db.lrange(fullQueueIdL, 0, -1, function onLRange(err, lQueue) {
+    db.lrange(fullQueueIdL, 0, maxMessages, function onLRange(err, lQueue) {
       logger.debug('onLRange(err, lQueue)', [err, lQueue]);
       dbCluster.free(db);
       db.get(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
