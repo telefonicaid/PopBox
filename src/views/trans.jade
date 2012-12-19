@@ -2,8 +2,9 @@ if locals.payload
   p expirationDate
   -var date = (new Date(expirationDate*1000));
   #expirationDate #{date}
-  p callback
-  #callback #{callback}
+  if locals.callback
+    p callback
+    #callback #{callback}
   p priority
   #priority #{priority}
   p payload
