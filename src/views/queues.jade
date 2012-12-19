@@ -1,9 +1,11 @@
-p ok: 
-  span#ok #{ok}
-p size: 
-  span#ok #{size} 
+if locals.ok
+    p ok: 
+        span#ok #{ok}
+if locals.size
+    p size: 
+        span#ok #{size} 
 p last pop: 
-  if lastPop
+  if locals.lastPop
     -var date = (new Date(lastPop*1000))
     span#lastPop #{date}
   else
