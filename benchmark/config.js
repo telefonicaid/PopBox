@@ -60,10 +60,36 @@ exports.payload_length = 1000;
  */
 exports.monitorRefreshTime = 3000;
 
-
-//MAX PROVISION
+/////////////////
+//MAX PROVISION//
+/////////////////
 
 exports.maxProvision = {};
+
+/**
+ * Performace Framework configuration
+ * @type {Object}
+ */
+exports.maxProvision.pf = {};
+exports.maxProvision.pf.name = 'MaxProvision';
+exports.maxProvision.pf.description = 'This benchmark calculates the time elapsed to provision ' +
+    'am increasing number of queues.';
+exports.maxProvision.pf.template = 'wijmo';
+exports.maxProvision.pf.axis = ['Num Queues', 'Milliseconds'];
+exports.maxProvision.pf.monitors = ['localhost'];
+exports.maxProvision.pf.folder = '.';
+
+
+/**
+ * @type {String}
+ */
+exports.maxProvision.name = 'Max Provisions';
+
+/**
+ * @type {String}
+ */
+exports.maxProvision.description = 'Max Provisions';
+
 
 /**
  * @type {Number}
@@ -90,10 +116,26 @@ exports.maxProvision.queues_inteval = 1000;
  */
 exports.maxProvision.payload_length_interval = 1000;
 
-
-//MAX POP
-
+///////////
+//MAX POP//
+///////////
 exports.maxPop = {};
+
+/**
+ * Performace Framework configuration
+ * @type {Object}
+ */
+exports.maxPop.pf = {};
+exports.maxPop.pf.name = 'Max Pop';
+exports.maxPop.pf.description = 'This benchmark determines the number of transactions that ' +
+    'can be popped from a queue in one second. First, some provisions are introduced in the queue and then ' +
+    'these transactions are popped. The number of transactions per second can be defined according to the ' +
+    'number of transactions in the queue and the elapsed time. The test is repeated increasing the payload ' +
+    'of the transactions.';
+exports.maxPop.pf.template = 'wijmo';
+exports.maxPop.pf.axis = ['Num Pops', 'Milliseconds'];
+exports.maxPop.pf.monitors = ['localhost'];
+exports.maxPop.pf.folder = '.';
 
 /**
  * @type {Number}
@@ -120,9 +162,9 @@ exports.maxPop.max_payload = 5000;
  */
 exports.maxPop.payload_length_interval = 1000;
 
-
-//RANDOM TEST
-
+///////////////
+//RANDOM TEST//
+///////////////
 exports.randomTest = {};
 
 /**
@@ -165,7 +207,9 @@ exports.randomTest.maxTimeOut = 300;
  */
 exports.randomTest.maxMessages = 1000;
 
-//MAX_CON
+///////////
+//MAX_CON//
+///////////
 exports.max_con = {};
 
 /**
