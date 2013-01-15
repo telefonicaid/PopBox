@@ -17,18 +17,20 @@ exports.launchWithDeployment = true;
  * @type {Array}
  */
 exports.agentsHosts = [
-	{host:'localhost', port: 3001},
+  {host: 'localhost', port: 3001}
 ];
 
 /**
  * @type {Object}
  */
-exports.redisTrans= {host:'localhost', port: 6379};
+exports.redisTrans = {host: 'localhost', port: 6379};
 
 /**
  * @type {Array}
  */
-exports.redisServers = [{host: 'localhost', port: 6379}];
+exports.redisServers = [
+  {host: 'localhost', port: 6379}
+];
 
 /**
  * @type {Number}
@@ -72,8 +74,8 @@ exports.maxProvision = {};
  */
 exports.maxProvision.pf = {};
 exports.maxProvision.pf.name = 'MaxProvision';
-exports.maxProvision.pf.description = 'This benchmark calculates the time elapsed to provision ' +
-    'am increasing number of queues.';
+exports.maxProvision.pf.description = 'This benchmark calculates ' +
+    'the time elapsed to provision am increasing number of queues.';
 exports.maxProvision.pf.template = 'wijmo';
 exports.maxProvision.pf.axis = ['Num Queues', 'Milliseconds'];
 exports.maxProvision.pf.monitors = ['localhost'];
@@ -127,11 +129,13 @@ exports.maxPop = {};
  */
 exports.maxPop.pf = {};
 exports.maxPop.pf.name = 'Max Pop';
-exports.maxPop.pf.description = 'This benchmark determines the number of transactions that ' +
-    'can be popped from a queue in one second. First, some provisions are introduced in the queue and then ' +
-    'these transactions are popped. The number of transactions per second can be defined according to the ' +
-    'number of transactions in the queue and the elapsed time. The test is repeated increasing the payload ' +
-    'of the transactions.';
+exports.maxPop.pf.description = 'This benchmark determines the number of ' +
+    'transactions that can be popped from a queue in one second. ' +
+    'First, some provisions are introduced in the queue and then ' +
+    'these transactions are popped. The number ' +
+    'of transactions per second can be defined according to the ' +
+    'number of transactions in the queue and the elapsed time. ' +
+    'The test is repeated increasing the payload of the transactions.';
 exports.maxPop.pf.template = 'wijmo';
 exports.maxPop.pf.axis = ['Num Pops', 'Milliseconds'];
 exports.maxPop.pf.monitors = ['localhost'];
@@ -175,7 +179,7 @@ exports.randomTest.maxQueues = 10;
 /**
  * @type {Number}
  */
-exports.randomTest.minPayloadLength =  500;
+exports.randomTest.minPayloadLength = 500;
 
 /**
  * @type {Number}

@@ -26,8 +26,8 @@ var dbCluster = require('./DBCluster.js');
 var amISlave = config.slave;
 function checkAndPromote() {
   'use strict';
-  return function (req, res, next) {
-    if(amISlave){
+  return function(req, res, next) {
+    if (amISlave) {
       dbCluster.promoteMaster();
       amISlave = false;
     }

@@ -20,11 +20,11 @@
  */
 
 function prefixer(prefix) {
-    'use strict';
-    return function (req, res, next) {
-        req.prefix = prefix;
-        next();
-    };
+  'use strict';
+  return function(req, res, next) {
+    req.prefix = prefix;
+    next();
+  };
 }
 
 exports.prefixer = prefixer;

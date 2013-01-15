@@ -8,143 +8,149 @@ var framework = require('performanceFramework');
 
 http.globalAgent.maxSockets = 100;
 
-
-var testFrameWork = framework.describe(config.maxPop.pf.name, config.maxPop.pf.description,
-    config.maxPop.pf.template, config.maxPop.pf.axis, config.maxPop.pf.monitors,
+var testFrameWork = framework.describe(
+    config.maxPop.pf.name,
+    config.maxPop.pf.description,
+    config.maxPop.pf.template,
+    config.maxPop.pf.axis,
+    config.maxPop.pf.monitors,
     config.maxPop.pf.folder);
 
-var doNtimes_queues = function (startNumPops, provision, callback) {
+var doNtimes_queues = function(startNumPops, provision, callback) {
 
-    testFrameWork.test('Payload ' + provision.payload.length + ' bytes', function(log, point) {
+  testFrameWork.test('Payload ' + provision.payload.length +
+      ' bytes', function(log, point) {
 
-        var numPops = startNumPops;
+    var numPops = startNumPops;
 
-        var _doNtimes_queues = function () {
-            async.series([
+    var _doNtimes_queues = function() {
+      async.series([
 
-                /**
-                 * Introduces numPops provisions in q0 contacting the data base directly
-                 * @param callback
-                 */
-                 function (callback) {
-                    var contResponse = 0;
-                    var fillQueue = function () {
+        /**
+         * Introduces numPops provisions in q0 contacting the data base directly
+         * @param callback
+         */
+            function(callback) {
+          var contResponse = 0;
+          var fillQueue = function() {
 
-                        dbPusher.pushTransaction('UNSEC:', provision, function (err, res) {
-                            contResponse++;
+            dbPusher.pushTransaction('UNSEC:', provision, function(err, res) {
+              contResponse++;
 
-                            if (contResponse === numPops) {
-                                callback();
-                            }
-                        });
-                    };
-
-                    for (var i = 0; i < numPops; i++) {
-                        setTimeout(function () {
-                            fillQueue();
-                        }, 0);
-                    }
-                },
-
-                function (callback) {
-
-                    var contResponse = 0,
-                        numCon = 0,
-                        numMaxCon = 0;
-
-                    var pop = function (host, port) {
-
-                        var options = {
-                            host: host,
-                            port: port,
-                            path: '/queue/q0/pop?max=1',
-                            method: 'POST',
-                            headers: {'Accept': 'application/json'}
-                        };
-
-                        var req = http.request(options, function (res) {
-                            res.setEncoding('utf8');
-
-                            res.on('error', function (e) {
-                                callback('Error: ' + e.message);
-                            });
-
-                            res.on('end', function () {
-
-                                var end, time, tps, message;
-
-                                numCon--;
-                                contResponse++;
-
-                                if (contResponse === numPops) {
-
-                                    end = new Date().valueOf();
-                                    time = end - init;
-                                    tps = Math.round((numPops / time) * 1000);
-                                    message = numPops + ' pops with a provision of ' + provision.payload.length +
-                                        ' bytes in ' + time + ' milliseconds without errors (' + tps + ' tps).' +
-                                        ' Simultaneous Connections: ' + numMaxCon;
-
-                                    //Add point to the graphic...
-                                    console.log(message);
-                                    log(message);
-                                    point(numPops, time);
-
-                                    callback();
-                                }
-                            });
-                        });
-
-                        req.on('socket', function(e) {
-                            numCon++;
-                            numMaxCon = (numCon > numMaxCon) ? numCon : numMaxCon;
-                        });
-
-                        req.end();
-
-                    };
-
-                    var agentIndex;
-                    var init = new Date().valueOf();
-
-                    for (var i = 0; i < numPops; i++) {
-                        agentIndex = Math.floor(i / config.slice) % config.agentsHosts.length;
-                        var host = config.agentsHosts[agentIndex].host;
-                        var port = config.agentsHosts[agentIndex].port;
-
-                        pop(host, port);
-                    }
-                }
-            ],
-            /**
-             * Function that is called when all pops has been completed (or when an error arises).
-             * @param err
-             * @param results
-             */
-             function (err, results) {
-
-                if (err) {
-                    callback();
-                } else {
-
-                    dbPusher.flushBBDD(function () {
-                        //Increase the number of pops until it reaches the maximum number of pops defined in the config file,
-                        if (numPops < config.maxPop.max_pops) {
-
-                            numPops += config.maxPop.queues_inteval;
-                            _doNtimes_queues(callback);
-
-                        } else {
-                            callback();
-                        }
-                    });
-                }
+              if (contResponse === numPops) {
+                callback();
+              }
             });
-        };
+          };
+
+          for (var i = 0; i < numPops; i++) {
+            setTimeout(function() {
+              fillQueue();
+            }, 0);
+          }
+        },
+
+        function(callback) {
+
+          var contResponse = 0,
+              numCon = 0,
+              numMaxCon = 0;
+
+          var pop = function(host, port) {
+
+            var options = {
+              host: host,
+              port: port,
+              path: '/queue/q0/pop?max=1',
+              method: 'POST',
+              headers: {'Accept': 'application/json'}
+            };
+
+            var req = http.request(options, function(res) {
+              res.setEncoding('utf8');
+
+              res.on('error', function(e) {
+                callback('Error: ' + e.message);
+              });
+
+              res.on('end', function() {
+
+                var end, time, tps, message;
+
+                numCon--;
+                contResponse++;
+
+                if (contResponse === numPops) {
+
+                  end = new Date().valueOf();
+                  time = end - init;
+                  tps = Math.round((numPops / time) * 1000);
+                  message = numPops + ' pops with a provision of ' +
+                      provision.payload.length + ' bytes in ' + time +
+                      ' milliseconds without errors (' + tps + ' tps).' +
+                      ' Simultaneous Connections: ' + numMaxCon;
+
+                  //Add point to the graphic...
+                  console.log(message);
+                  log(message);
+                  point(numPops, time);
+
+                  callback();
+                }
+              });
+            });
+
+            req.on('socket', function(e) {
+              numCon++;
+              numMaxCon = (numCon > numMaxCon) ? numCon : numMaxCon;
+            });
+
+            req.end();
+
+          };
+
+          var agentIndex;
+          var init = new Date().valueOf();
+
+          for (var i = 0; i < numPops; i++) {
+            agentIndex = Math.floor(i / config.slice) %
+                config.agentsHosts.length;
+            var host = config.agentsHosts[agentIndex].host;
+            var port = config.agentsHosts[agentIndex].port;
+
+            pop(host, port);
+          }
+        }
+      ],
+          /**
+           * Function that is called when all pops has been completed (or when an error arises).
+           * @param err
+           * @param results
+           */
+              function(err, results) {
+
+            if (err) {
+              callback();
+            } else {
+
+              dbPusher.flushBBDD(function() {
+                //Increase the number of pops until it reaches the maximum number of pops defined in the config file,
+                if (numPops < config.maxPop.max_pops) {
+
+                  numPops += config.maxPop.queues_inteval;
+                  _doNtimes_queues(callback);
+
+                } else {
+                  callback();
+                }
+              });
+            }
+          });
+    };
 
 
-        _doNtimes_queues();
-    });
+    _doNtimes_queues();
+  });
 };
 
 /**
@@ -153,24 +159,24 @@ var doNtimes_queues = function (startNumPops, provision, callback) {
  * these transactions are popped. The number of transactions per second can be defined according to the
  * number of transactions in the queue and the elapsed time.
  */
-var doNtimes = function (numPops, payloadLength) {
+var doNtimes = function(numPops, payloadLength) {
 
-    var provision = genProvision.genProvision(1, payloadLength);
+  var provision = genProvision.genProvision(1, payloadLength);
 
-    doNtimes_queues(numPops, provision, function () {
+  doNtimes_queues(numPops, provision, function() {
 
-        //Increase the payload until it reaches the maximum payload size defined in the config file.
-        if (payloadLength < config.maxPop.max_payload) {
+    //Increase the payload until it reaches the maximum payload size defined in the config file.
+    if (payloadLength < config.maxPop.max_payload) {
 
-            payloadLength += config.maxPop.payload_length_interval;
-            doNtimes(numPops, payloadLength);
+      payloadLength += config.maxPop.payload_length_interval;
+      doNtimes(numPops, payloadLength);
 
-        } else {
+    } else {
 
-            testFrameWork.done();
-            dbPusher.closeDBConnections();
-        }
-    });
+      testFrameWork.done();
+      dbPusher.closeDBConnections();
+    }
+  });
 };
 
 doNtimes(config.maxPop.start_number_pops, config.payload_length);

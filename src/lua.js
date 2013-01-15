@@ -8,12 +8,12 @@
 
 var redisModule = require('redis');
 var rc = redisModule.createClient(6379, 'localhost');
-var keys = ['uno', 'dos','tres'];
+var keys = ['uno', 'dos', 'tres'];
 var argv = [10];
 
 var joined = keys.concat(argv);
 
-var popScript="\
+var popScript = "\
 local rollback = function(data, key)\n\
   for i, elem in pairs(data) do\n\
     redis.call('lpush',key, elem)\n\
@@ -52,8 +52,8 @@ return result\n\
 ";
 
 
-rc.eval(popScript, keys.length, joined, function(err, data){
-  "use strict";
+rc.eval(popScript, keys.length, joined, function(err, data) {
+  'use strict';
   console.dir(err);
   console.dir(data);
 });

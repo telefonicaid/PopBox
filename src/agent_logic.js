@@ -32,546 +32,667 @@ logger.prefix = path.basename(module.filename, '.js');
 
 
 function postTrans(req, res) {
-    'use strict';
-    logger.debug('postTrans (req, res)', [req, res]);
-    var errors = validate.errorsTrans(req.body);
-    logger.debug('postTrans - errors', errors);
-    var ev = {};
-    var prefix = req.prefix;
+  'use strict';
+  logger.debug('postTrans (req, res)', [req, res]);
+  var errors = validate.errorsTrans(req.body);
+  logger.debug('postTrans - errors', errors);
+  var ev = {};
+  var prefix = req.prefix;
 
 
-    req.connection.setTimeout(config.agent.prov_timeout * 1000);
+  req.connection.setTimeout(config.agent.prov_timeout * 1000);
 
-    if (errors.length === 0) {
-        dataSrv.pushTransaction(prefix, req.body, function onPushedTrans(err, trans_id) {
-            logger.debug('onPushedTrans(err, trans_id)', [err, trans_id]);
-            if (err) {
-                ev = {
-                    'transaction': trans_id,
-                    'postdata': req.body,
-                    'action': 'USERPUSH',
-                    'timestamp': new Date(),
-                    'error': err
-                };
-                emitter.emit('ACTION', ev);
-                res.send({errors: [err]}, 500);
-                logger.info('postTrans', [
-                    {error: [err]},
-                    500 , req.info
-                ]);
-            } else {
-                ev = {
-                    'transaction': trans_id,
-                    'postdata': req.body,
-                    'action': 'USERPUSH',
-                    'timestamp': new Date()
-                };
-                emitter.emit('ACTION', ev);
-                res.send({ok: true, data: trans_id});
-                logger.info('postTrans', [
-                    {id: trans_id} ,req.info
-                ]);
-            }
-        });
-    } else {
-        res.send({errors: errors}, 400);
+  if (errors.length === 0) {
+    dataSrv.pushTransaction(prefix, req.body,
+        function onPushedTrans(err, trans_id) {
+      logger.debug('onPushedTrans(err, trans_id)', [err, trans_id]);
+      if (err) {
+        ev = {
+          'transaction': trans_id,
+          'postdata': req.body,
+          'action': 'USERPUSH',
+          'timestamp': new Date(),
+          'error': err
+        };
+        emitter.emit('ACTION', ev);
+        res.send({errors: [err]}, 500);
         logger.info('postTrans', [
-            {errors: errors},
-            400 , req.info
+          {error: [err]},
+          500 ,
+          req.info
         ]);
-    }
+      } else {
+        ev = {
+          'transaction': trans_id,
+          'postdata': req.body,
+          'action': 'USERPUSH',
+          'timestamp': new Date()
+        };
+        emitter.emit('ACTION', ev);
+        res.send({ok: true, data: trans_id});
+        logger.info('postTrans', [
+          {id: trans_id} ,
+          req.info
+        ]);
+      }
+    });
+  } else {
+    res.send({errors: errors}, 400);
+    logger.info('postTrans', [
+      {errors: errors},
+      400 ,
+      req.info
+    ]);
+  }
 }
 
 function postTransDelayed(req, res) {
-    'use strict';
-    logger.debug('postTransDelayed(req, res)', [req, res]);
-    var delay = Number(req.param('delay'));
-    if (delay) {
-        setTimeout(function() {
-            postTrans(req, { send: function() {}});
-        }, delay * 1000);
-        logger.info('postTransDelayed', [{'ok': true, 'data': 'unknown-delayed'},req.info]);
-        res.send({'ok': true, 'data': 'unknown-delayed'});
-    }
-    else {
-        postTrans(req, res);
-    }
+  'use strict';
+  logger.debug('postTransDelayed(req, res)', [req, res]);
+  var delay = Number(req.param('delay'));
+  if (delay) {
+    setTimeout(function() {
+      postTrans(req, { send: function() {
+      }});
+    }, delay * 1000);
+    logger.info('postTransDelayed', [
+      {'ok': true, 'data': 'unknown-delayed'},
+      req.info
+    ]);
+    res.send({'ok': true, 'data': 'unknown-delayed'});
+  }
+  else {
+    postTrans(req, res);
+  }
 }
 
 function putTransMeta(req, res) {
-    'use strict';
-    logger.debug('putTransMeta(req, res)', [req, res]);
-    var id = req.param('id_trans', null),
-        empty = true, filteredReq = {}, errorsP, errorsExpDate, errors = [];
+  'use strict';
+  logger.debug('putTransMeta(req, res)', [req, res]);
+  var id = req.param('id_trans', null),
+      empty = true, filteredReq = {}, errorsP, errorsExpDate, errors = [];
 
 
-    filteredReq.payload = req.body.payload;
-    filteredReq.callback = req.body.callback;
-    filteredReq.expirationDate = req.body.expirationDate;
+  filteredReq.payload = req.body.payload;
+  filteredReq.callback = req.body.callback;
+  filteredReq.expirationDate = req.body.expirationDate;
 
-    empty = (filteredReq.payload === undefined) &&
-        (filteredReq.callback === undefined) &&
-        (filteredReq.expirationDate === undefined);
+  empty = (filteredReq.payload === undefined) &&
+      (filteredReq.callback === undefined) &&
+      (filteredReq.expirationDate === undefined);
 
-    if (empty) {
-        logger.info('putTransMeta', [{ok: true, data: 'empty data'},req.info]);
-        res.send({ok: true, data: 'empty data'});
+  if (empty) {
+    logger.info('putTransMeta', [
+      {ok: true, data: 'empty data'},
+      req.info
+    ]);
+    res.send({ok: true, data: 'empty data'});
+  }
+  else {
+    if (id === null) {
+      errors.push('missing id');
+    }
+    errorsP = validate.errorsPayload(filteredReq.payload, false);
+    errors = errors.concat(errorsP);
+
+    errorsExpDate = validate.errorsExpirationDate(filteredReq.expirationDate);
+    errors = errors.concat(errorsExpDate);
+
+    if (errors.length > 0) {
+      logger.info('putTransMeta', [req.info, {errors: errors}, 400]);
+      res.send({errors: errors}, 400);
     }
     else {
-        if (id === null) {
-            errors.push('missing id');
+      dataSrv.updateTransMeta(id, req.body, function(e, data) {
+        if (e) {
+          logger.info('putTransMeta', [
+            {errors: [String(e)]},
+            400,
+            req.info
+          ]);
+          res.send({errors: [String(e)]}, 400);
+        } else {
+          logger.info('putTransMeta', [
+            {ok: true, data: data},
+            req.info
+          ]);
+          res.send({ok: true, data: data});
         }
-        errorsP = validate.errorsPayload(filteredReq.payload, false);
-        errors = errors.concat(errorsP);
-
-        errorsExpDate = validate.errorsExpirationDate(filteredReq.expirationDate);
-        errors = errors.concat(errorsExpDate);
-
-        if (errors.length > 0) {
-            logger.info('putTransMeta', [req.info, {errors: errors}, 400]);
-            res.send({errors: errors}, 400);
-        }
-        else {
-            dataSrv.updateTransMeta(id, req.body, function(e, data) {
-                if (e) {
-                    logger.info('putTransMeta', [{errors: [String(e)]}, 400, req.info]);
-                    res.send({errors: [String(e)]}, 400);
-                } else {
-                    logger.info('putTransMeta', [{ok: true, data: data},req.info]);
-                    res.send({ok: true, data: data});
-                }
-            });
-        }
+      });
     }
+  }
 }
 
 function postQueue(req, res) {
-    'use strict';
+  'use strict';
 
-    logger.debug('postQueue (req, res)', [req, res]);
-    var errors = [];//validate.errorsTrans(req.body);
-    var ev = {};
-    var queue = req.body.queue,
-        user = req.body.user,
-        passwd = req.body.password;
-    var appPrefix = req.prefix;
+  logger.debug('postQueue (req, res)', [req, res]);
+  var errors = [];//validate.errorsTrans(req.body);
+  var ev = {};
+  var queue = req.body.queue,
+      user = req.body.user,
+      passwd = req.body.password;
+  var appPrefix = req.prefix;
 
-    if (errors.length === 0) {
-        dataSrv.setSecHash(appPrefix, queue, user, passwd, function(err) {
-            if (err) {
-                ev = {
-                    'queue': queue,
-                    'postdata': req.body,
-                    'action': 'CREATEQUEUE',
-                    'timestamp': new Date(),
-                    'error': err
-                };
-                emitter.emit('ACTION', ev);
-                logger.info('putTransMeta', [{errors: [String(err)]}, 400, req.info]);
-                res.send([{errors: [err]}, 500]);
-            } else {
-                ev = {
-                    'queue': queue,
-                    'postdata': req.body,
-                    'action': 'CREATEQUEUE',
-                    'timestamp': new Date()
-                };
-                emitter.emit('ACTION', ev);
-                logger.info('putTransMeta', [{ok: true},req.info]);
-                res.send({ok: true});
-            }
-        });
-    } else {
-        logger.info('putTransMeta', [{errors: errors}, 400, req.info]);
-        res.send({errors: errors}, 400);
-    }
+  if (errors.length === 0) {
+    dataSrv.setSecHash(appPrefix, queue, user, passwd, function(err) {
+      if (err) {
+        ev = {
+          'queue': queue,
+          'postdata': req.body,
+          'action': 'CREATEQUEUE',
+          'timestamp': new Date(),
+          'error': err
+        };
+        emitter.emit('ACTION', ev);
+        logger.info('putTransMeta', [
+          {errors: [String(err)]},
+          400,
+          req.info
+        ]);
+        res.send([
+          {errors: [err]},
+          500
+        ]);
+      } else {
+        ev = {
+          'queue': queue,
+          'postdata': req.body,
+          'action': 'CREATEQUEUE',
+          'timestamp': new Date()
+        };
+        emitter.emit('ACTION', ev);
+        logger.info('putTransMeta', [
+          {ok: true},
+          req.info
+        ]);
+        res.send({ok: true});
+      }
+    });
+  } else {
+    logger.info('putTransMeta', [
+      {errors: errors},
+      400,
+      req.info
+    ]);
+    res.send({errors: errors}, 400);
+  }
 }
 
 
 function transState(req, res) {
-    'use strict';
-    logger.debug('transState(req, res)', [req, res]);
-    var id = req.param('id_trans', null);
-    var state = req.param('state', 'All');
-    var summary;
-    if (state === 'summary') {
-        summary = true;
-        state = 'All';
-    }
-    if (id) {
-        dataSrv.getTransaction(id, state, summary, function(e, data) {
-            if (e) {
-                logger.info('transState', [{errors: [e]}, 400, req.info]);
-                res.send({errors: [e]}, 400);
-            } else {
-                logger.info('transState', [{ok: true, data: data},req.info]);
-                res.send({ok: true, data: data});
-            }
-        });
-    } else {
-        logger.info('transState', [{errors: ['missing id']}, 400, req.info]);
-        res.send({errors: ['missing id']}, 400);
-    }
+  'use strict';
+  logger.debug('transState(req, res)', [req, res]);
+  var id = req.param('id_trans', null);
+  var state = req.param('state', 'All');
+  var summary;
+  if (state === 'summary') {
+    summary = true;
+    state = 'All';
+  }
+  if (id) {
+    dataSrv.getTransaction(id, state, summary, function(e, data) {
+      if (e) {
+        logger.info('transState', [
+          {errors: [e]},
+          400,
+          req.info
+        ]);
+        res.send({errors: [e]}, 400);
+      } else {
+        logger.info('transState', [
+          {ok: true, data: data},
+          req.info
+        ]);
+        res.send({ok: true, data: data});
+      }
+    });
+  } else {
+    logger.info('transState', [
+      {errors: ['missing id']},
+      400,
+      req.info
+    ]);
+    res.send({errors: ['missing id']}, 400);
+  }
 }
 
 function deleteTrans(req, res) {
-    'use strict';
-    logger.debug('deleteTrans(req, res)', [req, res]);
-    var id = req.param('id_trans', null);
+  'use strict';
+  logger.debug('deleteTrans(req, res)', [req, res]);
+  var id = req.param('id_trans', null);
 
-    if (id) {
-        dataSrv.deleteTrans(id, function(e) {
-            if (e) {
-                logger.info('deleteTrans', [{errors: [e]}, 400, req.info]);
-                res.send({errors: [e]}, 400);
-            } else {
-                logger.info('deleteTrans', [{ok: true}, req.info]);
-                res.send({ok: true});
-            }
-        });
-    } else {
-        logger.info('deleteTrans', [{errors: ['missing id']}, 400], req.info);
-        res.send({errors: ['missing id']}, 400);
-    }
+  if (id) {
+    dataSrv.deleteTrans(id, function(e) {
+      if (e) {
+        logger.info('deleteTrans', [
+          {errors: [e]},
+          400,
+          req.info
+        ]);
+        res.send({errors: [e]}, 400);
+      } else {
+        logger.info('deleteTrans', [
+          {ok: true},
+          req.info
+        ]);
+        res.send({ok: true});
+      }
+    });
+  } else {
+    logger.info('deleteTrans', [
+      {errors: ['missing id']},
+      400
+    ], req.info);
+    res.send({errors: ['missing id']}, 400);
+  }
 }
 
 function payloadTrans(req, res) {
-    'use strict';
-    logger.debug('payloadTrans(req, res)', [req, res]);
-    var id = req.param('id_trans', null);
-    logger.debug('payloadTrans - id req.body', id, req.body);
+  'use strict';
+  logger.debug('payloadTrans(req, res)', [req, res]);
+  var id = req.param('id_trans', null);
+  logger.debug('payloadTrans - id req.body', id, req.body);
 
 
-    if (!id) {
-        logger.info('payloadTrans', [{errors: ['missing id']}, 400, req.info]);
-        res.send({errors: ['missing id']}, 400);
-    }
-    else if (!req.body) {
-        logger.info('payloadTrans', [{errors: ['missing body']}, 400, req.info]);
-        res.send({errors: ['missing body']}, 400);
-    }
-    else {
-        dataSrv.setPayload(id, req.body, function(e) {
-            if (e) {
-                logger.info('payloadTrans', [{errors: [String(e)]}, 400, req.info]);
-                res.send({errors: [String(e)]}, 400);
-            } else {
-                logger.info('payloadTrans', [{ok: true},req.info]);
-                res.send({ok: true});
-            }
-        });
-    }
+  if (! id) {
+    logger.info('payloadTrans', [
+      {errors: ['missing id']},
+      400,
+      req.info
+    ]);
+    res.send({errors: ['missing id']}, 400);
+  }
+  else if (! req.body) {
+    logger.info('payloadTrans', [
+      {errors: ['missing body']},
+      400,
+      req.info
+    ]);
+    res.send({errors: ['missing body']}, 400);
+  }
+  else {
+    dataSrv.setPayload(id, req.body, function(e) {
+      if (e) {
+        logger.info('payloadTrans', [
+          {errors: [String(e)]},
+          400,
+          req.info
+        ]);
+        res.send({errors: [String(e)]}, 400);
+      } else {
+        logger.info('payloadTrans', [
+          {ok: true},
+          req.info
+        ]);
+        res.send({ok: true});
+      }
+    });
+  }
 }
 
 function callbackTrans(req, res) {
-    'use strict';
-    logger.debug('callbackTrans(req, res)', [req, res]);
-    var id = req.param('id_trans', null);
-    logger.debug('callbackTrans - id req.body', id, req.body);
+  'use strict';
+  logger.debug('callbackTrans(req, res)', [req, res]);
+  var id = req.param('id_trans', null);
+  logger.debug('callbackTrans - id req.body', id, req.body);
 
 
-    if (!id) {
-        logger.info('callbackTrans', [{errors: ['missing id']}, 400, req.info]);
-        res.send({errors: ['missing id']}, 400);
-    }
-    else if (!req.body) {
-        logger.info('callbackTrans', [{errors: ['missing body']}, 400, req.info]);
-        res.send({errors: ['missing body']}, 400);
-    }
-    else {
-        dataSrv.setUrlCallback(id, req.body, function(e) {
-            if (e) {
-                logger.info('callbackTrans', [{errors: [String(e)]}, 400, req.info]);
-                res.send({errors: [String(e)]}, 400);
-            } else {
-                logger.info('callbackTrans', [{ok: true}, req.info]);
-                res.send({ok: true});
-            }
-        });
-    }
+  if (! id) {
+    logger.info('callbackTrans', [
+      {errors: ['missing id']},
+      400,
+      req.info
+    ]);
+    res.send({errors: ['missing id']}, 400);
+  }
+  else if (! req.body) {
+    logger.info('callbackTrans', [
+      {errors: ['missing body']},
+      400,
+      req.info
+    ]);
+    res.send({errors: ['missing body']}, 400);
+  }
+  else {
+    dataSrv.setUrlCallback(id, req.body, function(e) {
+      if (e) {
+        logger.info('callbackTrans', [
+          {errors: [String(e)]},
+          400,
+          req.info
+        ]);
+        res.send({errors: [String(e)]}, 400);
+      } else {
+        logger.info('callbackTrans', [
+          {ok: true},
+          req.info
+        ]);
+        res.send({ok: true});
+      }
+    });
+  }
 }
 function expirationDate(req, res) {
-    'use strict';
-    logger.debug('expirationDate(req, res)', [req, res]);
-    var id = req.param('id_trans', null),
-        errors;
-    logger.debug('expirationDate - id  req.body', id, req.body);
-    if (id) {
-        errors = validate.errorsExpirationDate(req.body);
-        if (errors.length === 0) {
-            logger.debug('putTransMeta - errors', errors);
-            dataSrv.setExpirationDate(id, req.body, function(e) {
-                if (e) {
-                    logger.info('expirationDate', [{errors: [String(e)]}, 400, req.info]);
-                    res.send({errors: [String(e)]}, 400);
-                } else {
-                    logger.info('expirationDate', [{ok: true},req.info]);
-                    res.send({ok: true});
-                }
-            });
+  'use strict';
+  logger.debug('expirationDate(req, res)', [req, res]);
+  var id = req.param('id_trans', null),
+      errors;
+  logger.debug('expirationDate - id  req.body', id, req.body);
+  if (id) {
+    errors = validate.errorsExpirationDate(req.body);
+    if (errors.length === 0) {
+      logger.debug('putTransMeta - errors', errors);
+      dataSrv.setExpirationDate(id, req.body, function(e) {
+        if (e) {
+          logger.info('expirationDate', [
+            {errors: [String(e)]},
+            400,
+            req.info
+          ]);
+          res.send({errors: [String(e)]}, 400);
+        } else {
+          logger.info('expirationDate', [
+            {ok: true},
+            req.info
+          ]);
+          res.send({ok: true});
         }
-        else {
-            logger.info('expirationDate', [{errors: errors}, 400, req.info]);
-            res.send({errors: errors}, 400);
-        }
-    } else {
-        logger.info('expirationDate', [{errors: ['missing id']}, 400, req.info]);
-        res.send({errors: ['missing id']}, 400);
+      });
     }
+    else {
+      logger.info('expirationDate', [
+        {errors: errors},
+        400,
+        req.info
+      ]);
+      res.send({errors: errors}, 400);
+    }
+  } else {
+    logger.info('expirationDate', [
+      {errors: ['missing id']},
+      400,
+      req.info
+    ]);
+    res.send({errors: ['missing id']}, 400);
+  }
 }
 function queueSize(req, res) {
-    'use strict';
-    logger.debug('queueSize (req, res)', [req, res]);
-    var queueId = req.param('id');
-    var prefix = req.prefix;
+  'use strict';
+  logger.debug('queueSize (req, res)', [req, res]);
+  var queueId = req.param('id');
+  var prefix = req.prefix;
 
-    dataSrv.queueSize(prefix, queueId, function onQueueSize(err, length) {
-        logger.debug('onQueueSize(err, length)', [err, length]);
-        if (err) {
-            logger.info('onQueueSize', [String(err), 500, req.info]);
-            res.send({errors: [String(err)]}, 500);
-        } else {
-            logger.info('onQueueSize', [String(length), req.info]);
-            res.send({ok: true, data: String(length)});
-        }
-    });
+  dataSrv.queueSize(prefix, queueId, function onQueueSize(err, length) {
+    logger.debug('onQueueSize(err, length)', [err, length]);
+    if (err) {
+      logger.info('onQueueSize', [String(err), 500, req.info]);
+      res.send({errors: [String(err)]}, 500);
+    } else {
+      logger.info('onQueueSize', [String(length), req.info]);
+      res.send({ok: true, data: String(length)});
+    }
+  });
 }
 
 function getQueue(req, res) {
-    'use strict';
-    logger.debug('getQueue (req, res)', [req, res]);
-    var queueId = req.param('id');
-    var prefix = req.prefix;
+  'use strict';
+  logger.debug('getQueue (req, res)', [req, res]);
+  var queueId = req.param('id');
+  var prefix = req.prefix;
 
-    req.template = 'queues.jade';
+  req.template = 'queues.jade';
 
-    dataSrv.getQueue(prefix, queueId, function onGetQueue(err, hQ, lQ, lastPop) {
-        logger.debug('onGetQueue(err, hQ, lQ, lastPop)', [err, hQ, lQ, lastPop]);
-        if (err) {
-            logger.info('onGetQueue', [String(err), 500, req.info]);
-            res.send({errors: [String(err)]}, 500);
-        } else {
-            var mapTrans = function(v) {
-                var id = v.split('|')[1];
-                return {
-                    id: id,
-                    href: 'http://' + req.headers.host + '/trans/' + id + '?queues=All'
-                };
-            };
-            hQ = hQ.map(mapTrans);
-            lQ = lQ.map(mapTrans);
-            logger.info('onGetQueue', [{ok: true, host: req.headers.host, lastPop: lastPop,
-                size: hQ.length + lQ.length, high: hQ, low: lQ } ,req.info]);
-            res.send({ok: true, host: req.headers.host, lastPop: lastPop,
-                size: hQ.length + lQ.length, high: hQ, low: lQ });
-        }
-    });
+  dataSrv.getQueue(prefix, queueId, function onGetQueue(err, hQ, lQ, lastPop) {
+    logger.debug('onGetQueue(err, hQ, lQ, lastPop)', [err, hQ, lQ, lastPop]);
+    if (err) {
+      logger.info('onGetQueue', [String(err), 500, req.info]);
+      res.send({errors: [String(err)]}, 500);
+    } else {
+      var mapTrans = function(v) {
+        var id = v.split('|')[1];
+        return {
+          id: id,
+          href: 'http://' + req.headers.host + '/trans/' + id + '?queues=All'
+        };
+      };
+      hQ = hQ.map(mapTrans);
+      lQ = lQ.map(mapTrans);
+      logger.info('onGetQueue', [
+        {ok: true, host: req.headers.host, lastPop: lastPop,
+          size: hQ.length + lQ.length, high: hQ, low: lQ } ,
+        req.info
+      ]);
+      res.send({ok: true, host: req.headers.host, lastPop: lastPop,
+        size: hQ.length + lQ.length, high: hQ, low: lQ });
+    }
+  });
 }
 
 function popQueue(req, res) {
-    'use strict';
-    logger.debug('popQueue(req, res)', [req, res]);
-    var queueId = req.param('id');
-    var maxMsgs = req.param('max', config.agent.max_messages);
-    var tOut = req.param('timeout', config.agent.pop_timeout);
-    var appPrefix = req.prefix;
+  'use strict';
+  logger.debug('popQueue(req, res)', [req, res]);
+  var queueId = req.param('id');
+  var maxMsgs = req.param('max', config.agent.max_messages);
+  var tOut = req.param('timeout', config.agent.pop_timeout);
+  var appPrefix = req.prefix;
 
-    maxMsgs = parseInt(maxMsgs, 10);
-    if (isNaN(maxMsgs)) {
-        maxMsgs = config.agent.max_messages;
+  maxMsgs = parseInt(maxMsgs, 10);
+  if (isNaN(maxMsgs)) {
+    maxMsgs = config.agent.max_messages;
+  }
+
+  tOut = parseInt(tOut, 10);
+  if (isNaN(tOut)) {
+    tOut = config.agent.pop_timeout;
+  }
+  if (tOut === 0) {
+    tOut = 1;
+  }
+  if (tOut > config.agent.max_pop_timeout) {
+    tOut = config.agent.max_pop_timeout;
+  }
+
+  req.connection.setTimeout((tOut + config.agent.grace_timeout) * 1000);
+
+  logger.debug('Blocking: queueId, maxMsgs, tOut', [queueId, maxMsgs, tOut]);
+
+  dataSrv.blockingPop(appPrefix, {id: queueId}, maxMsgs,
+      tOut, function onBlockingPop(err, notifList) {
+    logger.debug('onBlockingPop(err, notifList)', [err, notifList]);
+    var messageList = [];
+    var transactionIdList = [];
+    var ev = {};
+    //stablish the timeout depending on blocking time
+
+    if (err) {
+      ev = {
+        'queue': queueId,
+        'max_msg': maxMsgs,
+        'action': 'USERPOP',
+        'timestamp': new Date(),
+        'error': err
+      };
+      emitter.emit('ACTION', ev);
+      logger.info('popQueue', [String(err), 500, req.info]);
+      res.send({errors: [String(err)]}, 500);
+    } else {
+      if (notifList) {
+        messageList = notifList.map(function(notif) {
+          return notif && notif.payload;
+        });
+        transactionIdList = notifList.map(function(notif) {
+          return notif && notif.transactionId;
+        });
+      }
+      ev = {
+        'queue': queueId,
+        'max_msg': maxMsgs,
+        'total_msg': messageList.length,
+        'action': 'USERPOP',
+        'timestamp': new Date()
+      };
+      emitter.emit('ACTION', ev);
+      logger.info('popQueue', [
+        {ok: true, data: messageList, transactions: transactionIdList},
+        req.info
+      ]);
+      res.send({ok: true, data: messageList, transactions: transactionIdList});
     }
-
-    tOut = parseInt(tOut, 10);
-    if (isNaN(tOut)) {
-        tOut = config.agent.pop_timeout;
-    }
-    if (tOut === 0) {
-        tOut = 1;
-    }
-    if (tOut > config.agent.max_pop_timeout) {
-        tOut = config.agent.max_pop_timeout;
-    }
-
-    req.connection.setTimeout((tOut + config.agent.grace_timeout) * 1000);
-
-    logger.debug('Blocking: queueId, maxMsgs, tOut', [queueId, maxMsgs, tOut]);
-
-    dataSrv.blockingPop(appPrefix, {id: queueId}, maxMsgs, tOut, function onBlockingPop(err, notifList) {
-        logger.debug('onBlockingPop(err, notifList)', [err, notifList]);
-        var messageList = [];
-        var transactionIdList = [];
-        var ev = {};
-        //stablish the timeout depending on blocking time
-
-        if (err) {
-            ev = {
-                'queue': queueId,
-                'max_msg': maxMsgs,
-                'action': 'USERPOP',
-                'timestamp': new Date(),
-                'error': err
-            };
-            emitter.emit('ACTION', ev);
-            logger.info('popQueue', [String(err), 500, req.info]);
-            res.send({errors: [String(err)]}, 500);
-        } else {
-            if (notifList) {
-                messageList = notifList.map(function(notif) {
-                    return notif && notif.payload;
-                });
-                transactionIdList = notifList.map(function(notif) {
-                   return notif && notif.transactionId;
-                });
-            }
-            ev = {
-                'queue': queueId,
-                'max_msg': maxMsgs,
-                'total_msg': messageList.length,
-                'action': 'USERPOP',
-                'timestamp': new Date()
-            };
-            emitter.emit('ACTION', ev);
-            logger.info('popQueue', [
-                {ok: true, data: messageList, transactions: transactionIdList}, req.info]);
-            res.send({ok: true, data: messageList, transactions: transactionIdList});
-        }
-    });
+  });
 }
 
 function peekQueue(req, res) {
-    'use strict';
-    logger.debug('peekQueue(req, res)', [req, res]);
-    var queueId = req.param('id');
-    var maxMsgs = req.param('max', config.agent.max_messages);
-    var appPrefix = req.prefix;
+  'use strict';
+  logger.debug('peekQueue(req, res)', [req, res]);
+  var queueId = req.param('id');
+  var maxMsgs = req.param('max', config.agent.max_messages);
+  var appPrefix = req.prefix;
 
-    maxMsgs = parseInt(maxMsgs, 10);
-    if (isNaN(maxMsgs)) {
-        maxMsgs = config.agent.max_messages;
+  maxMsgs = parseInt(maxMsgs, 10);
+  if (isNaN(maxMsgs)) {
+    maxMsgs = config.agent.max_messages;
+  }
+
+  logger.debug('Peek: queueId, maxMsgs', [queueId, maxMsgs]);
+
+  dataSrv.peek(appPrefix, {id: queueId}, maxMsgs,
+      function onPeek(err, notifList) {
+    logger.debug('onBlockingPop(err, notifList)', [err, notifList]);
+    var messageList = [];
+    var ev = {};
+    //stablish the timeout depending on blocking time
+
+    if (err) {
+      logger.info('peekQueue', [String(err), 500, req.info]);
+      res.send({errors: [String(err)]}, 500);
+
+    } else {
+
+      if (notifList) {
+        messageList = notifList.map(function(notif) {
+          return notif && notif.payload;
+        });
+      }
+      logger.info('peekQueue', [
+        {ok: true, data: messageList} ,
+        req.info
+      ]);
+      res.send({ok: true, data: messageList});
     }
-
-    logger.debug('Peek: queueId, maxMsgs', [queueId, maxMsgs]);
-
-    dataSrv.peek(appPrefix, {id: queueId}, maxMsgs, function onPeek(err, notifList) {
-        logger.debug('onBlockingPop(err, notifList)', [err, notifList]);
-        var messageList = [];
-        var ev = {};
-        //stablish the timeout depending on blocking time
-
-        if (err) {
-            logger.info('peekQueue', [String(err), 500, req.info]);
-            res.send({errors: [String(err)]}, 500);
-
-        } else {
-
-            if (notifList) {
-                messageList = notifList.map(function(notif) {
-                    return notif && notif.payload;
-                });
-            }
-            logger.info('peekQueue', [{ok: true, data: messageList} ,req.info]);
-            res.send({ok: true, data: messageList});
-        }
-    });
+  });
 }
 
 function checkPerm(req, res, cb) {
-    'use strict';
-    logger.debug('checkPerm(req, res, cb)', [req, res, cb]);
-    var header = req.headers.authorization || '', // get the header
-        token = header.split(/\s+/).pop() || '', // and the encoded auth token
-        auth = new Buffer(token, 'base64').toString(), // convert from base64
-        parts = auth.split(/:/), // split on colon
-        username = parts[0],
-        password = parts[1];
-    var appPrefix = req.prefix;
+  'use strict';
+  logger.debug('checkPerm(req, res, cb)', [req, res, cb]);
+  var header = req.headers.authorization || '', // get the header
+      token = header.split(/\s+/).pop() || '', // and the encoded auth token
+      auth = new Buffer(token, 'base64').toString(), // convert from base64
+      parts = auth.split(/:/), // split on colon
+      username = parts[0],
+      password = parts[1];
+  var appPrefix = req.prefix;
 
-    var shasum = crypto.createHash('sha1'),
-        digest;
+  var shasum = crypto.createHash('sha1'),
+      digest;
 
-    shasum.update(username + password);
-    digest = shasum.digest();
+  shasum.update(username + password);
+  digest = shasum.digest();
 
-    dataSrv.getSecHash(appPrefix, req.param('id'), function(err, value) {
+  dataSrv.getSecHash(appPrefix, req.param('id'), function(err, value) {
 
-        if (err) {
-            res.send('ERROR:' + err, {
-                'Content-Type': 'text/plain',
-                'WWW-Authenticate': 'Basic realm="PopBox"' }, 500);
+    if (err) {
+      res.send('ERROR:' + err, {
+        'Content-Type': 'text/plain',
+        'WWW-Authenticate': 'Basic realm="PopBox"' }, 500);
+    }
+
+    else if (value) {
+      if (digest === value) {
+        if (cb) {
+          cb(appPrefix, req, res);
         }
-
-        else if (value) {
-            if (digest === value) {
-                if (cb) {
-                    cb(appPrefix, req, res);
-                }
-            }
-            else {
-                res.send('Unauthorized ' + username, {
-                    'Content-Type': 'text/plain',
-                    'WWW-Authenticate': 'Basic realm="PopBox"' }, 401);
-            }
-        }
-        else {
-            res.send('ERROR: Secure Queue does not exist', {
-                'Content-Type': 'text/plain',
-                'WWW-Authenticate': 'Basic realm="PopBox"' }, 500);
-        }
-    });
+      }
+      else {
+        res.send('Unauthorized ' + username, {
+          'Content-Type': 'text/plain',
+          'WWW-Authenticate': 'Basic realm="PopBox"' }, 401);
+      }
+    }
+    else {
+      res.send('ERROR: Secure Queue does not exist', {
+        'Content-Type': 'text/plain',
+        'WWW-Authenticate': 'Basic realm="PopBox"' }, 500);
+    }
+  });
 
 }
 
 
 function transMeta(req, res) {
-    'use strict';
-    logger.debug('transMeta(req, res)', [req, res]);
-    var id = req.param('id_trans', null);
-    var queues = req.param('queues', null);
-    var summary = false;
+  'use strict';
+  logger.debug('transMeta(req, res)', [req, res]);
+  var id = req.param('id_trans', null);
+  var queues = req.param('queues', null);
+  var summary = false;
 
-    req.template = 'trans.jade';
+  req.template = 'trans.jade';
 
-    if (queues === 'summary') {
-        summary = true;
-        queues = 'All';
-    }
-    if (id === null) {
-        logger.info('transMeta', [{errors: ['missing id']}, 400, req.info]);
-        res.send({errors: ['missing id']}, 400);
-    } else {
-        dataSrv.getTransactionMeta(id, function(errM, dataM) {
-            if (errM) {
-                logger.info('transMeta', [{errors: [errM]}, 400, req.info]);
-                res.send({errors: [errM]}, 400);
+  if (queues === 'summary') {
+    summary = true;
+    queues = 'All';
+  }
+  if (id === null) {
+    logger.info('transMeta', [
+      {errors: ['missing id']},
+      400,
+      req.info
+    ]);
+    res.send({errors: ['missing id']}, 400);
+  } else {
+    dataSrv.getTransactionMeta(id, function(errM, dataM) {
+      if (errM) {
+        logger.info('transMeta', [
+          {errors: [errM]},
+          400,
+          req.info
+        ]);
+        res.send({errors: [errM]}, 400);
+      } else {
+        if (queues !== null) {
+          dataSrv.getTransaction(id, queues, summary, function(errQ, dataQ) {
+            if (errQ) {
+              logger.info('transMeta', [
+                {errors: [errQ]},
+                400,
+                req.info
+              ]);
+              res.send({errors: [errQ]}, 400);
             } else {
-                if (queues !== null) {
-                    dataSrv.getTransaction(id, queues, summary, function(errQ, dataQ) {
-                        if (errQ) {
-                            logger.info('transMeta', [{errors: [errQ]}, 400, req.info]);
-                            res.send({errors: [errQ]}, 400);
-                        } else {
-                            dataM.queues = dataQ;
-                            if (!summary) {
-                                for (var p in dataQ) {
-                                    if (dataQ.hasOwnProperty(p)) {
-                                        dataQ[p] = {state: dataQ[p], href: 'http://' + req.headers.host + '/queue/' + p};
-                                    }
-                                }
-                            }
-                            //res.send({ok:true, data:dataM});
-                            logger.info('transMeta', [dataM, req.info]);
-                            res.send(dataM);
-                        }
-                    });
+              dataM.queues = dataQ;
+              if (! summary) {
+                for (var p in dataQ) {
+                  if (dataQ.hasOwnProperty(p)) {
+                    dataQ[p] = {state: dataQ[p], href: 'http://' +
+                        req.headers.host + '/queue/' + p};
+                  }
                 }
-                else {
-                    //res.send({ok:true, data:dataM});
-                    logger.info('transMeta', [dataM, req.info]);
-                    res.send(dataM);
-                }
+              }
+              //res.send({ok:true, data:dataM});
+              logger.info('transMeta', [dataM, req.info]);
+              res.send(dataM);
             }
-        });
-    }
+          });
+        }
+        else {
+          //res.send({ok:true, data:dataM});
+          logger.info('transMeta', [dataM, req.info]);
+          res.send(dataM);
+        }
+      }
+    });
+  }
 }
 
 

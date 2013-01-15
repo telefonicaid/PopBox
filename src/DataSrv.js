@@ -41,36 +41,37 @@ logger.prefix = path.basename(module.filename, '.js');
 var pushTransaction = function(appPrefix, provision, callback) {
   'use strict';
   logger.debug('pushTransaction(appPrefix, provision, callback)',
-    [appPrefix, provision, callback]);
+      [appPrefix, provision, callback]);
   //handles a new transaction  (N ids involved)
   var priority = provision.priority + ':', //contains "H" || "L"
-    queues = provision.queue, //[{},{}]   //list of ids
-    extTransactionId = uuid.v4(),
-    transactionId = config.dbKeyTransPrefix + extTransactionId,
-    //setting up the bach proceses for async module.
-    processBatch = [],
-    dbTr = dbCluster.getTransactionDb(transactionId),
-    i ,
-    queue;
+      queues = provision.queue, //[{},{}]   //list of ids
+      extTransactionId = uuid.v4(),
+      transactionId = config.dbKeyTransPrefix + extTransactionId,
+  //setting up the bach proceses for async module.
+      processBatch = [],
+      dbTr = dbCluster.getTransactionDb(transactionId),
+      i,
+      queue;
 
-  if (!provision.expirationDate) {
+  if (! provision.expirationDate) {
     provision.expirationDate =
-      Math.round(Date.now() / 1000) + config.defaultExpireDelay;
+        Math.round(Date.now() / 1000) + config.defaultExpireDelay;
   }
 
-  helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',provision)(function (err){
-    if(err){
+  helper.hsetMetaHashParallel(dbTr, transactionId,
+      ':meta', provision)(function(err) {
+    if (err) {
       manageError(err, callback);
       return;
     }
-    else{
+    else {
       //Set expires for :meta collection
       helper.setExpirationDate(dbTr, transactionId + ':meta', provision,
-        function expirationDateMetaEnd(err) {
-          if (err) {
-            logger.warning('expirationDateMetaEnd', err);
-          }
-        });
+          function expirationDateMetaEnd(err) {
+            if (err) {
+              logger.warning('expirationDateMetaEnd', err);
+            }
+          });
 
       for (i = 0; i < queues.length; i += 1) {
         queue = queues[i];
@@ -79,39 +80,39 @@ var pushTransaction = function(appPrefix, provision, callback) {
       }
       logger.debug('pushTransaction- processBatch', processBatch);
       async.parallel(processBatch,
-        function pushEnd(err) {
-          logger.debug('pushEnd(err)', [err]);
-          //MAIN Exit point
-          if (err) {
-            //some of the queues could be populated
-            //remove the transaction
-            deleteTrans(extTransactionId);
-            manageError(err, callback);
-          } else {
-            helper.setExpirationDate(dbTr, transactionId + ':state', provision,
-              function expirationDateStateEnd(err) {
-                if (err) {
-                  logger.warning('expirationDateStateEnd', err);
-                }
-              });
-            if (callback) {
-              callback(null, extTransactionId);
+          function pushEnd(err) {
+            logger.debug('pushEnd(err)', [err]);
+            //MAIN Exit point
+            if (err) {
+              //some of the queues could be populated
+              //remove the transaction
+              deleteTrans(extTransactionId);
+              manageError(err, callback);
+            } else {
+              helper.setExpirationDate(dbTr, transactionId +
+                  ':state', provision, function expirationDateStateEnd(err) {
+                    if (err) {
+                      logger.warning('expirationDateStateEnd', err);
+                    }
+                  });
+              if (callback) {
+                callback(null, extTransactionId);
+              }
             }
-          }
-        });
+          });
     }
   });
 
 
   function processOneId(dbTr, transactionId, queue, priority) {
     logger.debug('processOneId(dbTr, transactionId, queue, priority)',
-      [dbTr, transactionId, queue, priority]);
+        [dbTr, transactionId, queue, priority]);
     return function processOneIdAsync(callback) {
       logger.debug('processOneIdAsync(callback)', [callback]);
       var db = dbCluster.getDb(queue.id); //different DB for different Ids
       async.parallel([
         helper.pushParallel(db, {id: appPrefix + queue.id}, priority,
-          transactionId),
+            transactionId),
         helper.hsetHashParallel(dbTr, queue, transactionId, ':state', 'Pending')
       ], function parallel_end(err) {
         var ev = null;
@@ -140,49 +141,49 @@ var pushTransaction = function(appPrefix, provision, callback) {
  * @param callback
  */
 
-var updateTransMeta = function (extTransactionId, provision, callback) {
-    'use strict';
-    logger.debug('updateTransMeta(transId, provision, callback)',
-        [extTransactionId, provision, callback]);
-    var transactionId = config.dbKeyTransPrefix +
-        extTransactionId, dbTr = dbCluster.getTransactionDb(transactionId);
+var updateTransMeta = function(extTransactionId, provision, callback) {
+  'use strict';
+  logger.debug('updateTransMeta(transId, provision, callback)',
+      [extTransactionId, provision, callback]);
+  var transactionId = config.dbKeyTransPrefix +
+      extTransactionId, dbTr = dbCluster.getTransactionDb(transactionId);
 
-    // curry for async (may be refactored)
+  // curry for async (may be refactored)
 
-    delete provision.queue;
-    delete provision.priority;
-    
-    helper.exists(dbTr, transactionId + ':meta', function (errE, value) {
-        if (errE) {
-               callback(errE);
+  delete provision.queue;
+  delete provision.priority;
+
+  helper.exists(dbTr, transactionId + ':meta', function(errE, value) {
+    if (errE) {
+      callback(errE);
+    }
+    else if (! value) {
+      callback(extTransactionId + ' does not exist');
+    }
+    else {
+      helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',
+          provision)(function(err) {
+        if (err) {
+          callback(err);
+        } else {
+          helper.setExpirationDate(dbTr, transactionId + ':meta', provision,
+              function(err2) {
+                helper.setExpirationDate(dbTr, transactionId +
+                    ':state', provision, function(err3) {
+                      callback(err2 || err3);
+                    });
+              });
         }
-        else if (!value) {
-               callback(extTransactionId + " does not exist");
-        }
-        else {
-            helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',
-                provision)(function (err) {
-                if (err) {
-                    callback(err);
-                } else {
-                    helper.setExpirationDate(dbTr, transactionId + ':meta', provision,
-                        function (err2) {
-                            helper.setExpirationDate(dbTr, transactionId + ':state', provision,
-                                function (err3) {
-                                    callback(err2 || err3);
-                                });
-                        });
-                }
-            });
-        }
-    });
+      });
+    }
+  });
 
 };
 
 var setSecHash = function(appPrefix, queueId, user, passwd, callback) {
-  "use strict";
+  'use strict';
   logger.debug('setSecHash(appPrefix, queueId, user, passwd, callback)',
-    [appPrefix, queueId, user, passwd, callback]);
+      [appPrefix, queueId, user, passwd, callback]);
   var shasum = crypto.createHash('sha1'), digest, db = dbCluster.getDb(queueId);
 
   //TODO:  Overwrite existing value ???
@@ -192,30 +193,31 @@ var setSecHash = function(appPrefix, queueId, user, passwd, callback) {
 };
 
 var getSecHash = function(appPrefix, queueId, cb) {
-  "use strict";
+  'use strict';
   logger.debug('getSecHash(appPrefix, queueId, cb)', [appPrefix, queueId, cb]);
   var db = dbCluster.getDb(queueId);
   helper.getKey(db, appPrefix + queueId, cb);
 };
 
-var popNotification = function(db, appPrefix, queue, maxElems, callback,
-  firstElem) {
+var popNotification = function(db, appPrefix, queue,
+                               maxElems, callback, firstElem) {
   'use strict';
-  logger.debug('popNotification(db, appPrefix, queue, maxElems, callback, firstElem)',
-    [db, appPrefix, queue, maxElems, callback, firstElem]);
+  logger.debug('popNotification(db, appPrefix,' +
+      ' queue, maxElems, callback, firstElem)',
+      [db, appPrefix, queue, maxElems, callback, firstElem]);
   //pop the queu  (LRANGE)
   //hight priority first
   var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
-    queue.id, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
-    queue.id, restElems = 0;
+      queue.id, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
+      queue.id, restElems = 0;
 
-  db.lrange(fullQueueIdH, 0, maxElems-1, function onRangeH(errH, dataH) {
+  db.lrange(fullQueueIdH, 0, maxElems - 1, function onRangeH(errH, dataH) {
     var dataHlength = dataH.length;
-    logger.debug('onRangeH(errH, dataH)', [ errH, dataH ]);
-    if (errH && !firstElem) {//errH
+    logger.debug('onRangeH(errH, dataH)', [errH, dataH]);
+    if (errH && ! firstElem) {//errH
       manageError(errH, callback);
     } else {
-      db.ltrim(fullQueueIdH, dataH.length, -1, function onTrimH(err) {
+      db.ltrim(fullQueueIdH, dataH.length, - 1, function onTrimH(err) {
         if (err) {
           logger.warning('onTrimH', err);
         }
@@ -232,32 +234,33 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback,
       if (dataHlength < maxElems) {
         restElems = maxElems - dataHlength;
         //Extract from both queues
-        db.lrange(fullQueueIdL, 0, restElems-1, function on_rangeL(errL, dataL) {
-            if (errL && firstElem[0] !== fullQueueIdL) {
-              //fail but we may have data of previous range
-              if (dataH) {
-                //if there is dataH dismiss the low priority error
-                getPopData(dataH, callback, queue);
-              } else {
-                manageError(errL, callback);
-              }
+        db.lrange(fullQueueIdL, 0, restElems - 1,
+            function on_rangeL(errL, dataL) {
+          if (errL && firstElem[0] !== fullQueueIdL) {
+            //fail but we may have data of previous range
+            if (dataH) {
+              //if there is dataH dismiss the low priority error
+              getPopData(dataH, callback, queue);
             } else {
-              if (firstElem[0] === fullQueueIdL) {
-                dataL = [
-                  firstElem[1]
-                ].concat(dataL);
+              manageError(errL, callback);
+            }
+          } else {
+            if (firstElem[0] === fullQueueIdL) {
+              dataL = [
+                firstElem[1]
+              ].concat(dataL);
+            }
+            db.ltrim(fullQueueIdL, dataL.length, - 1, function on_trimL(err) {
+              if (err) {
+                logger.warning('on_trimL', err);
               }
-                db.ltrim(fullQueueIdL,dataL.length, -1, function on_trimL(err) {
-                    if(err) {
-                        logger.warning('on_trimL', err);
-                    }
-                  });
-                if (dataL) {
-                  dataH = dataH.concat(dataL);
-                }
-                getPopData(dataH, callback, queue);
-              }
-          });
+            });
+            if (dataL) {
+              dataH = dataH.concat(dataL);
+            }
+            getPopData(dataH, callback, queue);
+          }
+        });
       } else {
         //just one queue used
         getPopData(dataH, callback, queue);
@@ -267,20 +270,22 @@ var popNotification = function(db, appPrefix, queue, maxElems, callback,
 };
 
 
-var blockingPop = function (appPrefix, queue, maxElems, blockingTime, callback) {
+var blockingPop = function(appPrefix, queue,
+                           maxElems, blockingTime, callback) {
   'use strict';
-  logger.debug('blockingPop(appPrefix, queue, maxElems, blockingTime, callback)',
-    [appPrefix, queue, maxElems, blockingTime, callback]);
+  logger.debug('blockingPop(appPrefix, queue,' +
+      ' maxElems, blockingTime, callback)',
+      [appPrefix, queue, maxElems, blockingTime, callback]);
   var queueId = queue.id,
-    fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id,
-    fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id,
-    firstElem = null;
+      fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id,
+      fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id,
+      firstElem = null;
 
   //Set the last PopAction over the queue
   var popDate = Math.round(Date.now() / 1000);
 
-  dbCluster.getOwnDb(queueId, function(err, db){
-    if(err) {
+  dbCluster.getOwnDb(queueId, function(err, db) {
+    if (err) {
       manageError(err, callback);
     }
     else {
@@ -290,194 +295,196 @@ var blockingPop = function (appPrefix, queue, maxElems, blockingTime, callback) 
 
   function blockingPopAux(db) {
     db.set(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
-      popDate, function() {});
+        popDate, function() {
+        });
     //Do the blocking part (over the two lists)
     db.blpop(fullQueueIdH, fullQueueIdL, blockingTime,
-      function onPopData(err, data) {
-        if (err) {
-          dbCluster.free(db);
-          manageError(err, callback);
-        } else {
-          //data:: A two-element multi-bulk with the first element being
-          // the name of the key where an element was popped and the second
-          // element being the value of the popped element.
-          //if data == null => timeout || empty queue --> nothing to do
-          if (!data) {
+        function onPopData(err, data) {
+          if (err) {
             dbCluster.free(db);
-            if (callback) {
-              callback(null, null);
-            }
+            manageError(err, callback);
           } else {
-            //we got one elem -> need to check the rest
-            firstElem = data;
-            if (maxElems > 1) {
-              popNotification(db, appPrefix, queue, maxElems - 1,
-                function onPop(err, clean_data) {
-                  dbCluster.free(db); //add free() when pool
-                  if (err) {
-                    if (callback) {
-                      err.data = true; //flag for err+data
-                      callback(err, firstElem); //weird
-                    }
-                  } else {
-                    if (callback) {
-                      callback(null, clean_data);
-                    }
-                  }
-                }, firstElem); //last optional param
-            } else {
+            //data:: A two-element multi-bulk with the first element being
+            // the name of the key where an element was popped and the second
+            // element being the value of the popped element.
+            //if data == null => timeout || empty queue --> nothing to do
+            if (! data) {
               dbCluster.free(db);
-              //just first_elem
-              getPopData([
-                firstElem[1]
-              ], callback, queue);
+              if (callback) {
+                callback(null, null);
+              }
+            } else {
+              //we got one elem -> need to check the rest
+              firstElem = data;
+              if (maxElems > 1) {
+                popNotification(db, appPrefix, queue, maxElems - 1,
+                    function onPop(err, clean_data) {
+                      dbCluster.free(db); //add free() when pool
+                      if (err) {
+                        if (callback) {
+                          err.data = true; //flag for err+data
+                          callback(err, firstElem); //weird
+                        }
+                      } else {
+                        if (callback) {
+                          callback(null, clean_data);
+                        }
+                      }
+                    }, firstElem); //last optional param
+              } else {
+                dbCluster.free(db);
+                //just first_elem
+                getPopData([
+                  firstElem[1]
+                ], callback, queue);
+              }
             }
           }
-        }
-      });
+        });
   }
 };
 
 function getPopData(dataH, callback, queue) {
-    'use strict';
-    logger.debug('getPopData(dataH, callback, queue)', [dataH, callback, queue]);
-    var newStateBatch = [
-    ], transactionId = null, dbTr = null, cleanData = null;
-    retrieveData(queue, dataH, function onData(err, payloadWithNulls) {
-        logger.debug('onData(err, payloadWithNulls)', [err, payloadWithNulls]);
-        if (err) {
-            manageError(err, callback);
-        } else {
-            //Handle post-pop behaviour (callback)
-            cleanData = payloadWithNulls.filter(function notNull(elem) {
-                return elem !== null;
-            });
-            //SET NEW STATE for Every popped transaction
-            newStateBatch = cleanData.map(function prepareStateBatch(elem) {
-                logger.debug('prepareStateBatch(elem)', [elem]);
-                transactionId = elem.transactionId;
-                dbTr = dbCluster.getTransactionDb(transactionId);
-                return helper.hsetHashParallel(dbTr, queue, transactionId, ':state',
-                    'Delivered');
+  'use strict';
+  logger.debug('getPopData(dataH, callback, queue)', [dataH, callback, queue]);
+  var newStateBatch = [
+  ], transactionId = null, dbTr = null, cleanData = null;
+  retrieveData(queue, dataH, function onData(err, payloadWithNulls) {
+    logger.debug('onData(err, payloadWithNulls)', [err, payloadWithNulls]);
+    if (err) {
+      manageError(err, callback);
+    } else {
+      //Handle post-pop behaviour (callback)
+      cleanData = payloadWithNulls.filter(function notNull(elem) {
+        return elem !== null;
+      });
+      //SET NEW STATE for Every popped transaction
+      newStateBatch = cleanData.map(function prepareStateBatch(elem) {
+        logger.debug('prepareStateBatch(elem)', [elem]);
+        transactionId = elem.transactionId;
+        dbTr = dbCluster.getTransactionDb(transactionId);
+        return helper.hsetHashParallel(dbTr, queue, transactionId, ':state',
+            'Delivered');
 
-            });
-            async.parallel(newStateBatch, function newStateAsyncEnd(err) {
-                if (callback) {
-                    callback(err, payloadWithNulls);
-                }
-            });
+      });
+      async.parallel(newStateBatch, function newStateAsyncEnd(err) {
+        if (callback) {
+          callback(err, payloadWithNulls);
         }
-    });
+      });
+    }
+  });
 }
 
-var peek = function (appPrefix, queue, maxElems, callback) {
-    'use strict';
-    logger.debug('peek(appPrefix, queue, maxElems, callback)',
-        [appPrefix, queue, maxElems, callback]);
-    var queueId = queue.id,
-        fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id,
-        fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id,
-        restElems = 0;
+var peek = function(appPrefix, queue, maxElems, callback) {
+  'use strict';
+  logger.debug('peek(appPrefix, queue, maxElems, callback)',
+      [appPrefix, queue, maxElems, callback]);
+  var queueId = queue.id,
+      fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id,
+      fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id,
+      restElems = 0;
 
-    dbCluster.getOwnDb(queueId, function(err, db){
-        if(err) {
-            manageError(err, callback);
-        } else {
-            peekAux(db);
-        }
-    });
+  dbCluster.getOwnDb(queueId, function(err, db) {
+    if (err) {
+      manageError(err, callback);
+    } else {
+      peekAux(db);
+    }
+  });
 
-    function peekAux(db) {
-        db.lrange(fullQueueIdH, 0, maxElems - 1, function onRangeH(errH, dataH) {
+  function peekAux(db) {
+    db.lrange(fullQueueIdH, 0, maxElems - 1, function onRangeH(errH, dataH) {
 
-            var dataHlength = dataH.length;
-            logger.debug('onRangeH(errH, dataH)', [ errH, dataH ]);
+      var dataHlength = dataH.length;
+      logger.debug('onRangeH(errH, dataH)', [errH, dataH]);
 
-            if (errH) {//errH
-                manageError(errH, callback);
+      if (errH) {//errH
+        manageError(errH, callback);
+
+      } else {
+        if (dataHlength < maxElems) {
+
+          restElems = maxElems - dataHlength;
+          //Extract from both queues
+          db.lrange(fullQueueIdL, 0, restElems - 1,
+              function on_rangeL(errL, dataL) {
+
+            if (errL) {
+
+              //fail but we may have data of previous range
+              if (dataH) {
+                //if there is dataH dismiss the low priority error
+                getPeekData(dataH, callback, queue);
+              } else {
+                manageError(errL, callback);
+              }
 
             } else {
-                if (dataHlength < maxElems) {
 
-                    restElems = maxElems - dataHlength;
-                    //Extract from both queues
-                    db.lrange(fullQueueIdL, 0, restElems - 1, function on_rangeL(errL, dataL) {
+              if (dataL) {
+                dataH = dataH.concat(dataL);
+              }
 
-                        if (errL) {
-
-                            //fail but we may have data of previous range
-                            if (dataH) {
-                                //if there is dataH dismiss the low priority error
-                                getPeekData(dataH, callback, queue);
-                            } else {
-                                manageError(errL, callback);
-                            }
-
-                        } else {
-
-                            if (dataL) {
-                                dataH = dataH.concat(dataL);
-                            }
-
-                            getPeekData(dataH, callback, queue);
-                        }
-                    });
-                } else {
-                    //just one queue used
-                    getPeekData(dataH, callback, queue);
-                }
+              getPeekData(dataH, callback, queue);
             }
-        });
-    }
+          });
+        } else {
+          //just one queue used
+          getPeekData(dataH, callback, queue);
+        }
+      }
+    });
+  }
 };
 
 function getPeekData(dataH, callback, queue) {
-    'use strict';
-    logger.debug('getPopData(dataH, callback, queue)', [dataH, callback, queue]);
-    var transactionId = null, dbTr = null, cleanData = null;
+  'use strict';
+  logger.debug('getPopData(dataH, callback, queue)', [dataH, callback, queue]);
+  var transactionId = null, dbTr = null, cleanData = null;
 
-    retrieveData(queue, dataH, function onData(err, payloadWithNulls) {
-        logger.debug('onData(err, payloadWithNulls)', [err, payloadWithNulls]);
-        if (err) {
-            manageError(err, callback);
+  retrieveData(queue, dataH, function onData(err, payloadWithNulls) {
+    logger.debug('onData(err, payloadWithNulls)', [err, payloadWithNulls]);
+    if (err) {
+      manageError(err, callback);
 
-        } else {
-            //Handle post-pop behaviour (callback)
-            cleanData = payloadWithNulls.filter(function notNull(elem) {
-                return elem !== null;
-            });
+    } else {
+      //Handle post-pop behaviour (callback)
+      cleanData = payloadWithNulls.filter(function notNull(elem) {
+        return elem !== null;
+      });
 
-            if (callback) {
-                callback(null, payloadWithNulls);
-            }
-        }
-    });
+      if (callback) {
+        callback(null, payloadWithNulls);
+      }
+    }
+  });
 }
 
 function retrieveData(queue, transactionList, callback) {
   'use strict';
   logger.debug('retrieveData(queue, transactionList, callback)',
-    [queue, transactionList, callback]);
+      [queue, transactionList, callback]);
   var ghostBusterBatch =
-    transactionList.map(function prepareDataBatch(transaction) {
-      logger.debug('prepareDataBatch(transaction)', [transaction]);
-      var dbTr = dbCluster.getTransactionDb(transaction);
-      return checkData(queue, dbTr, transaction);
-    });
+      transactionList.map(function prepareDataBatch(transaction) {
+        logger.debug('prepareDataBatch(transaction)', [transaction]);
+        var dbTr = dbCluster.getTransactionDb(transaction);
+        return checkData(queue, dbTr, transaction);
+      });
   async.parallel(ghostBusterBatch,
-    function retrieveDataAsyncEnd(err, foundMetadata) {
-      logger.debug('retrieveDataAsyncEnd(err, foundMetadata)',
-        [err, foundMetadata]);
-      if (callback) {
-        callback(err, foundMetadata);
-      }
-    });
+      function retrieveDataAsyncEnd(err, foundMetadata) {
+        logger.debug('retrieveDataAsyncEnd(err, foundMetadata)',
+            [err, foundMetadata]);
+        if (callback) {
+          callback(err, foundMetadata);
+        }
+      });
 }
 
 function checkData(queue, dbTr, transactionId) {
   'use strict';
   logger.debug('checkData(queue, dbTr, transactionId)',
-    [queue, dbTr, transactionId]);
+      [queue, dbTr, transactionId]);
   return function(callback) {
     var ev = null, extTransactionId = transactionId.split('|')[1];
     dbTr.hgetall(transactionId + ':meta', function on_data(err, data) {
@@ -497,7 +504,7 @@ function checkData(queue, dbTr, transactionId) {
           emitter.emit('NEWSTATE', ev);
         } else {
           data = {
-            'payload' : null,
+            'payload': null,
             'transactionId': extTransactionId
           };
           //EMIT Expired
@@ -522,12 +529,12 @@ function checkData(queue, dbTr, transactionId) {
 var getTransaction = function(extTransactionId, state, summary, callback) {
   'use strict';
   logger.debug('getTransaction(extTransactionId, state, summary, callback)',
-    [extTransactionId, state, summary, callback]);
+      [extTransactionId, state, summary, callback]);
   var err = null, //
-    dbTr = null, //
-    transactionId = null, //
-    processTransactionData = null, //
-    processedData = null;
+      dbTr = null, //
+      transactionId = null, //
+      processTransactionData = null, //
+      processedData = null;
 
   //check params
   if (state !== 'All' && state !== 'Pending' && state !== 'Delivered') {
@@ -606,7 +613,7 @@ var getTransaction = function(extTransactionId, state, summary, callback) {
 var getTransactionMeta = function(extTransactionId, callback) {
   'use strict';
   logger.debug('getTransactionMeta(extTransactionId, callback)',
-    [extTransactionId, callback]);
+      [extTransactionId, callback]);
 
   var err, dbTr, transactionId;
 
@@ -628,10 +635,10 @@ var getTransactionMeta = function(extTransactionId, callback) {
 var queueSize = function(appPrefix, queueId, callback) {
   'use strict';
   logger.debug('queueSize(appPrefix, queueId, callback)',
-    [appPrefix, queueId, callback]);
+      [appPrefix, queueId, callback]);
   var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
-    queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
-    queueId, db = dbCluster.getDb(queueId);
+      queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
+      queueId, db = dbCluster.getDb(queueId);
 
   db.llen(fullQueueIdH, function onHLength(err, hLength) {
     logger.debug('onHLength(err, hLength)', [err, hLength]);
@@ -646,14 +653,14 @@ var queueSize = function(appPrefix, queueId, callback) {
 };
 var getQueue = function(appPrefix, queueId, callback) {
   'use strict';
-    
-    var maxMessages = config.agent.max_messages;
-    
+
+  var maxMessages = config.agent.max_messages;
+
   logger.debug('popQueue(appPrefix, queueId, callback)',
-    [appPrefix, queueId, callback]);
+      [appPrefix, queueId, callback]);
   var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
-    queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
-    queueId, db = dbCluster.getDb(queueId);
+      queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
+      queueId, db = dbCluster.getDb(queueId);
 
   db.lrange(fullQueueIdH, 0, maxMessages, function onHRange(err, hQueue) {
     logger.debug('onHRange(err, hQueue)', [err, hQueue]);
@@ -661,14 +668,14 @@ var getQueue = function(appPrefix, queueId, callback) {
       logger.debug('onLRange(err, lQueue)', [err, lQueue]);
       dbCluster.free(db);
       db.get(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
-        function(err, lastPopDate) {
-          if (err) {
-            lastPopDate = null;
-          }
-          if (callback) {
-            callback(err, hQueue, lQueue, lastPopDate);
-          }
-        });
+          function(err, lastPopDate) {
+            if (err) {
+              lastPopDate = null;
+            }
+            if (callback) {
+              callback(err, hQueue, lQueue, lastPopDate);
+            }
+          });
 
     });
   });
@@ -676,11 +683,12 @@ var getQueue = function(appPrefix, queueId, callback) {
 
 
 var deleteTrans = function(extTransactionId, cb) {
-  "use strict";
+  'use strict';
   logger.debug('deleteTrans(transactionId)', [extTransactionId]);
-  var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
-    extTransactionId + ':meta', state = config.dbKeyTransPrefix +
-    extTransactionId + ':state';
+  var dbTr = dbCluster.getTransactionDb(extTransactionId),
+      meta = config.dbKeyTransPrefix +
+      extTransactionId + ':meta', state = config.dbKeyTransPrefix +
+      extTransactionId + ':state';
 
   dbTr.del(meta, state, function onDeleted(err) {
     logger.debug('onDeleted(err)', [err]);
@@ -690,98 +698,102 @@ var deleteTrans = function(extTransactionId, cb) {
   });
 };
 
-var setPayload = function (extTransactionId, payload, cb) {
-    "use strict";
-    logger.debug('setPayload(transactionId, payload, cb)',
-        [extTransactionId, payload, cb]);
-    var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
-        extTransactionId + ':meta';
+var setPayload = function(extTransactionId, payload, cb) {
+  'use strict';
+  logger.debug('setPayload(transactionId, payload, cb)',
+      [extTransactionId, payload, cb]);
+  var dbTr = dbCluster.getTransactionDb(extTransactionId),
+      meta = config.dbKeyTransPrefix +
+      extTransactionId + ':meta';
 
-    helper.exists(dbTr, meta, function (errE, value) {
-        if (errE) {
-            cb(errE);
-        }
-        else if (!value) {
-            cb(extTransactionId + " does not exist");
-        }
-        else {
+  helper.exists(dbTr, meta, function(errE, value) {
+    if (errE) {
+      cb(errE);
+    }
+    else if (! value) {
+      cb(extTransactionId + ' does not exist');
+    }
+    else {
 
-            dbTr.hset(meta, 'payload', payload, function cbSetPayload(err) {
-                logger.debug('cbSetPayload(err)', [err]);
-                if (cb) {
-                    cb(err);
-                }
-            });
+      dbTr.hset(meta, 'payload', payload, function cbSetPayload(err) {
+        logger.debug('cbSetPayload(err)', [err]);
+        if (cb) {
+          cb(err);
         }
-    });
+      });
+    }
+  });
 };
 
-var setUrlCallback = function (extTransactionId, urlCallback, cb) {
-    "use strict";
-    logger.debug('setUrlCallback(transactionId, urlCallback, cb)',
-        [extTransactionId, urlCallback, cb]);
-    var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
-        extTransactionId + ':meta';
+var setUrlCallback = function(extTransactionId, urlCallback, cb) {
+  'use strict';
+  logger.debug('setUrlCallback(transactionId, urlCallback, cb)',
+      [extTransactionId, urlCallback, cb]);
+  var dbTr = dbCluster.getTransactionDb(extTransactionId),
+      meta = config.dbKeyTransPrefix +
+      extTransactionId + ':meta';
 
-    helper.exists(dbTr, meta, function (errE, value) {
-        if (errE) {
-            cb(errE);
-        }
-        else if (!value) {
-            cb(extTransactionId + " does not exist");
-        }
-        else {
+  helper.exists(dbTr, meta, function(errE, value) {
+    if (errE) {
+      cb(errE);
+    }
+    else if (! value) {
+      cb(extTransactionId + ' does not exist');
+    }
+    else {
 
-            dbTr.hset(meta, 'callback', urlCallback, function cbSetUrlCallback(err) {
-                logger.debug('cbSetUrlCallback(err)', [err]);
-                if (cb) {
-                    cb(err);
-                }
-            });
+      dbTr.hset(meta, 'callback', urlCallback, function cbSetUrlCallback(err) {
+        logger.debug('cbSetUrlCallback(err)', [err]);
+        if (cb) {
+          cb(err);
         }
-    });
+      });
+    }
+  });
 };
 
 
 //deprecated
-var setExpirationDate = function (extTransactionId, date, cb) {
-    'use strict';
-    logger.debug('expirationDate(transactionId, date, cb)',
-        [extTransactionId, date, cb]);
-    var dbTr = dbCluster.getTransactionDb(extTransactionId), meta = config.dbKeyTransPrefix +
-        extTransactionId + ':meta', state = config.dbKeyTransPrefix +
-        extTransactionId + ':state';
+var setExpirationDate = function(extTransactionId, date, cb) {
+  'use strict';
+  logger.debug('expirationDate(transactionId, date, cb)',
+      [extTransactionId, date, cb]);
+  var dbTr = dbCluster.getTransactionDb(extTransactionId),
+      meta = config.dbKeyTransPrefix +
+      extTransactionId + ':meta', state = config.dbKeyTransPrefix +
+      extTransactionId + ':state';
 
-    helper.exists(dbTr, meta, function (errE, value) {
-        if (errE) {
-            cb(errE);
-        }
-        else if (!value) {
-            cb(extTransactionId + " does not exist");
-        }
-        else {
-            dbTr.hset(meta, 'expirationDate', date, function cbHsetExpirationDate(errE) {
-                logger.debug('cbSetPayload(errE)', [errE]);
-                helper.setExpirationDate(dbTr, meta, {expirationDate:date},
-                    function cbExpirationDateMeta(errM) {
-                        logger.debug('cbExpirationDateMeta(errM)', [errM]);
-                        helper.setExpirationDate(dbTr, state, {expirationDate:date},
-                            function cbExpirationDateState(errS) {
-                                logger.debug('cbExpirationDateState(errS)', [errS]);
-                                if (cb) {
-                                    cb(errE || errM || errS);
-                                }
-                            });
-                    });
+  helper.exists(dbTr, meta, function(errE, value) {
+    if (errE) {
+      cb(errE);
+    }
+    else if (! value) {
+      cb(extTransactionId + ' does not exist');
+    }
+    else {
+      dbTr.hset(meta, 'expirationDate', date,
+          function cbHsetExpirationDate(errE) {
+        logger.debug('cbSetPayload(errE)', [errE]);
+        helper.setExpirationDate(dbTr, meta, {expirationDate: date},
+            function cbExpirationDateMeta(errM) {
+              logger.debug('cbExpirationDateMeta(errM)', [errM]);
+              helper.setExpirationDate(dbTr, state, {expirationDate: date},
+                  function cbExpirationDateState(errS) {
+                    logger.debug('cbExpirationDateState(errS)', [errS]);
+                    if (cb) {
+                      cb(errE || errM || errS);
+                    }
+                  });
             });
-        }
-    });
+      });
+    }
+  });
 };
 
 //Public Interface Area
 
 /**
- * @param {string} appPrefix For secure/non secure behaviour
+ * @param {string} appPrefix For secure/non secure behaviour.
  * @param {PopBox.Provision} provision MUST be a Valid JSON see Provision.json.
  * @param {function(Object, string)} callback takes (err, transactionId).
  */
@@ -806,7 +818,7 @@ exports.getTransaction = getTransaction;
 exports.getTransactionMeta = getTransactionMeta;
 
 /**
- * @param {string} appPrefix For secure/non secure behaviour
+ * @param {string} appPrefix For secure/non secure behaviour.
  * @param {PopBox.Queue} queue Object representing a queue.
  * @param {number} maxElems maximun number of elements to be extracted.
  * @param {number} blockingTime max time to be blocked, 0-forever.
@@ -815,7 +827,7 @@ exports.getTransactionMeta = getTransactionMeta;
 exports.blockingPop = blockingPop;
 
 /**
- * @param {string} appPrefix For secure/non secure behaviour
+ * @param {string} appPrefix For secure/non secure behaviour.
  * @param {PopBox.Queue} queue Object representing a queue.
  * @param {number} maxElems maximun number of elements to be retrieved.
  * @param {function(Object, Array.Object)} callback takes (err, peekedData).
@@ -824,7 +836,7 @@ exports.peek = peek;
 
 /**
  *
- * @param {string} appPrefix For secure/non secure behaviour
+ * @param {string} appPrefix For secure/non secure behaviour.
  * @param {string} queueId
  * @param {function(Object, number)} callback takes (err, length).
 
@@ -833,7 +845,7 @@ exports.queueSize = queueSize;
 
 /**
  *
- * @param {string} appPrefix For secure/non secure behaviour
+ * @param {string} appPrefix For secure/non secure behaviour.
  * @param {string} queueId
  * @param {function(Object, number)} callback takes (err, highQueue, lowQueue).
 
@@ -842,7 +854,7 @@ exports.getQueue = getQueue;
 
 /**
  *
- * @param {string} appPrefix For secure/non secure behaviour
+ * @param {string} appPrefix For secure/non secure behaviour.
  * @param {string} queueId
  * @param {string} user
  * @param {string} passwd
@@ -852,7 +864,7 @@ exports.setSecHash = setSecHash;
 
 /**
  *
- * @param {string} appPrefix For secure/non secure behaviour
+ * @param {string} appPrefix For secure/non secure behaviour.
  * @param {string} queueId
  * @param cb
  */
@@ -876,7 +888,7 @@ exports.setPayload = setPayload;
 /**
  *
  * @param {string} extTransactionId valid uuid.v1.
- * @param {string} URL for callback
+ * @param {string} URL for callback.
  * @param cb
  */
 

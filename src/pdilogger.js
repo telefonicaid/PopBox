@@ -29,17 +29,17 @@ var logger = log.newLogger();
 logger.prefix = path.basename(module.filename, '.js');
 
 function pdiLogger() {
-    'use strict';
-    return function(req, res, next) {
-        //console.dir(req);
-        req.info = {
-            ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-            method: req.method,
-            originalUrl: req.originalUrl,
-            httpVersion: req.httpVersion};
+  'use strict';
+  return function(req, res, next) {
+    //console.dir(req);
+    req.info = {
+      ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+      method: req.method,
+      originalUrl: req.originalUrl,
+      httpVersion: req.httpVersion};
 
-        next();
-    };
+    next();
+  };
 }
 
 exports.pdiLogger = pdiLogger;

@@ -29,84 +29,84 @@ logger.prefix = path.basename(module.filename, '.js');
 var MAX_TIMESTAMP = config.MAX_TIMESTAMP;
 
 function errorsTrans(trans) {
-    'use strict';
-    logger.debug('errorsTrans(trans)', [trans]);
-    var errors = [],
-        maxNumQueues = config.agent.max_num_queues,
-        errorsExpDate, errorsP;
+  'use strict';
+  logger.debug('errorsTrans(trans)', [trans]);
+  var errors = [],
+      maxNumQueues = config.agent.max_num_queues,
+      errorsExpDate, errorsP;
 
-    if (!trans.priority) {
-        errors.push('undefined priority');
-    }
-    else if (trans.priority !== 'H' && trans.priority !== 'L') {
-        errors.push('invalid priority');
-    }
+  if (! trans.priority) {
+    errors.push('undefined priority');
+  }
+  else if (trans.priority !== 'H' && trans.priority !== 'L') {
+    errors.push('invalid priority');
+  }
 
-    if (!trans.queue) {
-        errors.push('undefined queue');
+  if (! trans.queue) {
+    errors.push('undefined queue');
+  }
+  else if (trans.queue.constructor !== Array) {
+    errors.push('invalid queue type');
+  }
+  else if (trans.queue.length > maxNumQueues) {
+    errors.push('too many queues: maximum ' + '' + maxNumQueues + ')');
+  }
+  else {
+    if (! trans.queue.every(function(value) {
+      return (value && 'id' in value);
+    })) {
+      errors.push('invalid queue element');
     }
-    else if (trans.queue.constructor !== Array) {
-        errors.push('invalid queue type');
-    }
-    else if (trans.queue.length > maxNumQueues) {
-        errors.push('too many queues: maximum ' + '' + maxNumQueues + ')');
-    }
-    else {
-        if (!trans.queue.every(function(value) {
-            return (value && 'id' in value);
-        })) {
-            errors.push('invalid queue element');
-        }
-    }
+  }
 
 
-    errorsP = errorsPayload(trans.payload, true);
-    errors = errors.concat(errorsP);
+  errorsP = errorsPayload(trans.payload, true);
+  errors = errors.concat(errorsP);
 
-    errorsExpDate = errorsExpirationDate(trans.expirationDate);
-    errors = errors.concat(errorsExpDate);
-    return errors;
+  errorsExpDate = errorsExpirationDate(trans.expirationDate);
+  errors = errors.concat(errorsExpDate);
+  return errors;
 
 }
 
 
 function errorsPayload(payload, required) {
-    'use strict';
-    logger.debug('errorsPayload(payload)', [payload]);
-    var maxPayloadSize = config.agent.max_payload_size,
-        errors = [];
-    if (required && !payload) {
-        errors.push('undefined payload');
-    }
+  'use strict';
+  logger.debug('errorsPayload(payload)', [payload]);
+  var maxPayloadSize = config.agent.max_payload_size,
+      errors = [];
+  if (required && ! payload) {
+    errors.push('undefined payload');
+  }
 
-    if (payload && payload.length && payload.length > maxPayloadSize) {
-        errors.push('payload greater than ' + maxPayloadSize);
-    }
-    return errors;
+  if (payload && payload.length && payload.length > maxPayloadSize) {
+    errors.push('payload greater than ' + maxPayloadSize);
+  }
+  return errors;
 }
 function errorsExpirationDate(expirationDate) {
-    'use strict';
-    logger.debug('errorsExpirationDate(expirationDate)', [expirationDate]);
-    var errors = [];
-    if (expirationDate) {
-        if (typeof expirationDate !== 'number') {
-            errors.push('expirationDate is not a number');
-        }
-        else {
-            // not 0, the current date ??
-            if (expirationDate < 0 || expirationDate > MAX_TIMESTAMP) {
-                errors.push('expirationDate out of range');
-            }
-        }
+  'use strict';
+  logger.debug('errorsExpirationDate(expirationDate)', [expirationDate]);
+  var errors = [];
+  if (expirationDate) {
+    if (typeof expirationDate !== 'number') {
+      errors.push('expirationDate is not a number');
     }
-    return errors;
+    else {
+      // not 0, the current date ??
+      if (expirationDate < 0 || expirationDate > MAX_TIMESTAMP) {
+        errors.push('expirationDate out of range');
+      }
+    }
+  }
+  return errors;
 }
 
 function validTransId(transId) {
   'use strict';
-    logger.debug('validTransId(transId)', [transId]);
+  logger.debug('validTransId(transId)', [transId]);
   return (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
-    .test(transId);
+      .test(transId);
 }
 /**
  *

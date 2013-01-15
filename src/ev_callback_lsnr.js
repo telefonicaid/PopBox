@@ -26,11 +26,11 @@ var url = require('url');
 var path = require('path');
 var log = require('PDITCLogger');
 var logger = log.newLogger();
-logger.prefix = path.basename(module.filename,'.js');
+logger.prefix = path.basename(module.filename, '.js');
 
 var init = function(emitter) {
   'use strict';
-    
+
   return function asyncInit(callback) {
     emitter.on('NEWSTATE', function onNewState(data) {
       logger.debug('onNewState(data)', [data]);
@@ -40,14 +40,14 @@ var init = function(emitter) {
       }
     });
     if (callback) {
-        callback(null, "ev_callback OK");
+      callback(null, 'ev_callback OK');
     }
   };
 };
 
 function doCallback(data) {
   'use strict';
-    logger.debug('doCallback(data)', [data]);
+  logger.debug('doCallback(data)', [data]);
   if (data.callback) {
     var options = url.parse(data.callback);
     options.headers = {'content-type': 'application/json'};

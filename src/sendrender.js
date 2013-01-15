@@ -20,30 +20,30 @@
  */
 
 function sendRender() {
-    'use strict';
-    return function (req, res, next) {
-        res.trueSend = res.send;
-        res.send = function (body, headers, status ) {
-            if (typeof body !== 'object') {
-                res.trueSend(body, headers, status);
+  'use strict';
+  return function(req, res, next) {
+    res.trueSend = res.send;
+    res.send = function(body, headers, status) {
+      if (typeof body !== 'object') {
+        res.trueSend(body, headers, status);
+      }
+      else {
+        if (req.template && req.accepts('text/html')) {
+          //args.template.layout = false;
+          res.render(req.template, body, function(err, text) {
+            if (err) {
+              console.log(err);
             }
-            else {
-                if (req.template && req.accepts('text/html')) {
-                    //args.template.layout = false;
-                    res.render(req.template, body, function(err, text){
-                        if(err){
-                            console.log(err);
-                        }
-                        res.trueSend(text, headers, status);
-                    });
-                }
-                else {
-                    res.trueSend(body, headers, status);
-                }
-            }
-        };
-        next();
+            res.trueSend(text, headers, status);
+          });
+        }
+        else {
+          res.trueSend(body, headers, status);
+        }
+      }
     };
+    next();
+  };
 }
 
 exports.sendRender = sendRender;

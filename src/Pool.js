@@ -21,55 +21,57 @@
 
 //Pool modeled via Connection array
 var config = require('./config.js');
-var redisModule = require ('redis');
+var redisModule = require('redis');
 
 var path = require('path');
 var log = require('PDITCLogger');
 var logger = log.newLogger();
 logger.prefix = path.basename(module.filename, '.js');
 
-exports.Pool = function Pool(poolIndex){
-  "use strict";
-  var maxElems =  config.pool.max_elems || 1000;
+exports.Pool = function Pool(poolIndex) {
+  'use strict';
+  var maxElems = config.pool.max_elems || 1000;
   var connections = [];
   var currentConnections = 0;
   var index = poolIndex;
 
   var pool = {
-    get : get,
+    get: get,
     free: free
   };
   return pool;
 
-    function get(queueId, callback) {
-        var con = connections.pop();
-        logger.debug('get', connections.toString());
-        if (con) {
-            callback(null, con);
+  function get(queueId, callback) {
+    var con = connections.pop();
+    logger.debug('get', connections.toString());
+    if (con) {
+      callback(null, con);
 
-        }
-        else if (!con && currentConnections < maxElems) {
-            //we will create a new connection
-            var port = config.redisServers[index].port || redisModule.DEFAULT_PORT;
-            con = redisModule.createClient(port,
-                config.redisServers[index].host);
-            con.select(config.selected_db);
-            con.isOwn = true;
-            con.pool = pool; //add pool reference
-            currentConnections++;
-            con.on('error', function(err) {console.log("error - redis", err);});
-            callback(null, con);
-
-        }
-        else {
-            callback("no more conections available", null);
-        }
     }
+    else if (! con && currentConnections < maxElems) {
+      //we will create a new connection
+      var port = config.redisServers[index].port || redisModule.DEFAULT_PORT;
+      con = redisModule.createClient(port,
+          config.redisServers[index].host);
+      con.select(config.selected_db);
+      con.isOwn = true;
+      con.pool = pool; //add pool reference
+      currentConnections++;
+      con.on('error', function(err) {
+        console.log('error - redis', err);
+      });
+      callback(null, con);
 
-  function free(con){
+    }
+    else {
+      callback('no more conections available', null);
+    }
+  }
+
+  function free(con) {
     //get back to the pool
-     
-      connections.push(con);
-      logger.debug('free', connections.toString());
+
+    connections.push(con);
+    logger.debug('free', connections.toString());
   }
 };

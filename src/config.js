@@ -20,10 +20,9 @@
  */
 
 
-
 var dir_prefix = './';
-if(process.env.POPBOX_DIR_PREFIX) {
-    dir_prefix =process.env.POPBOX_DIR_PREFIX;
+if (process.env.POPBOX_DIR_PREFIX) {
+  dir_prefix = process.env.POPBOX_DIR_PREFIX;
 }
 /**
  * Level for logger
@@ -35,14 +34,15 @@ if(process.env.POPBOX_DIR_PREFIX) {
  */
 exports.logger = {};
 exports.logger.logLevel = 'error';
-exports.logger.inspectDepth = 1 ;
+exports.logger.inspectDepth = 1;
 exports.logger.Console = {
-    level: 'info', timestamp:true
+  level: 'info', timestamp: true
 };
-exports.logger.File ={
-    level:'info', filename: dir_prefix +'/popbox.log', timestamp:true, json:false ,
-    maxsize: 10*1024*1024,
-    maxFiles: 3
+exports.logger.File = {
+  level: 'info', filename: dir_prefix +
+      '/popbox.log', timestamp: true, json: false,
+  maxsize: 10 * 1024 * 1024,
+  maxFiles: 3
 };
 
 /**
@@ -56,7 +56,9 @@ exports.slave = false;
  * @type {Array} ex. [{host:'localhost'}, {host:'localhost', port:'6789'}]
  */
 //exports.redisServers = [{host:'localhost'}, {host:'localhost', port:'6789'}];
-exports.redisServers = [{host:'localhost', port: 6379}];
+exports.redisServers = [
+  {host: 'localhost', port: 6379}
+];
 
 /**
  * One to One relationship with redisServers
@@ -66,10 +68,10 @@ exports.masterRedisServers = [];
 
 /**
  *
- * @type {Object} ex. { host:'hostname', port: 'port'} 
- * 
+ * @type {Object} ex. { host:'hostname', port: 'port'}
+ *
  */
-exports.tranRedisServer = {host:'localhost', port: 6379};
+exports.tranRedisServer = {host: 'localhost', port: 6379};
 
 /**
  *
@@ -187,29 +189,28 @@ exports.agent.prov_timeout = 3 * 60;
 exports.agent.pop_timeout = 5;
 
 /**
-* Maximum pop timeout
-* @type {Number} seconds
-*/
-exports.agent.max_pop_timeout = 5*60;
+ * Maximum pop timeout
+ * @type {Number} seconds
+ */
+exports.agent.max_pop_timeout = 5 * 60;
 
 /**
-* Additional time for the HTTP request (added to pop timeout)
-* @type {Number}  seconds
-*/
+ * Additional time for the HTTP request (added to pop timeout)
+ * @type {Number}  seconds
+ */
 exports.agent.grace_timeout = 60;
 
 /**
  *
  * @type {Object}
  */
-exports.cluster= {};
+exports.cluster = {};
 
 /**
  *
  * @type {Number} number of CPUS to be used in cluster mode (-1 for all)
  */
 exports.cluster.numcpus = 0;
-
 
 
 /**
@@ -222,13 +223,13 @@ exports.MAX_TIMESTAMP = 2147483647; // 32-bit, 19 January 2038
  *
  * @type {boolean}
  */
-exports.enableSecure= false;
+exports.enableSecure = false;
 
 /**
  *
  * @type {String} absolute path for the certs and keys. Default will be chosen when empty.
  */
-exports.agent.crt_path = "";
+exports.agent.crt_path = '';
 
 exports.pool = {};
 /**
@@ -240,36 +241,37 @@ exports.pool.max_elems = 10000;
 
 /* generic event listener */
 var gevlsnr_mongo = 'localhost';
-if(process.env.POPBOX_GEN_MONGO) {
-    gevlsnr_mongo =process.env.POPBOX_GEN_MONGO;
+if (process.env.POPBOX_GEN_MONGO) {
+  gevlsnr_mongo = process.env.POPBOX_GEN_MONGO;
 }
 var gevlsnr = {};
-gevlsnr.name = "gevlsnr-state";
+gevlsnr.name = 'gevlsnr-state';
 gevlsnr.event = 'NEWSTATE';
 gevlsnr.mongo_host = gevlsnr_mongo;
 gevlsnr.mongo_port = 27017;
-gevlsnr.mongo_db =  'popbox';
-gevlsnr.collection= 'PopBoxState';
+gevlsnr.mongo_db = 'popbox';
+gevlsnr.collection = 'PopBoxState';
 gevlsnr.filter = null;
-gevlsnr.take= {transaction: 'transaction', state: 'state'};
+gevlsnr.take = {transaction: 'transaction', state: 'state'};
 
 var gevlsnr_action = {};
-gevlsnr_action.name = "gevlsnr-action";
+gevlsnr_action.name = 'gevlsnr-action';
 gevlsnr_action.event = 'ACTION';
 gevlsnr_action.mongo_host = gevlsnr_mongo;
 gevlsnr_action.mongo_port = 27017;
-gevlsnr_action.mongo_db =  'popbox';
-gevlsnr_action.collection= 'PopBoxAction';
+gevlsnr_action.mongo_db = 'popbox';
+gevlsnr_action.collection = 'PopBoxAction';
 gevlsnr_action.filter = null;
-gevlsnr_action.take= {transaction: 'transaction', action: 'action'};
-exports.evModules = [{ module:'./ev_callback_lsnr'},
-                    { module:'./gevlsnr', config: gevlsnr},
-                    { module:'./gevlsnr', config: gevlsnr_action}
-                    ];
+gevlsnr_action.take = {transaction: 'transaction', action: 'action'};
+exports.evModules = [
+  { module: './ev_callback_lsnr'},
+  { module: './gevlsnr', config: gevlsnr},
+  { module: './gevlsnr', config: gevlsnr_action}
+];
 
 
 exports.connectLogger = {
-    format: '[:date] :remote-addr - :method :url HTTP/:http-version :status :res[content-length] - :response-time ms'
+  format: '[:date] :remote-addr - :method :url HTTP/:http-version :status :res[content-length] - :response-time ms'
 };
 
 

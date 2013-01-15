@@ -5,38 +5,38 @@ if locals.size
     p size: 
         span#ok #{size} 
 p last pop: 
-  if locals.lastPop
-    -var date = (new Date(lastPop*1000))
-    span#lastPop #{date}
-  else
-    span#lastPop Not available
-  end
+    if locals.lastPop
+        -var date = (new Date(lastPop*1000))
+        span#lastPop #{date}
+    else
+        span#lastPop Not available
+    end
 p HIGH PRIORITY QUEUES
 - var baseurl ='http://'+host+'/trans/'
 #high
-  each qobj in high
-    - var ref = baseurl+qobj.id
-      div(id='#{qobj.id}')
-        pre #{qobj.id} 
-          a(href='#{ref}?queues=All') All
-          &ensp;
-          a(href='#{ref}?queues=Pending') Pending
-          &ensp;
-          a(href='#{ref}?queues=Delivered') Delivered
-          &ensp;
-          a(href='#{ref}?queues=summary') Summary
-          &ensp;
+    each qobj in high
+        - var ref = baseurl+qobj.id
+            div(id='#{qobj.id}')
+                pre #{qobj.id}
+                    a(href='#{ref}?queues=All') All
+                    &ensp;
+                    a(href='#{ref}?queues=Pending') Pending
+                    &ensp;
+                    a(href='#{ref}?queues=Delivered') Delivered
+                    &ensp;
+                    a(href='#{ref}?queues=summary') Summary
+                    &ensp;
 p LOW PRIORITY QUEUES
 pre#low
-  each qobj in low
-    - var ref = baseurl+qobj.id
-      div(id='#{qobj.id}')
-        pre #{qobj.id} 
-          a(href='#{ref}?queues=All') All
-          &ensp;
-          a(href='#{ref}?queues=Pending') Pending
-          &ensp;
-          a(href='#{ref}?queues=Delivered') Delivered
-          &ensp;
-          a(href='#{ref}?queues=summary') Summary
-          &ensp;
+    each qobj in low
+        - var ref = baseurl+qobj.id
+            div(id='#{qobj.id}')
+                pre #{qobj.id}
+                    a(href='#{ref}?queues=All') All
+                    &ensp;
+                    a(href='#{ref}?queues=Pending') Pending
+                    &ensp;
+                    a(href='#{ref}?queues=Delivered') Delivered
+                    &ensp;
+                    a(href='#{ref}?queues=summary') Summary
+                    &ensp;

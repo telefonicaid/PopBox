@@ -44,152 +44,155 @@ var promoteSlave = require('./promoteExprMdwr.js');
 
 logger.info('Node version:', process.versions.node);
 logger.info('V8 version:', process.versions.v8);
-logger.info('Current directory: ' , process.cwd());
-logger.info('POPBOX_DIR_PREFIX: ' , process.env.POPBOX_DIR_PREFIX);
+logger.info('Current directory: ', process.cwd());
+logger.info('POPBOX_DIR_PREFIX: ', process.env.POPBOX_DIR_PREFIX);
 
 
 if (config.cluster.numcpus >= 0 && config.cluster.numcpus < numCPUs) {
-    numCPUs = config.cluster.numcpus;
-    logger.info('numCPUs=' + numCPUs);
+  numCPUs = config.cluster.numcpus;
+  logger.info('numCPUs=' + numCPUs);
 }
 
 
 if (cluster.isMaster && numCPUs !== 0) {
-    // Fork workers.
-    for (var i = 0; i < numCPUs; i++) {
-        cluster.fork();
-    }
+  // Fork workers.
+  for (var i = 0; i < numCPUs; i++) {
+    cluster.fork();
+  }
 
-    cluster.on('death', function(worker) {
-        'use strict';
-        logger.warning('worker ' + worker.pid + ' died');
-    });
+  cluster.on('death', function(worker) {
+    'use strict';
+    logger.warning('worker ' + worker.pid + ' died');
+  });
 } else {
-    logger.debug('cluster worker', cluster);
+  logger.debug('cluster worker', cluster);
 
-    var fs = require('fs');
-    var express = require('express');
-    var logic = require('./agent_logic');
-    var async = require('async');
-    var emitter = require('./emitter_module').getEmitter();
-    var evLsnr = require('./ev_lsnr');
-    var cbLsnr = require('./ev_callback_lsnr');
+  var fs = require('fs');
+  var express = require('express');
+  var logic = require('./agent_logic');
+  var async = require('async');
+  var emitter = require('./emitter_module').getEmitter();
+  var evLsnr = require('./ev_lsnr');
+  var cbLsnr = require('./ev_callback_lsnr');
 
-    var servers = [];
-    var app = express.createServer();
-    app.prefix = 'UNSEC:';
-    app.port = config.agent.port;
-    app._backlog = 2048;
-    servers.push(app);
+  var servers = [];
+  var app = express.createServer();
+  app.prefix = 'UNSEC:';
+  app.port = config.agent.port;
+  app._backlog = 2048;
+  servers.push(app);
 
-    var optionsDir;
-    logger.info('config.enableSecure', config.enableSecure);
-    if (config.enableSecure === true || config.enableSecure === 'true' || config.enableSecure === 1) {
-        if (!config.agent.crt_path) {
-            optionsDir = {
-                key: path.resolve(dirModule, '../utils/server.key'),
-                cert: path.resolve(dirModule, '../utils/server.crt')
-            };
-        } else {
-            optionsDir = {
-                key: path.resolve(config.agent.crt_path, 'server.key'),
-                cert: path.resolve(config.agent.crt_path, 'server.crt')
-            };
-        }
-
-        /*checks whether the cert files exist or not
-         and starts the appSec server*/
-
-        if (path.existsSync(optionsDir.key) &&
-            path.existsSync(optionsDir.cert) &&
-            fs.statSync(optionsDir.key).isFile() &&
-            fs.statSync(optionsDir.cert).isFile()) {
-
-            var options = {
-                key: fs.readFileSync(optionsDir.key),
-                cert: fs.readFileSync(optionsDir.cert)
-            };
-            logger.info('valid certificates');
-        } else {
-            logger.debug('certs not found', optionsDir);
-            throw new Error('No valid certificates were found in the given path');
-        }
-
-        var appSec = express.createServer(options);
-        appSec.prefix = 'SEC:';
-        appSec.port = Number(config.agent.port) + 1;
-
-        servers.push(appSec);
+  var optionsDir;
+  logger.info('config.enableSecure', config.enableSecure);
+  if (config.enableSecure === true || config.enableSecure === 'true' ||
+      config.enableSecure === 1) {
+    if (! config.agent.crt_path) {
+      optionsDir = {
+        key: path.resolve(dirModule, '../utils/server.key'),
+        cert: path.resolve(dirModule, '../utils/server.crt')
+      };
+    } else {
+      optionsDir = {
+        key: path.resolve(config.agent.crt_path, 'server.key'),
+        cert: path.resolve(config.agent.crt_path, 'server.crt')
+      };
     }
 
-    servers.forEach(function(server) {
-        'use strict';
+    /*checks whether the cert files exist or not
+     and starts the appSec server*/
 
-        if (config.connectLogger) {
-            server.use(express.logger(config.connectLogger)); 
+    if (path.existsSync(optionsDir.key) &&
+        path.existsSync(optionsDir.cert) &&
+        fs.statSync(optionsDir.key).isFile() &&
+        fs.statSync(optionsDir.cert).isFile()) {
+
+      var options = {
+        key: fs.readFileSync(optionsDir.key),
+        cert: fs.readFileSync(optionsDir.cert)
+      };
+      logger.info('valid certificates');
+    } else {
+      logger.debug('certs not found', optionsDir);
+      throw new Error('No valid certificates were found in the given path');
+    }
+
+    var appSec = express.createServer(options);
+    appSec.prefix = 'SEC:';
+    appSec.port = Number(config.agent.port) + 1;
+
+    servers.push(appSec);
+  }
+
+  servers.forEach(function(server) {
+    'use strict';
+
+    if (config.connectLogger) {
+      server.use(express.logger(config.connectLogger));
+    }
+    server.use(express.query());
+    server.use(express.bodyParser());
+    server.use(express.limit(config.agent.max_req_size));
+    server.use(prefixer.prefixer(server.prefix));
+    server.use(sendrender.sendRender());
+    server.use(pdilogger.pdiLogger());
+    server.use(promoteSlave.checkAndPromote());
+    server.use('/', express.static(__dirname + '/public'));
+    server.del('/trans/:id_trans', logic.deleteTrans);
+    //app.get('/trans/:id_trans/state/:state?', logic.transState);
+    server.get('/trans/:id_trans', logic.transMeta);
+    server.put('/trans/:id_trans', logic.putTransMeta);
+    server.post('/trans/:id_trans/payload', logic.payloadTrans);
+    server.post('/trans/:id_trans/expirationDate', logic.expirationDate);
+    server.post('/trans/:id_trans/callback', logic.callbackTrans);
+    server.post('/trans', logic.postTransDelayed);
+    server.get('/queue/:id', logic.getQueue);
+    server.post('/queue/:id/pop', logic.popQueue);
+    server.get('/queue/:id/peek', logic.peekQueue);
+  });
+
+  var evModules = config.evModules;
+  var evInitArray = evModules.map(function(x) {
+    'use strict';
+    return require(x.module).init(emitter, x.config);
+  });
+
+  async.parallel(evInitArray,
+      function onSubscribed(err, results) {
+        'use strict';
+        logger.debug('onSubscribed(err, results)', [err, results]);
+        if (err) {
+          logger.error('error subscribing event listener', err);
+          throw new InitError(['error subscribing event listener', err]);
         }
-        server.use(express.query());
-        server.use(express.bodyParser());
-        server.use(express.limit(config.agent.max_req_size));
-        server.use(prefixer.prefixer(server.prefix));
-        server.use(sendrender.sendRender());
-        server.use(pdilogger.pdiLogger());
-        server.use(promoteSlave.checkAndPromote());
-        server.use('/', express.static(__dirname + '/public'));
-        server.del('/trans/:id_trans', logic.deleteTrans);
-        //app.get('/trans/:id_trans/state/:state?', logic.transState);
-        server.get('/trans/:id_trans', logic.transMeta);
-        server.put('/trans/:id_trans', logic.putTransMeta);
-        server.post('/trans/:id_trans/payload', logic.payloadTrans);
-        server.post('/trans/:id_trans/expirationDate', logic.expirationDate);
-        server.post('/trans/:id_trans/callback', logic.callbackTrans);
-        server.post('/trans', logic.postTransDelayed);
-        server.get('/queue/:id', logic.getQueue);
-        server.post('/queue/:id/pop', logic.popQueue);
-        server.get('/queue/:id/peek', logic.peekQueue);
-    });
-
-    var evModules = config.evModules;
-    var evInitArray = evModules.map(function(x) {
-        'use strict';
-        return require(x.module).init(emitter, x.config);
-    });
-
-    async.parallel(evInitArray,
-        function onSubscribed(err, results) {
-            'use strict';
-            logger.debug('onSubscribed(err, results)', [err, results]);
-            if (err) {
-                logger.error('error subscribing event listener', err);
-                throw new InitError(['error subscribing event listener', err]);
-            }
-            else {
-                servers.forEach(function(server) {
-                    server.listen(server.port);
-                    logger.info('PopBox listening on', server.prefix + server.port);
-                });
-            }
-        });
+        else {
+          servers.forEach(function(server) {
+            server.listen(server.port);
+            logger.info('PopBox listening on', server.prefix + server.port);
+          });
+        }
+      });
 
 
 }
 
 
 function InitError(message) {
-    'use strict';
-    this.name = 'InitError';
-    this.message = message || '(no message)';
+  'use strict';
+  this.name = 'InitError';
+  this.message = message || '(no message)';
 }
 InitError.prototype = new Error();
 
 
 process.on('uncaughtException', function onUncaughtException(err) {
-    'use strict';
-    logger.warning('onUncaughtException', err);
+  'use strict';
+  logger.warning('onUncaughtException', err);
 
-    if (err instanceof InitError) {
-        setTimeout(function() {process.exit();}, 1000);
-    }
+  if (err instanceof InitError) {
+    setTimeout(function() {
+      process.exit();
+    }, 1000);
+  }
 });
 
 
