@@ -52,7 +52,7 @@ The hostname of the Redis Server intended to keep track of the transactions and 
 
 The same Redis instance may be used between transactions and queues.
 
-###Historic support (opional)
+###Historic support (optional)
 ```
 exports.ev_lsnr.mongo_host = 'localhost';
 exports.ev_lsnr.mongo_port = 27017;
