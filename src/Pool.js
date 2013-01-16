@@ -43,7 +43,6 @@ exports.Pool = function Pool(poolIndex) {
 
   function get(queueId, callback) {
     var con = connections.pop();
-    logger.debug('get', connections.toString());
     if (con) {
       callback(null, con);
 
@@ -70,8 +69,8 @@ exports.Pool = function Pool(poolIndex) {
 
   function free(con) {
     //get back to the pool
-
     connections.push(con);
-    logger.debug('free', connections.toString());
   }
 };
+
+require('./hookLogger.js').init(exports.Pool, logger);

@@ -30,7 +30,6 @@ var MAX_TIMESTAMP = config.MAX_TIMESTAMP;
 
 function errorsTrans(trans) {
   'use strict';
-  logger.debug('errorsTrans(trans)', [trans]);
   var errors = [],
       maxNumQueues = config.agent.max_num_queues,
       errorsExpDate, errorsP;
@@ -72,7 +71,6 @@ function errorsTrans(trans) {
 
 function errorsPayload(payload, required) {
   'use strict';
-  logger.debug('errorsPayload(payload)', [payload]);
   var maxPayloadSize = config.agent.max_payload_size,
       errors = [];
   if (required && ! payload) {
@@ -86,7 +84,6 @@ function errorsPayload(payload, required) {
 }
 function errorsExpirationDate(expirationDate) {
   'use strict';
-  logger.debug('errorsExpirationDate(expirationDate)', [expirationDate]);
   var errors = [];
   if (expirationDate) {
     if (typeof expirationDate !== 'number') {
@@ -104,7 +101,6 @@ function errorsExpirationDate(expirationDate) {
 
 function validTransId(transId) {
   'use strict';
-  logger.debug('validTransId(transId)', [transId]);
   return (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
       .test(transId);
 }
@@ -137,3 +133,4 @@ exports.errorsExpirationDate = errorsExpirationDate;
  */
 exports.errorsPayload = errorsPayload;
 
+require('./hookLogger.js').init(exports, logger);

@@ -33,13 +33,13 @@ if (process.env.POPBOX_DIR_PREFIX) {
  * @type {String}
  */
 exports.logger = {};
-exports.logger.logLevel = 'error';
+exports.logger.logLevel = 'debug';
 exports.logger.inspectDepth = 1;
 exports.logger.Console = {
   level: 'info', timestamp: true
 };
 exports.logger.File = {
-  level: 'info', filename: dir_prefix +
+  level: 'debug', filename: dir_prefix +
       '/popbox.log', timestamp: true, json: false,
   maxsize: 10 * 1024 * 1024,
   maxFiles: 3
@@ -265,8 +265,8 @@ gevlsnr_action.filter = null;
 gevlsnr_action.take = {transaction: 'transaction', action: 'action'};
 exports.evModules = [
   { module: './ev_callback_lsnr'},
-  { module: './gevlsnr', config: gevlsnr},
-  { module: './gevlsnr', config: gevlsnr_action}
+  //{ module: './gevlsnr', config: gevlsnr},
+  //{ module: './gevlsnr', config: gevlsnr_action}
 ];
 
 

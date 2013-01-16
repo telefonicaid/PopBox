@@ -65,7 +65,6 @@ if (cluster.isMaster && numCPUs !== 0) {
     logger.warning('worker ' + worker.pid + ' died');
   });
 } else {
-  logger.debug('cluster worker', cluster);
 
   var fs = require('fs');
   var express = require('express');
@@ -112,7 +111,7 @@ if (cluster.isMaster && numCPUs !== 0) {
       };
       logger.info('valid certificates');
     } else {
-      logger.debug('certs not found', optionsDir);
+      logger.warning('certs not found', optionsDir);
       throw new Error('No valid certificates were found in the given path');
     }
 
@@ -159,7 +158,6 @@ if (cluster.isMaster && numCPUs !== 0) {
   async.parallel(evInitArray,
       function onSubscribed(err, results) {
         'use strict';
-        logger.debug('onSubscribed(err, results)', [err, results]);
         if (err) {
           logger.error('error subscribing event listener', err);
           throw new InitError(['error subscribing event listener', err]);

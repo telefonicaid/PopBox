@@ -43,7 +43,7 @@ function init(emitter) {
               callback(err);
             }
           } else {
-            logger.debug('mongo is susbcribed');
+            logger.info('mongo is susbcribed');
             emitter.on('NEWSTATE', function onNewState(data) {
               try {
                 logger.debug('onNewState(data)', [data]);
