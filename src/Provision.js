@@ -27,7 +27,7 @@ PopBox.Provision.prototype = {
   'payload': '{\"spanish\": \"hola\", \"english\":' +
       ' \"hello\", \"to\":\"Mr Lopez\"}',
   'priority': 'H',
-  'callback': 'http://foo.bar',
+  'callback': 'http://fool.bar',
   'queue': [
     {
       'id': 'Ax'

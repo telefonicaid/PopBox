@@ -55,6 +55,7 @@ logger.prefix = path.basename(module.filename, '.js');
 
 var transactionDbClient = redisModule.createClient(config.tranRedisServer.port ||
     redisModule.DEFAULT_PORT, config.tranRedisServer.host);
+require('./hookLogger.js').initRedisHook(transactionDbClient, logger);
 if (config.slave) {
   slaveOf(transactionDbClient, config.masterTranRedisServer.host,
       config.masterTranRedisServer.port);
@@ -66,6 +67,8 @@ for (var i = 0; i < config.redisServers.length; i++) {
   var port = config.redisServers[i].port || redisModule.DEFAULT_PORT;
   var host = config.redisServers[i].host;
   var cli = redisModule.createClient(port, host);
+  require('./hookLogger.js').initRedisHook(cli, logger);
+
   if (config.slave) {
     slaveOf(cli, config.masterRedisServers[i].host,
         config.masterRedisServers[i].port);
