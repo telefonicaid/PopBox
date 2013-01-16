@@ -37,8 +37,6 @@ var logger = log.newLogger();
  */
 var slaveOf = function(rc, masterHost, masterPort) {
   'use strict';
-  logger.debug('slaveOf(rc, masterHost, masterPort)',
-      [rc, masterHost, masterPort]);
   if (! (masterHost && masterPort)) {
     logger.error('Masters must be defined in slave' +
         ' configuration. Look at configFile');
@@ -88,14 +86,12 @@ for (var i = 0; i < config.redisServers.length; i++) {
 
 var getDb = function(queueId) {
   'use strict';
-  logger.debug('getDb(queueId)', [queueId]);
   var hash = hashMe(queueId, config.redisServers.length);
   return queuesDbArray[hash];
 };
 
 var getOwnDb = function(queueId, callback) {
   'use strict';
-  logger.debug('getOwnDb(queueId)', [queueId]);
   var hash = hashMe(queueId, config.redisServers.length);
   //get the pool
   var pool = poolArray[hash];
@@ -105,8 +101,6 @@ var getOwnDb = function(queueId, callback) {
 
 var getTransactionDb = function(transactionId) {
   'use strict';
-  logger.debug('getTransactionDb(transactionId)', [transactionId]);
-
   //return a client for transactions
   return transactionDbClient;
 
@@ -114,7 +108,6 @@ var getTransactionDb = function(transactionId) {
 
 var hashMe = function(id, mod) {
   'use strict';
-  logger.debug('hashMe(id, mod)', [id, mod]);
   var i,
       len,
       sum = 0;
@@ -129,10 +122,9 @@ var hashMe = function(id, mod) {
   return sum % mod;
 };
 
-var free = function(db) {
+var free = function (db) {
   'use strict';
   //return to the pool TechDebt
-  logger.debug('free(db)', [db]);
   if (db.isOwn) {
     db.pool.free(db);
   }
@@ -178,3 +170,4 @@ exports.free = free;
  */
 exports.promoteMaster = promoteMaster;
 
+require('./hookLogger.js').init(exports, logger);

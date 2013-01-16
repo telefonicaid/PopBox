@@ -40,8 +40,6 @@ logger.prefix = path.basename(module.filename, '.js');
 //Private methods Area
 var pushTransaction = function(appPrefix, provision, callback) {
   'use strict';
-  logger.debug('pushTransaction(appPrefix, provision, callback)',
-      [appPrefix, provision, callback]);
   //handles a new transaction  (N ids involved)
   var priority = provision.priority + ':', //contains "H" || "L"
       queues = provision.queue, //[{},{}]   //list of ids
@@ -78,10 +76,8 @@ var pushTransaction = function(appPrefix, provision, callback) {
         //launch push/set:state in parallel for one ID
         processBatch.push(processOneId(dbTr, transactionId, queue, priority));
       }
-      logger.debug('pushTransaction- processBatch', processBatch);
       async.parallel(processBatch,
           function pushEnd(err) {
-            logger.debug('pushEnd(err)', [err]);
             //MAIN Exit point
             if (err) {
               //some of the queues could be populated
@@ -105,10 +101,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
 
 
   function processOneId(dbTr, transactionId, queue, priority) {
-    logger.debug('processOneId(dbTr, transactionId, queue, priority)',
-        [dbTr, transactionId, queue, priority]);
     return function processOneIdAsync(callback) {
-      logger.debug('processOneIdAsync(callback)', [callback]);
       var db = dbCluster.getDb(queue.id); //different DB for different Ids
       async.parallel([
         helper.pushParallel(db, {id: appPrefix + queue.id}, priority,
@@ -143,8 +136,6 @@ var pushTransaction = function(appPrefix, provision, callback) {
 
 var updateTransMeta = function(extTransactionId, provision, callback) {
   'use strict';
-  logger.debug('updateTransMeta(transId, provision, callback)',
-      [extTransactionId, provision, callback]);
   var transactionId = config.dbKeyTransPrefix +
       extTransactionId, dbTr = dbCluster.getTransactionDb(transactionId);
 
@@ -182,8 +173,6 @@ var updateTransMeta = function(extTransactionId, provision, callback) {
 
 var setSecHash = function(appPrefix, queueId, user, passwd, callback) {
   'use strict';
-  logger.debug('setSecHash(appPrefix, queueId, user, passwd, callback)',
-      [appPrefix, queueId, user, passwd, callback]);
   var shasum = crypto.createHash('sha1'), digest, db = dbCluster.getDb(queueId);
 
   //TODO:  Overwrite existing value ???
@@ -194,7 +183,6 @@ var setSecHash = function(appPrefix, queueId, user, passwd, callback) {
 
 var getSecHash = function(appPrefix, queueId, cb) {
   'use strict';
-  logger.debug('getSecHash(appPrefix, queueId, cb)', [appPrefix, queueId, cb]);
   var db = dbCluster.getDb(queueId);
   helper.getKey(db, appPrefix + queueId, cb);
 };
@@ -202,9 +190,6 @@ var getSecHash = function(appPrefix, queueId, cb) {
 var popNotification = function(db, appPrefix, queue,
                                maxElems, callback, firstElem) {
   'use strict';
-  logger.debug('popNotification(db, appPrefix,' +
-      ' queue, maxElems, callback, firstElem)',
-      [db, appPrefix, queue, maxElems, callback, firstElem]);
   //pop the queu  (LRANGE)
   //hight priority first
   var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
@@ -213,7 +198,6 @@ var popNotification = function(db, appPrefix, queue,
 
   db.lrange(fullQueueIdH, 0, maxElems - 1, function onRangeH(errH, dataH) {
     var dataHlength = dataH.length;
-    logger.debug('onRangeH(errH, dataH)', [errH, dataH]);
     if (errH && ! firstElem) {//errH
       manageError(errH, callback);
     } else {
@@ -273,9 +257,6 @@ var popNotification = function(db, appPrefix, queue,
 var blockingPop = function(appPrefix, queue,
                            maxElems, blockingTime, callback) {
   'use strict';
-  logger.debug('blockingPop(appPrefix, queue,' +
-      ' maxElems, blockingTime, callback)',
-      [appPrefix, queue, maxElems, blockingTime, callback]);
   var queueId = queue.id,
       fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id,
       fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id,
@@ -346,11 +327,9 @@ var blockingPop = function(appPrefix, queue,
 
 function getPopData(dataH, callback, queue) {
   'use strict';
-  logger.debug('getPopData(dataH, callback, queue)', [dataH, callback, queue]);
   var newStateBatch = [
   ], transactionId = null, dbTr = null, cleanData = null;
   retrieveData(queue, dataH, function onData(err, payloadWithNulls) {
-    logger.debug('onData(err, payloadWithNulls)', [err, payloadWithNulls]);
     if (err) {
       manageError(err, callback);
     } else {
@@ -360,7 +339,6 @@ function getPopData(dataH, callback, queue) {
       });
       //SET NEW STATE for Every popped transaction
       newStateBatch = cleanData.map(function prepareStateBatch(elem) {
-        logger.debug('prepareStateBatch(elem)', [elem]);
         transactionId = elem.transactionId;
         dbTr = dbCluster.getTransactionDb(transactionId);
         return helper.hsetHashParallel(dbTr, queue, transactionId, ':state',
@@ -378,8 +356,6 @@ function getPopData(dataH, callback, queue) {
 
 var peek = function(appPrefix, queue, maxElems, callback) {
   'use strict';
-  logger.debug('peek(appPrefix, queue, maxElems, callback)',
-      [appPrefix, queue, maxElems, callback]);
   var queueId = queue.id,
       fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id,
       fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id,
@@ -397,8 +373,6 @@ var peek = function(appPrefix, queue, maxElems, callback) {
     db.lrange(fullQueueIdH, 0, maxElems - 1, function onRangeH(errH, dataH) {
 
       var dataHlength = dataH.length;
-      logger.debug('onRangeH(errH, dataH)', [errH, dataH]);
-
       if (errH) {//errH
         manageError(errH, callback);
 
@@ -440,11 +414,9 @@ var peek = function(appPrefix, queue, maxElems, callback) {
 
 function getPeekData(dataH, callback, queue) {
   'use strict';
-  logger.debug('getPopData(dataH, callback, queue)', [dataH, callback, queue]);
   var transactionId = null, dbTr = null, cleanData = null;
 
   retrieveData(queue, dataH, function onData(err, payloadWithNulls) {
-    logger.debug('onData(err, payloadWithNulls)', [err, payloadWithNulls]);
     if (err) {
       manageError(err, callback);
 
@@ -463,18 +435,13 @@ function getPeekData(dataH, callback, queue) {
 
 function retrieveData(queue, transactionList, callback) {
   'use strict';
-  logger.debug('retrieveData(queue, transactionList, callback)',
-      [queue, transactionList, callback]);
   var ghostBusterBatch =
       transactionList.map(function prepareDataBatch(transaction) {
-        logger.debug('prepareDataBatch(transaction)', [transaction]);
         var dbTr = dbCluster.getTransactionDb(transaction);
         return checkData(queue, dbTr, transaction);
       });
   async.parallel(ghostBusterBatch,
       function retrieveDataAsyncEnd(err, foundMetadata) {
-        logger.debug('retrieveDataAsyncEnd(err, foundMetadata)',
-            [err, foundMetadata]);
         if (callback) {
           callback(err, foundMetadata);
         }
@@ -483,8 +450,6 @@ function retrieveData(queue, transactionList, callback) {
 
 function checkData(queue, dbTr, transactionId) {
   'use strict';
-  logger.debug('checkData(queue, dbTr, transactionId)',
-      [queue, dbTr, transactionId]);
   return function(callback) {
     var ev = null, extTransactionId = transactionId.split('|')[1];
     dbTr.hgetall(transactionId + ':meta', function on_data(err, data) {
@@ -528,8 +493,6 @@ function checkData(queue, dbTr, transactionId) {
 
 var getTransaction = function(extTransactionId, state, summary, callback) {
   'use strict';
-  logger.debug('getTransaction(extTransactionId, state, summary, callback)',
-      [extTransactionId, state, summary, callback]);
   var err = null, //
       dbTr = null, //
       transactionId = null, //
@@ -546,7 +509,6 @@ var getTransaction = function(extTransactionId, state, summary, callback) {
     dbTr = dbCluster.getTransactionDb(extTransactionId);
     transactionId = config.dbKeyTransPrefix + extTransactionId;
     dbTr.hgetall(transactionId + ':state', function on_data(err, data) {
-      logger.debug('on_data(err, data)', [err, data]);
       if (err) {
         manageError(err, callback);
       } else {
@@ -566,7 +528,6 @@ var getTransaction = function(extTransactionId, state, summary, callback) {
   }
 
   function getData(state, data) {
-    logger.debug('getData(state, data)', [state, data]);
     var filteredData = {}, pname = null;
     if (state === 'All') {
       return data;
@@ -584,7 +545,6 @@ var getTransaction = function(extTransactionId, state, summary, callback) {
   }
 
   function getSummary(state, data) {
-    logger.debug('getSummary(state, data)', [state, data]);
     var summaryObj = {}, dataArray = [
     ], pname, dataAux;
     for (pname in data) {
@@ -612,8 +572,6 @@ var getTransaction = function(extTransactionId, state, summary, callback) {
 //callback return transaction info
 var getTransactionMeta = function(extTransactionId, callback) {
   'use strict';
-  logger.debug('getTransactionMeta(extTransactionId, callback)',
-      [extTransactionId, callback]);
 
   var err, dbTr, transactionId;
 
@@ -621,7 +579,6 @@ var getTransactionMeta = function(extTransactionId, callback) {
   dbTr = dbCluster.getTransactionDb(extTransactionId);
   transactionId = config.dbKeyTransPrefix + extTransactionId;
   dbTr.hgetall(transactionId + ':meta', function onDataMeta(err, data) {
-    logger.debug('onDataMeta(err, data)', [err, data]);
     if (err) {
       manageError(err, callback);
     } else {
@@ -634,16 +591,13 @@ var getTransactionMeta = function(extTransactionId, callback) {
 
 var queueSize = function(appPrefix, queueId, callback) {
   'use strict';
-  logger.debug('queueSize(appPrefix, queueId, callback)',
-      [appPrefix, queueId, callback]);
+
   var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
       queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
       queueId, db = dbCluster.getDb(queueId);
 
   db.llen(fullQueueIdH, function onHLength(err, hLength) {
-    logger.debug('onHLength(err, hLength)', [err, hLength]);
     db.llen(fullQueueIdL, function onLLength(err, lLength) {
-      logger.debug('onLLength(err, lLength)', [err, lLength]);
       dbCluster.free(db);
       if (callback) {
         callback(err, hLength + lLength);
@@ -655,17 +609,12 @@ var getQueue = function(appPrefix, queueId, callback) {
   'use strict';
 
   var maxMessages = config.agent.max_messages;
-
-  logger.debug('popQueue(appPrefix, queueId, callback)',
-      [appPrefix, queueId, callback]);
   var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
       queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
       queueId, db = dbCluster.getDb(queueId);
 
   db.lrange(fullQueueIdH, 0, maxMessages, function onHRange(err, hQueue) {
-    logger.debug('onHRange(err, hQueue)', [err, hQueue]);
     db.lrange(fullQueueIdL, 0, maxMessages, function onLRange(err, lQueue) {
-      logger.debug('onLRange(err, lQueue)', [err, lQueue]);
       dbCluster.free(db);
       db.get(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
           function(err, lastPopDate) {
@@ -684,14 +633,12 @@ var getQueue = function(appPrefix, queueId, callback) {
 
 var deleteTrans = function(extTransactionId, cb) {
   'use strict';
-  logger.debug('deleteTrans(transactionId)', [extTransactionId]);
   var dbTr = dbCluster.getTransactionDb(extTransactionId),
       meta = config.dbKeyTransPrefix +
       extTransactionId + ':meta', state = config.dbKeyTransPrefix +
       extTransactionId + ':state';
 
   dbTr.del(meta, state, function onDeleted(err) {
-    logger.debug('onDeleted(err)', [err]);
     if (cb) {
       cb(err);
     }
@@ -700,8 +647,6 @@ var deleteTrans = function(extTransactionId, cb) {
 
 var setPayload = function(extTransactionId, payload, cb) {
   'use strict';
-  logger.debug('setPayload(transactionId, payload, cb)',
-      [extTransactionId, payload, cb]);
   var dbTr = dbCluster.getTransactionDb(extTransactionId),
       meta = config.dbKeyTransPrefix +
       extTransactionId + ':meta';
@@ -716,7 +661,6 @@ var setPayload = function(extTransactionId, payload, cb) {
     else {
 
       dbTr.hset(meta, 'payload', payload, function cbSetPayload(err) {
-        logger.debug('cbSetPayload(err)', [err]);
         if (cb) {
           cb(err);
         }
@@ -727,8 +671,6 @@ var setPayload = function(extTransactionId, payload, cb) {
 
 var setUrlCallback = function(extTransactionId, urlCallback, cb) {
   'use strict';
-  logger.debug('setUrlCallback(transactionId, urlCallback, cb)',
-      [extTransactionId, urlCallback, cb]);
   var dbTr = dbCluster.getTransactionDb(extTransactionId),
       meta = config.dbKeyTransPrefix +
       extTransactionId + ':meta';
@@ -743,7 +685,6 @@ var setUrlCallback = function(extTransactionId, urlCallback, cb) {
     else {
 
       dbTr.hset(meta, 'callback', urlCallback, function cbSetUrlCallback(err) {
-        logger.debug('cbSetUrlCallback(err)', [err]);
         if (cb) {
           cb(err);
         }
@@ -756,8 +697,6 @@ var setUrlCallback = function(extTransactionId, urlCallback, cb) {
 //deprecated
 var setExpirationDate = function(extTransactionId, date, cb) {
   'use strict';
-  logger.debug('expirationDate(transactionId, date, cb)',
-      [extTransactionId, date, cb]);
   var dbTr = dbCluster.getTransactionDb(extTransactionId),
       meta = config.dbKeyTransPrefix +
       extTransactionId + ':meta', state = config.dbKeyTransPrefix +
@@ -773,13 +712,10 @@ var setExpirationDate = function(extTransactionId, date, cb) {
     else {
       dbTr.hset(meta, 'expirationDate', date,
           function cbHsetExpirationDate(errE) {
-        logger.debug('cbSetPayload(errE)', [errE]);
         helper.setExpirationDate(dbTr, meta, {expirationDate: date},
             function cbExpirationDateMeta(errM) {
-              logger.debug('cbExpirationDateMeta(errM)', [errM]);
               helper.setExpirationDate(dbTr, state, {expirationDate: date},
                   function cbExpirationDateState(errS) {
-                    logger.debug('cbExpirationDateState(errS)', [errS]);
                     if (cb) {
                       cb(errE || errM || errS);
                     }
@@ -909,6 +845,8 @@ exports.setExpirationDate = setExpirationDate;
  * @param callback
  */
 exports.updateTransMeta = updateTransMeta;
+
+require('./hookLogger.js').init(exports, logger);
 
 //aux
 function manageError(err, callback) {

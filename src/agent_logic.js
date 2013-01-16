@@ -30,22 +30,17 @@ var log = require('PDITCLogger');
 var logger = log.newLogger();
 logger.prefix = path.basename(module.filename, '.js');
 
-
 function postTrans(req, res) {
   'use strict';
-  logger.debug('postTrans (req, res)', [req, res]);
   var errors = validate.errorsTrans(req.body);
-  logger.debug('postTrans - errors', errors);
   var ev = {};
   var prefix = req.prefix;
-
 
   req.connection.setTimeout(config.agent.prov_timeout * 1000);
 
   if (errors.length === 0) {
     dataSrv.pushTransaction(prefix, req.body,
         function onPushedTrans(err, trans_id) {
-      logger.debug('onPushedTrans(err, trans_id)', [err, trans_id]);
       if (err) {
         ev = {
           'transaction': trans_id,
@@ -88,7 +83,6 @@ function postTrans(req, res) {
 
 function postTransDelayed(req, res) {
   'use strict';
-  logger.debug('postTransDelayed(req, res)', [req, res]);
   var delay = Number(req.param('delay'));
   if (delay) {
     setTimeout(function() {
@@ -108,7 +102,6 @@ function postTransDelayed(req, res) {
 
 function putTransMeta(req, res) {
   'use strict';
-  logger.debug('putTransMeta(req, res)', [req, res]);
   var id = req.param('id_trans', null),
       empty = true, filteredReq = {}, errorsP, errorsExpDate, errors = [];
 
@@ -166,7 +159,6 @@ function putTransMeta(req, res) {
 function postQueue(req, res) {
   'use strict';
 
-  logger.debug('postQueue (req, res)', [req, res]);
   var errors = [];//validate.errorsTrans(req.body);
   var ev = {};
   var queue = req.body.queue,
@@ -222,7 +214,6 @@ function postQueue(req, res) {
 
 function transState(req, res) {
   'use strict';
-  logger.debug('transState(req, res)', [req, res]);
   var id = req.param('id_trans', null);
   var state = req.param('state', 'All');
   var summary;
@@ -259,7 +250,6 @@ function transState(req, res) {
 
 function deleteTrans(req, res) {
   'use strict';
-  logger.debug('deleteTrans(req, res)', [req, res]);
   var id = req.param('id_trans', null);
 
   if (id) {
@@ -290,10 +280,7 @@ function deleteTrans(req, res) {
 
 function payloadTrans(req, res) {
   'use strict';
-  logger.debug('payloadTrans(req, res)', [req, res]);
   var id = req.param('id_trans', null);
-  logger.debug('payloadTrans - id req.body', id, req.body);
-
 
   if (! id) {
     logger.info('payloadTrans', [
@@ -333,10 +320,7 @@ function payloadTrans(req, res) {
 
 function callbackTrans(req, res) {
   'use strict';
-  logger.debug('callbackTrans(req, res)', [req, res]);
   var id = req.param('id_trans', null);
-  logger.debug('callbackTrans - id req.body', id, req.body);
-
 
   if (! id) {
     logger.info('callbackTrans', [
@@ -375,14 +359,11 @@ function callbackTrans(req, res) {
 }
 function expirationDate(req, res) {
   'use strict';
-  logger.debug('expirationDate(req, res)', [req, res]);
   var id = req.param('id_trans', null),
       errors;
-  logger.debug('expirationDate - id  req.body', id, req.body);
   if (id) {
     errors = validate.errorsExpirationDate(req.body);
     if (errors.length === 0) {
-      logger.debug('putTransMeta - errors', errors);
       dataSrv.setExpirationDate(id, req.body, function(e) {
         if (e) {
           logger.info('expirationDate', [
@@ -419,12 +400,10 @@ function expirationDate(req, res) {
 }
 function queueSize(req, res) {
   'use strict';
-  logger.debug('queueSize (req, res)', [req, res]);
   var queueId = req.param('id');
   var prefix = req.prefix;
 
   dataSrv.queueSize(prefix, queueId, function onQueueSize(err, length) {
-    logger.debug('onQueueSize(err, length)', [err, length]);
     if (err) {
       logger.info('onQueueSize', [String(err), 500, req.info]);
       res.send({errors: [String(err)]}, 500);
@@ -437,14 +416,12 @@ function queueSize(req, res) {
 
 function getQueue(req, res) {
   'use strict';
-  logger.debug('getQueue (req, res)', [req, res]);
   var queueId = req.param('id');
   var prefix = req.prefix;
 
   req.template = 'queues.jade';
 
   dataSrv.getQueue(prefix, queueId, function onGetQueue(err, hQ, lQ, lastPop) {
-    logger.debug('onGetQueue(err, hQ, lQ, lastPop)', [err, hQ, lQ, lastPop]);
     if (err) {
       logger.info('onGetQueue', [String(err), 500, req.info]);
       res.send({errors: [String(err)]}, 500);
@@ -471,7 +448,6 @@ function getQueue(req, res) {
 
 function popQueue(req, res) {
   'use strict';
-  logger.debug('popQueue(req, res)', [req, res]);
   var queueId = req.param('id');
   var maxMsgs = req.param('max', config.agent.max_messages);
   var tOut = req.param('timeout', config.agent.pop_timeout);
@@ -495,11 +471,8 @@ function popQueue(req, res) {
 
   req.connection.setTimeout((tOut + config.agent.grace_timeout) * 1000);
 
-  logger.debug('Blocking: queueId, maxMsgs, tOut', [queueId, maxMsgs, tOut]);
-
   dataSrv.blockingPop(appPrefix, {id: queueId}, maxMsgs,
       tOut, function onBlockingPop(err, notifList) {
-    logger.debug('onBlockingPop(err, notifList)', [err, notifList]);
     var messageList = [];
     var transactionIdList = [];
     var ev = {};
@@ -544,7 +517,6 @@ function popQueue(req, res) {
 
 function peekQueue(req, res) {
   'use strict';
-  logger.debug('peekQueue(req, res)', [req, res]);
   var queueId = req.param('id');
   var maxMsgs = req.param('max', config.agent.max_messages);
   var appPrefix = req.prefix;
@@ -554,11 +526,8 @@ function peekQueue(req, res) {
     maxMsgs = config.agent.max_messages;
   }
 
-  logger.debug('Peek: queueId, maxMsgs', [queueId, maxMsgs]);
-
   dataSrv.peek(appPrefix, {id: queueId}, maxMsgs,
       function onPeek(err, notifList) {
-    logger.debug('onBlockingPop(err, notifList)', [err, notifList]);
     var messageList = [];
     var ev = {};
     //stablish the timeout depending on blocking time
@@ -585,7 +554,6 @@ function peekQueue(req, res) {
 
 function checkPerm(req, res, cb) {
   'use strict';
-  logger.debug('checkPerm(req, res, cb)', [req, res, cb]);
   var header = req.headers.authorization || '', // get the header
       token = header.split(/\s+/).pop() || '', // and the encoded auth token
       auth = new Buffer(token, 'base64').toString(), // convert from base64
@@ -632,7 +600,6 @@ function checkPerm(req, res, cb) {
 
 function transMeta(req, res) {
   'use strict';
-  logger.debug('transMeta(req, res)', [req, res]);
   var id = req.param('id_trans', null);
   var queues = req.param('queues', null);
   var summary = false;
@@ -711,3 +678,4 @@ exports.transMeta = transMeta;
 exports.putTransMeta = putTransMeta;
 exports.postTransDelayed = postTransDelayed;
 
+require('./hookLogger.js').init(exports, logger);

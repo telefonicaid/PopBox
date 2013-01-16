@@ -33,7 +33,6 @@ var init = function(emitter) {
 
   return function asyncInit(callback) {
     emitter.on('NEWSTATE', function onNewState(data) {
-      logger.debug('onNewState(data)', [data]);
       //Just act on delivered
       if (data.state === 'Delivered') {
         doCallback(data);
@@ -47,15 +46,14 @@ var init = function(emitter) {
 
 function doCallback(data) {
   'use strict';
-  logger.debug('doCallback(data)', [data]);
   if (data.callback) {
     var options = url.parse(data.callback);
     options.headers = {'content-type': 'application/json'};
     options.method = 'POST';
     var cbReq = http.request(options);  //FIRE AND FORGET
     var strData = JSON.stringify(data);
-    cbReq.on('error', function foo(err) {
-      logger.debug('function foo(err)', err);
+    cbReq.on('error', function callbackReqErr(err) {
+      logger.warning('function callbackReqErr(err)', err);
     });
     cbReq.write(strData);
     cbReq.end();
@@ -69,3 +67,5 @@ function doCallback(data) {
  * @return {function(function)} asyncInit funtion ready for async.
  */
 exports.init = init;
+
+require('./hookLogger.js').init(exports, logger);
