@@ -136,7 +136,7 @@ if (cluster.isMaster && numCPUs !== 0) {
     server.use(sendrender.sendRender());
     server.use(pdilogger.pdiLogger());
     server.use(promoteSlave.checkAndPromote());
-    server.get("/", deploy_info.showDeployInfo);
+    server.get('/', deploy_info.showDeployInfo);
     server.del('/trans/:id_trans', logic.deleteTrans);
     //app.get('/trans/:id_trans/state/:state?', logic.transState);
     server.get('/trans/:id_trans', logic.transMeta);
