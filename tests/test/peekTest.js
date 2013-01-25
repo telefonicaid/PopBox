@@ -122,6 +122,7 @@ describe('Peek from High Priority Queue', function() {
 
       utils.makeRequest(options, trans, function(err, response, data) {
 
+        should.not.exist(err);
         data.should.have.property('data');
         ids[completed] = data.data;
         completed++;
