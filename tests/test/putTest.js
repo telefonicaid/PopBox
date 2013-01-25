@@ -31,6 +31,7 @@ describe('#PUT', function() {
       path: '/trans/', method: 'POST', headers: heads};
 
     utils.makeRequest(options, trans1, function(error, response, data) {
+      should.not.exist(error);
       data.should.have.property('data');
       trans = {id: data.data, value: trans1};
       done();
