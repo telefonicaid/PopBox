@@ -53,6 +53,12 @@ exports.slave = false;
 
 /**
  *
+ * @type {Boolean}
+ */
+exports.showDeployInformation = true;
+
+/**
+ *
  * @type {Array} ex. [{host:'localhost'}, {host:'localhost', port:'6789'}]
  */
 //exports.redisServers = [{host:'localhost'}, {host:'localhost', port:'6789'}];

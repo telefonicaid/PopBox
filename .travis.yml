@@ -13,7 +13,7 @@ services:
  - redis-server
 
 install:
- - sudo ./install.sh
+ - ./install.sh
 
 before_script:
  - cd ./utils

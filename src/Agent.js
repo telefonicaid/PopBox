@@ -24,6 +24,7 @@ var config = require('./config.js');
 
 var path = require('path');
 var log = require('PDITCLogger');
+var deploy_info = require('./deploy_info.js');
 
 log.setConfig(config.logger);
 var logger = log.newLogger();
@@ -135,7 +136,7 @@ if (cluster.isMaster && numCPUs !== 0) {
     server.use(sendrender.sendRender());
     server.use(pdilogger.pdiLogger());
     server.use(promoteSlave.checkAndPromote());
-    server.use('/', express.static(__dirname + '/public'));
+    server.get("/", deploy_info.showDeployInfo);
     server.del('/trans/:id_trans', logic.deleteTrans);
     //app.get('/trans/:id_trans/state/:state?', logic.transState);
     server.get('/trans/:id_trans', logic.transMeta);
