@@ -5,14 +5,14 @@ var config = require('./config.js');
 
 var dbTr = redisModule.createClient(config.redisTrans.port,
     config.redisTrans.host);
-dbTr.select(config.selected_db);
+dbTr.select(config.selectedDB);
 
 var dbArray = [];
 for (var i = 0; i < config.redisServers.length; i++) {
   var port = config.redisServers[i].port || redisModule.DEFAULT_PORT;
   var host = config.redisServers[i].host;
   var cli = redisModule.createClient(port, host);
-  cli.select(config.selected_db);
+  cli.select(config.selectedDB);
   dbArray.push(cli);
 }
 
@@ -52,7 +52,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
 
       async.forEach(queues, function(queue, asyncCallback) {
 
-        fullQueueId = config.db_key_queue_prefix +
+        fullQueueId = config.dbKeyQueuePrefix +
             priority + appPrefix + queue.id;
 
         //Choose DB

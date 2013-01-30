@@ -21,7 +21,7 @@
 
 var mongodb = require('mongodb');
 
-var config = require('./config').ev_lsnr;
+var config = require('./config').evLsnr;
 
 var path = require('path');
 var log = require('PDITCLogger');
@@ -32,9 +32,9 @@ logger.prefix = path.basename(module.filename, '.js');
 function init(emitter) {
   'use strict';
   return function(callback) {
-    var db = new mongodb.Db(config.mongo_db,
-        new mongodb.Server(config.mongo_host,
-            config.mongo_port, {auto_reconnect: true}));
+    var db = new mongodb.Db(config.mongoDB,
+        new mongodb.Server(config.mongoHost,
+            config.mongoPort, {auto_reconnect: true}));
     db.open(function(errOpen, db) {
       if (! errOpen) {
         db.collection(config.collection, function(err, collection) {

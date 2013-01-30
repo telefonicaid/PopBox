@@ -30,7 +30,7 @@ logger.prefix = path.basename(module.filename, '.js');
 
 exports.Pool = function Pool(poolIndex) {
   'use strict';
-  var maxElems = config.pool.max_elems || 1000;
+  var maxElems = config.pool.maxElems || 1000;
   var connections = [];
   var currentConnections = 0;
   var index = poolIndex;
@@ -52,7 +52,7 @@ exports.Pool = function Pool(poolIndex) {
       var port = config.redisServers[index].port || redisModule.DEFAULT_PORT;
       con = redisModule.createClient(port,
           config.redisServers[index].host);
-      con.select(config.selected_db);
+      con.select(config.selectedDB);
       con.isOwn = true;
       con.pool = pool; //add pool reference
       currentConnections++;

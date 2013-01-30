@@ -23,7 +23,7 @@
 
 var redisModule = require('redis');
 var config = require('./config.js');
-var poolMod = require('./Pool.js');
+var poolMod = require('./pool.js');
 
 var path = require('path');
 var log = require('PDITCLogger');
@@ -61,7 +61,7 @@ if (config.slave) {
       config.masterTranRedisServer.port);
 }
 
-transactionDbClient.select(config.selected_db); //false pool for pushing
+transactionDbClient.select(config.selectedDB); //false pool for pushing
 var queuesDbArray = [];
 for (var i = 0; i < config.redisServers.length; i++) {
   var port = config.redisServers[i].port || redisModule.DEFAULT_PORT;
@@ -75,7 +75,7 @@ for (var i = 0; i < config.redisServers.length; i++) {
   }
 
   logger.info('Connected to REDIS ', host + ':' + port);
-  cli.select(config.selected_db);
+  cli.select(config.selectedDB);
   cli.isOwn = false;
   queuesDbArray.push(cli);
 }

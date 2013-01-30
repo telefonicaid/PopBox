@@ -1,4 +1,4 @@
-var dbPusher = require('./DBPusher.js');
+var dbPusher = require('./dbPusher.js');
 var config = require('./config.js');
 var genProvision = require('./genProvision.js');
 var async = require('async');
@@ -16,14 +16,14 @@ var testFrameWork = framework.describe(
     config.maxPop.pf.monitors,
     config.maxPop.pf.folder);
 
-var doNtimes_queues = function(startNumPops, provision, callback) {
+var doNtimesQueues = function(startNumPops, provision, callback) {
 
   testFrameWork.test('Payload ' + provision.payload.length +
       ' bytes', function(log, point) {
 
     var numPops = startNumPops;
 
-    var _doNtimes_queues = function() {
+    var _doNtimesQueues = function() {
       async.series([
 
         /**
@@ -135,10 +135,10 @@ var doNtimes_queues = function(startNumPops, provision, callback) {
 
               dbPusher.flushBBDD(function() {
                 //Increase the number of pops until it reaches the maximum number of pops defined in the config file,
-                if (numPops < config.maxPop.max_pops) {
+                if (numPops < config.maxPop.maxPops) {
 
-                  numPops += config.maxPop.queues_inteval;
-                  _doNtimes_queues(callback);
+                  numPops += config.maxPop.queuesInteval;
+                  _doNtimesQueues(callback);
 
                 } else {
                   callback();
@@ -149,7 +149,7 @@ var doNtimes_queues = function(startNumPops, provision, callback) {
     };
 
 
-    _doNtimes_queues();
+    _doNtimesQueues();
   });
 };
 
@@ -163,12 +163,12 @@ var doNtimes = function(numPops, payloadLength) {
 
   var provision = genProvision.genProvision(1, payloadLength);
 
-  doNtimes_queues(numPops, provision, function() {
+  doNtimesQueues(numPops, provision, function() {
 
     //Increase the payload until it reaches the maximum payload size defined in the config file.
-    if (payloadLength < config.maxPop.max_payload) {
+    if (payloadLength < config.maxPop.maxPayload) {
 
-      payloadLength += config.maxPop.payload_length_interval;
+      payloadLength += config.maxPop.payloadLengthInterval;
       doNtimes(numPops, payloadLength);
 
     } else {
@@ -179,4 +179,4 @@ var doNtimes = function(numPops, payloadLength) {
   });
 };
 
-doNtimes(config.maxPop.start_number_pops, config.payload_length);
+doNtimes(config.maxPop.startNumberPops, config.payloadLength);

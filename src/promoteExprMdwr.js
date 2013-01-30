@@ -21,7 +21,7 @@
 
 
 var config = require('./config.js');
-var dbCluster = require('./DBCluster.js');
+var dbCluster = require('./dbCluster.js');
 
 var amISlave = config.slave;
 function checkAndPromote() {

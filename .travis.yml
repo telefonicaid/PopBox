@@ -23,4 +23,4 @@ before_script:
  - openssl rsa -in server.key.org -passin pass:test1234 -out server.key
  - openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
  - cd ..
- - node src/Agent.js &
+ - node src/agent.js &

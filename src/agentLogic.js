@@ -19,9 +19,9 @@
  please contact with::dtc_support@tid.es
  */
 
-var dataSrv = require('./DataSrv');
+var dataSrv = require('./dataSrv');
 var validate = require('./validate');
-var emitter = require('./emitter_module').getEmitter();
+var emitter = require('./emitterModule').getEmitter();
 var config = require('./config.js');
 var crypto = require('crypto');
 
@@ -36,7 +36,7 @@ function postTrans(req, res) {
   var ev = {};
   var prefix = req.prefix;
 
-  req.connection.setTimeout(config.agent.prov_timeout * 1000);
+  req.connection.setTimeout(config.agent.provTimeout * 1000);
 
   if (errors.length === 0) {
     dataSrv.pushTransaction(prefix, req.body,
@@ -449,27 +449,27 @@ function getQueue(req, res) {
 function popQueue(req, res) {
   'use strict';
   var queueId = req.param('id');
-  var maxMsgs = req.param('max', config.agent.max_messages);
-  var tOut = req.param('timeout', config.agent.pop_timeout);
+  var maxMsgs = req.param('max', config.agent.maxMessages);
+  var tOut = req.param('timeout', config.agent.popTimeout);
   var appPrefix = req.prefix;
 
   maxMsgs = parseInt(maxMsgs, 10);
   if (isNaN(maxMsgs)) {
-    maxMsgs = config.agent.max_messages;
+    maxMsgs = config.agent.maxMessages;
   }
 
   tOut = parseInt(tOut, 10);
   if (isNaN(tOut)) {
-    tOut = config.agent.pop_timeout;
+    tOut = config.agent.popTimeout;
   }
   if (tOut === 0) {
     tOut = 1;
   }
-  if (tOut > config.agent.max_pop_timeout) {
-    tOut = config.agent.max_pop_timeout;
+  if (tOut > config.agent.maxPopTimeout) {
+    tOut = config.agent.maxPopTimeout;
   }
 
-  req.connection.setTimeout((tOut + config.agent.grace_timeout) * 1000);
+  req.connection.setTimeout((tOut + config.agent.graceTimeout) * 1000);
 
   dataSrv.blockingPop(appPrefix, {id: queueId}, maxMsgs,
       tOut, function onBlockingPop(err, notifList) {
@@ -518,12 +518,12 @@ function popQueue(req, res) {
 function peekQueue(req, res) {
   'use strict';
   var queueId = req.param('id');
-  var maxMsgs = req.param('max', config.agent.max_messages);
+  var maxMsgs = req.param('max', config.agent.maxMessages);
   var appPrefix = req.prefix;
 
   maxMsgs = parseInt(maxMsgs, 10);
   if (isNaN(maxMsgs)) {
-    maxMsgs = config.agent.max_messages;
+    maxMsgs = config.agent.maxMessages;
   }
 
   dataSrv.peek(appPrefix, {id: queueId}, maxMsgs,

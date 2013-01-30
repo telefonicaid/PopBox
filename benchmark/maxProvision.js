@@ -1,4 +1,4 @@
-var dbPusher = require('./DBPusher.js');
+var dbPusher = require('./dbPusher.js');
 var rest = require('restler');
 var config = require('./config.js');
 var genProvision = require('./genProvision.js');
@@ -13,7 +13,7 @@ var testFrameWork = framework.describe(
     config.maxProvision.pf.monitors,
     config.maxProvision.pf.folder);
 
-var doNtimes_queues = function(numQueues, payload_length, callback) {
+var doNtimesQueues = function(numQueues, payload_length, callback) {
 
   testFrameWork.test('Payload ' + payload_length +
       ' bytes', function(log, point) {
@@ -29,11 +29,11 @@ var doNtimes_queues = function(numQueues, payload_length, callback) {
             host = config.agentsHosts[i].host,
             port = config.agentsHosts[i].port;
 
-        if (numQueues <= config.maxProvision.max_queues) {
+        if (numQueues <= config.maxProvision.maxQueues) {
 
           functionParallel = function(host, port, numQueues) {
             return function functionDoNTimes(cb) {
-              _doNtimes_queues(provision, payload_length,
+              _doNtimesQueues(provision, payload_length,
                   host, port, numQueues, cb);
             }
           };
@@ -41,13 +41,13 @@ var doNtimes_queues = function(numQueues, payload_length, callback) {
           functionArray.push(functionParallel(host, port, numQueues));
         }
 
-        numQueues += config.maxProvision.queues_inteval;
+        numQueues += config.maxProvision.queuesInteval;
       }
 
       async.parallel(functionArray, function() {
 
         dbPusher.flushBBDD(function() {
-          if (numQueues <= config.maxProvision.max_queues) {
+          if (numQueues <= config.maxProvision.maxQueues) {
             process.nextTick(agentsTime);
           } else {
             callback();
@@ -56,7 +56,7 @@ var doNtimes_queues = function(numQueues, payload_length, callback) {
       });
     };
 
-    var _doNtimes_queues = function(provision, payload_length,
+    var _doNtimesQueues = function(provision, payloadLength,
                                     host, port, numQueues, endCallback) {
       'use strict';
 
@@ -73,7 +73,7 @@ var doNtimes_queues = function(numQueues, payload_length, callback) {
 
               qps = Math.round((numQueues / time) * 1000);
               message = numQueues + ' inboxes have been provisioned with ' +
-                  payload_length + ' bytes of payload in ' + time +
+                  payloadLength + ' bytes of payload in ' + time +
                   ' ms with no errors (' + qps + ' qps)';
 
               console.log(message);
@@ -99,12 +99,12 @@ var doNtimes_queues = function(numQueues, payload_length, callback) {
 
 var doNtimes = function(numQueues, payloadLength) {
 
-  doNtimes_queues(numQueues, payloadLength, function() {
+  doNtimesQueues(numQueues, payloadLength, function() {
 
     //Increase the payload of the messages to be provisioned.
-    if (payloadLength < config.maxProvision.max_payload) {
+    if (payloadLength < config.maxProvision.maxPayload) {
 
-      payloadLength += config.maxProvision.payload_length_interval;
+      payloadLength += config.maxProvision.payloadLengthInterval;
       process.nextTick(function() {
         doNtimes(numQueues, payloadLength);
       });
@@ -117,4 +117,4 @@ var doNtimes = function(numQueues, payloadLength) {
   });
 };
 
-doNtimes(config.maxProvision.start_number_provisions, config.payload_length);
+doNtimes(config.maxProvision.startNumberProvisions, config.payloadLength);

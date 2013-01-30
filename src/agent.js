@@ -24,7 +24,7 @@ var config = require('./config.js');
 
 var path = require('path');
 var log = require('PDITCLogger');
-var deploy_info = require('./deploy_info.js');
+var deployInfo = require('./deployInfo.js');
 
 log.setConfig(config.logger);
 var logger = log.newLogger();
@@ -38,8 +38,8 @@ var crypto = require('crypto');
 var dirModule = path.dirname(module.filename);
 
 var prefixer = require('./prefixer');
-var sendrender = require('./sendrender');
-var pdilogger = require('./pdilogger');
+var sendrender = require('./sendRender');
+var pdilogger = require('./pdiLogger');
 
 var promoteSlave = require('./promoteExprMdwr.js');
 
@@ -69,11 +69,11 @@ if (cluster.isMaster && numCPUs !== 0) {
 
   var fs = require('fs');
   var express = require('express');
-  var logic = require('./agent_logic');
+  var logic = require('./agentLogic');
   var async = require('async');
-  var emitter = require('./emitter_module').getEmitter();
-  var evLsnr = require('./ev_lsnr');
-  var cbLsnr = require('./ev_callback_lsnr');
+  var emitter = require('./emitterModule').getEmitter();
+  var evLsnr = require('./evLsnr');
+  var cbLsnr = require('./evCallbackLsnr');
 
   var servers = [];
   var app = express.createServer();
@@ -86,15 +86,15 @@ if (cluster.isMaster && numCPUs !== 0) {
   logger.info('config.enableSecure', config.enableSecure);
   if (config.enableSecure === true || config.enableSecure === 'true' ||
       config.enableSecure === 1) {
-    if (! config.agent.crt_path) {
+    if (! config.agent.crtPath) {
       optionsDir = {
         key: path.resolve(dirModule, '../utils/server.key'),
         cert: path.resolve(dirModule, '../utils/server.crt')
       };
     } else {
       optionsDir = {
-        key: path.resolve(config.agent.crt_path, 'server.key'),
-        cert: path.resolve(config.agent.crt_path, 'server.crt')
+        key: path.resolve(config.agent.crtPath, 'server.key'),
+        cert: path.resolve(config.agent.crtPath, 'server.crt')
       };
     }
 
@@ -131,12 +131,12 @@ if (cluster.isMaster && numCPUs !== 0) {
     }
     server.use(express.query());
     server.use(express.bodyParser());
-    server.use(express.limit(config.agent.max_req_size));
+    server.use(express.limit(config.agent.maxReqSize));
     server.use(prefixer.prefixer(server.prefix));
     server.use(sendrender.sendRender());
     server.use(pdilogger.pdiLogger());
     server.use(promoteSlave.checkAndPromote());
-    server.get('/', deploy_info.showDeployInfo);
+    server.get('/', deployInfo.showDeployInfo);
     server.del('/trans/:id_trans', logic.deleteTrans);
     //app.get('/trans/:id_trans/state/:state?', logic.transState);
     server.get('/trans/:id_trans', logic.transMeta);

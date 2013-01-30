@@ -22,9 +22,9 @@ var showDeployInfo = function (req, res) {
     nodeVersion: process.versions.node,
     v8Version: process.versions.v8,
     nCores: numCPUs,
-    mongoHost: config.ev_lsnr.mongo_host,
-    mongoPort: config.ev_lsnr.mongo_port,
-    mongoDb: config.ev_lsnr.mongo_db,
+    mongoHost: config.evLsnr.mongoHost,
+    mongoPort: config.evLsnr.mongoPort,
+    mongoDb: config.evLsnr.mongoDB,
     queuesRedisHosts: config.redisServers,
     transRedisHost: config.tranRedisServer
   };

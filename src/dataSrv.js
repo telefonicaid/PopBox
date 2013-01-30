@@ -25,11 +25,11 @@
 
 //Require Area
 var config = require('./config.js');
-var dbCluster = require('./DBCluster.js');
-var helper = require('./DataHelper.js');
+var dbCluster = require('./dbCluster.js');
+var helper = require('./dataHelper.js');
 var uuid = require('node-uuid');
 var async = require('async');
-var emitter = require('./emitter_module').getEmitter();
+var emitter = require('./emitterModule').getEmitter();
 var crypto = require('crypto');
 
 var path = require('path');
@@ -192,8 +192,8 @@ var popNotification = function(db, appPrefix, queue,
   'use strict';
   //pop the queu  (LRANGE)
   //hight priority first
-  var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
-      queue.id, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
+  var fullQueueIdH = config.dbKeyQueuePrefix + 'H:' + appPrefix +
+      queue.id, fullQueueIdL = config.dbKeyQueuePrefix + 'L:' + appPrefix +
       queue.id, restElems = 0;
 
   db.lrange(fullQueueIdH, 0, maxElems - 1, function onRangeH(errH, dataH) {
@@ -258,8 +258,8 @@ var blockingPop = function(appPrefix, queue,
                            maxElems, blockingTime, callback) {
   'use strict';
   var queueId = queue.id,
-      fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id,
-      fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id,
+      fullQueueIdH = config.dbKeyQueuePrefix + 'H:' + appPrefix + queue.id,
+      fullQueueIdL = config.dbKeyQueuePrefix + 'L:' + appPrefix + queue.id,
       firstElem = null;
 
   //Set the last PopAction over the queue
@@ -275,7 +275,7 @@ var blockingPop = function(appPrefix, queue,
   });
 
   function blockingPopAux(db) {
-    db.set(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
+    db.set(config.dbKeyQueuePrefix + appPrefix + queueId + ':lastPopDate',
         popDate, function() {
         });
     //Do the blocking part (over the two lists)
@@ -357,8 +357,8 @@ function getPopData(dataH, callback, queue) {
 var peek = function(appPrefix, queue, maxElems, callback) {
   'use strict';
   var queueId = queue.id,
-      fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix + queue.id,
-      fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix + queue.id,
+      fullQueueIdH = config.dbKeyQueuePrefix + 'H:' + appPrefix + queue.id,
+      fullQueueIdL = config.dbKeyQueuePrefix + 'L:' + appPrefix + queue.id,
       restElems = 0;
 
   dbCluster.getOwnDb(queueId, function(err, db) {
@@ -592,8 +592,8 @@ var getTransactionMeta = function(extTransactionId, callback) {
 var queueSize = function(appPrefix, queueId, callback) {
   'use strict';
 
-  var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
-      queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
+  var fullQueueIdH = config.dbKeyQueuePrefix + 'H:' + appPrefix +
+      queueId, fullQueueIdL = config.dbKeyQueuePrefix + 'L:' + appPrefix +
       queueId, db = dbCluster.getDb(queueId);
 
   db.llen(fullQueueIdH, function onHLength(err, hLength) {
@@ -608,15 +608,15 @@ var queueSize = function(appPrefix, queueId, callback) {
 var getQueue = function(appPrefix, queueId, callback) {
   'use strict';
 
-  var maxMessages = config.agent.max_messages;
-  var fullQueueIdH = config.db_key_queue_prefix + 'H:' + appPrefix +
-      queueId, fullQueueIdL = config.db_key_queue_prefix + 'L:' + appPrefix +
+  var maxMessages = config.agent.maxMessages;
+  var fullQueueIdH = config.dbKeyQueuePrefix + 'H:' + appPrefix +
+      queueId, fullQueueIdL = config.dbKeyQueuePrefix + 'L:' + appPrefix +
       queueId, db = dbCluster.getDb(queueId);
 
   db.lrange(fullQueueIdH, 0, maxMessages, function onHRange(err, hQueue) {
     db.lrange(fullQueueIdL, 0, maxMessages, function onLRange(err, lQueue) {
       dbCluster.free(db);
-      db.get(config.db_key_queue_prefix + appPrefix + queueId + ':lastPopDate',
+      db.get(config.dbKeyQueuePrefix + appPrefix + queueId + ':lastPopDate',
           function(err, lastPopDate) {
             if (err) {
               lastPopDate = null;
@@ -730,7 +730,7 @@ var setExpirationDate = function(extTransactionId, date, cb) {
 
 /**
  * @param {string} appPrefix For secure/non secure behaviour.
- * @param {PopBox.Provision} provision MUST be a Valid JSON see Provision.json.
+ * @param {PopBox.Provision} provision MUST be a Valid JSON see provision.json.
  * @param {function(Object, string)} callback takes (err, transactionId).
  */
 exports.pushTransaction = pushTransaction;

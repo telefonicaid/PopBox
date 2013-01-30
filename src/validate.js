@@ -31,7 +31,7 @@ var MAX_TIMESTAMP = config.MAX_TIMESTAMP;
 function errorsTrans(trans) {
   'use strict';
   var errors = [],
-      maxNumQueues = config.agent.max_num_queues,
+      maxNumQueues = config.agent.maxNumQueues,
       errorsExpDate, errorsP;
 
   if (! trans.priority) {
@@ -71,7 +71,7 @@ function errorsTrans(trans) {
 
 function errorsPayload(payload, required) {
   'use strict';
-  var maxPayloadSize = config.agent.max_payload_size,
+  var maxPayloadSize = config.agent.maxPayloadSize,
       errors = [];
   if (required && ! payload) {
     errors.push('undefined payload');

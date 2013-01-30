@@ -1,6 +1,4 @@
-[![Build Status](https://travis-ci.org/telefonicaid/PopBox.png)](https://travis-ci.org/telefonicaid/PopBox)
-
-POPBox
+POPBox [![Build Status](https://travis-ci.org/telefonicaid/PopBox.png)](https://travis-ci.org/telefonicaid/PopBox)
 ===
 ##Simple High-Performance High-Scalability Inbox Notification Service
 ####Do you need really simple queues to distribute your work through a P&C schema?
@@ -16,7 +14,7 @@ Scalability has been taken into account from the very beginning (not dynamic yet
 ### Dependencies:
     Requires node.js 
         npm install package.json to install node modules dependencies
-        node Agent.js to launch a PopBox Agent.        
+        node agent.js to launch a PopBox Agent.
     Requires REDIS
     Optional MongoDB (historic data support)
 #####Edit src/config.js for configuration Options
@@ -54,8 +52,8 @@ The same Redis instance may be used between transactions and queues.
 
 ###Historic support (optional)
 ```
-exports.ev_lsnr.mongo_host = 'localhost';
-exports.ev_lsnr.mongo_port = 27017;
+exports.evLsnr.mongoHost = 'localhost';
+exports.evLsnr.mongoPort = 27017;
 ```
 Optionally you may indicate a MongoDB in order to keep track of historic data.
 
@@ -84,7 +82,7 @@ The certificates are located in /PopBox/utils/ by default, or you can choose you
  *
  * @type {String} absolute path for the certs and keys. Default will be chosen when empty.
  */
-exports.agent.crt_path = "";
+exports.agent.crtPath = "";
 ```
 Epected files:
 ```
@@ -106,7 +104,7 @@ openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
 At this point you should be able to start all the processes: 
 Redis 
 External Systems (Optional)
-Agents (node Agent.js)
+Agents (node agent.js)
 
 ##PopBox HA current approach
 Several PopBox replicas Master-SlaveChain may be deployed. To do so we must specify several properties in the config.js file:
@@ -128,7 +126,7 @@ When slave===true this property must define a one to one relationship between ex
 
 ####Deployment architecture for HA 
 ```
-(Agent->node Agent.js, Ri->Redis server)
+(Agent->node agent.js, Ri->Redis server)
 
 Agent(slave===false) --> {R1,..,Rn}
 

@@ -72,7 +72,7 @@ var exists = function(db, id, callback) {
 var pushParallel = function(db, queue, priority, transaction_id) {
   'use strict';
   return function asyncPushParallel(callback) {
-    var fullQueueId = config.db_key_queue_prefix + priority + queue.id;
+    var fullQueueId = config.dbKeyQueuePrefix + priority + queue.id;
     db.rpush(fullQueueId, transaction_id, function onLpushed(err) {
       if (err) {
         //error pushing

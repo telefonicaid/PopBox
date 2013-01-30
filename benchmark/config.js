@@ -50,12 +50,12 @@ exports.dbKeyTransPrefix = 'PB:T|';
 /**
  * @type {String}
  */
-exports.db_key_queue_prefix = 'PB:Q|';
+exports.dbKeyQueuePrefix = 'PB:Q|';
 
 /**
  * @type {Number}
  */
-exports.payload_length = 1000;
+exports.payloadLength = 1000;
 
 /**
  * @type {Number}
@@ -96,27 +96,27 @@ exports.maxProvision.description = 'Max Provisions';
 /**
  * @type {Number}
  */
-exports.maxProvision.start_number_provisions = 1000;
+exports.maxProvision.startNumberProvisions = 1000;
 
 /**
  * @type {Number}
  */
-exports.maxProvision.max_queues = 20000;
+exports.maxProvision.maxQueues = 20000;
 
 /**
  * @type {Number}
  */
-exports.maxProvision.max_payload = 5000;
+exports.maxProvision.maxPayload = 5000;
 
 /**
  * @type {Number}
  */
-exports.maxProvision.queues_inteval = 1000;
+exports.maxProvision.queuesInteval = 1000;
 
 /**
  * @type {Number}
  */
-exports.maxProvision.payload_length_interval = 1000;
+exports.maxProvision.payloadLengthInterval = 1000;
 
 ///////////
 //MAX POP//
@@ -144,27 +144,27 @@ exports.maxPop.pf.folder = '.';
 /**
  * @type {Number}
  */
-exports.maxPop.start_number_pops = 1000;
+exports.maxPop.startNumberPops = 1000;
 
 /**
  * @type {Number}
  */
-exports.maxPop.max_pops = 20000;
+exports.maxPop.maxPops = 20000;
 
 /**
  * @type {Number}
  */
-exports.maxPop.queues_inteval = 1000;
+exports.maxPop.queuesInteval = 1000;
 
 /**
  * @type {Number}
  */
-exports.maxPop.max_payload = 5000;
+exports.maxPop.maxPayload = 5000;
 
 /**
  * @type {Number}
  */
-exports.maxPop.payload_length_interval = 1000;
+exports.maxPop.payloadLengthInterval = 1000;
 
 ///////////////
 //RANDOM TEST//
@@ -214,9 +214,9 @@ exports.randomTest.maxMessages = 1000;
 ///////////
 //MAX_CON//
 ///////////
-exports.max_con = {};
+exports.maxCon = {};
 
 /**
  * @type {Number}
  */
-exports.max_con.numCon = 20000;
+exports.maxCon.numCon = 20000;

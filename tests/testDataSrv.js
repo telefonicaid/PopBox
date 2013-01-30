@@ -1,4 +1,4 @@
-var dataSrv = require('../src/DataSrv.js');
+var dataSrv = require('../src/dataSrv.js');
 var config = require('../src/config.js');
 var a = require('assert');
 var async = require('../src/node_modules/async');

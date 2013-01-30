@@ -90,13 +90,13 @@ exports.masterTranRedisServer = {};
  *
  * @type {Number}
  */
-exports.selected_db = 0; //0..15 for   0 ->pre-production 1->test
+exports.selectedDB = 0; //0..15 for   0 ->pre-production 1->test
 
 /**
  *
  * @type {String}
  */
-exports.db_key_queue_prefix = 'PB:Q|';
+exports.dbKeyQueuePrefix = 'PB:Q|';
 
 /**
  *
@@ -108,37 +108,37 @@ exports.dbKeyTransPrefix = 'PB:T|';
  *
  * @type {String}
  */
-exports.db_key_blocking_queue_prefix = 'PB:B|';
+exports.dbKeyBlockingQueuePrefix = 'PB:B|';
 
 /**
  *
  * @type {Object}
  */
-exports.ev_lsnr = {};
+exports.evLsnr = {};
 
 /**
  *
  * @type {String}
  */
-exports.ev_lsnr.mongo_host = 'localhost';
+exports.evLsnr.mongoHost = 'localhost';
 
 /**
  *
  * @type {Number}
  */
-exports.ev_lsnr.mongo_port = 27017;
+exports.evLsnr.mongoPort = 27017;
 
 /**
  *
  * @type {String}
  */
-exports.ev_lsnr.mongo_db = 'popbox';
+exports.evLsnr.mongoDB = 'popbox';
 
 /**
  *
  * @type {String}
  */
-exports.ev_lsnr.collection = 'popbox_ev';
+exports.evLsnr.collection = 'popbox_ev';
 
 /**
  *
@@ -150,13 +150,13 @@ exports.agent = {};
  * Maximum size of request
  * @type {Number}
  */
-exports.agent.max_req_size = '1mb';
+exports.agent.maxReqSize = '1mb';
 
 /**
  * Maximum number of queues for transaction
  * @type {Number}
  */
-exports.agent.max_num_queues = 10000;
+exports.agent.maxNumQueues = 10000;
 
 /**
  * Expiration date delay now+defaultExpireDelay seconds
@@ -168,13 +168,13 @@ exports.defaultExpireDelay = 3600;
  * Maximum payload size
  * @type {Number}
  */
-exports.agent.max_payload_size = 1024 * 1024;
+exports.agent.maxPayloadSize = 1024 * 1024;
 
 /**
  *
  * @type {Number}
  */
-exports.agent.max_messages = 1000;
+exports.agent.maxMessages = 1000;
 
 /**
  *
@@ -186,25 +186,25 @@ exports.agent.port = 3001;
  * Provision timeout
  * @type {Number} seconds
  */
-exports.agent.prov_timeout = 3 * 60;
+exports.agent.provTimeout = 3 * 60;
 
 /**
  * Default pop timeout
  * @type {Number} seconds
  */
-exports.agent.pop_timeout = 5;
+exports.agent.popTimeout = 5;
 
 /**
  * Maximum pop timeout
  * @type {Number} seconds
  */
-exports.agent.max_pop_timeout = 5 * 60;
+exports.agent.maxPopTimeout = 5 * 60;
 
 /**
  * Additional time for the HTTP request (added to pop timeout)
  * @type {Number}  seconds
  */
-exports.agent.grace_timeout = 60;
+exports.agent.graceTimeout = 60;
 
 /**
  *
@@ -235,44 +235,44 @@ exports.enableSecure = false;
  *
  * @type {String} absolute path for the certs and keys. Default will be chosen when empty.
  */
-exports.agent.crt_path = '';
+exports.agent.crtPath = '';
 
 exports.pool = {};
 /**
  *
  * @type {Number}
  */
-exports.pool.max_elems = 10000;
+exports.pool.maxElems = 10000;
 
 
 /* generic event listener */
-var gevlsnr_mongo = 'localhost';
+var gevLsnrMongo = 'localhost';
 if (process.env.POPBOX_GEN_MONGO) {
-  gevlsnr_mongo = process.env.POPBOX_GEN_MONGO;
+  gevLsnrMongo = process.env.POPBOX_GEN_MONGO;
 }
-var gevlsnr = {};
-gevlsnr.name = 'gevlsnr-state';
-gevlsnr.event = 'NEWSTATE';
-gevlsnr.mongo_host = gevlsnr_mongo;
-gevlsnr.mongo_port = 27017;
-gevlsnr.mongo_db = 'popbox';
-gevlsnr.collection = 'PopBoxState';
-gevlsnr.filter = null;
-gevlsnr.take = {transaction: 'transaction', state: 'state'};
+var gevLsnr = {};
+gevLsnr.name = 'gevlsnr-state';
+gevLsnr.event = 'NEWSTATE';
+gevLsnr.mongoHost = gevLsnrMongo;
+gevLsnr.mongoPort = 27017;
+gevLsnr.mongoDB = 'popbox';
+gevLsnr.collection = 'PopBoxState';
+gevLsnr.filter = null;
+gevLsnr.take = {transaction: 'transaction', state: 'state'};
 
-var gevlsnr_action = {};
-gevlsnr_action.name = 'gevlsnr-action';
-gevlsnr_action.event = 'ACTION';
-gevlsnr_action.mongo_host = gevlsnr_mongo;
-gevlsnr_action.mongo_port = 27017;
-gevlsnr_action.mongo_db = 'popbox';
-gevlsnr_action.collection = 'PopBoxAction';
-gevlsnr_action.filter = null;
-gevlsnr_action.take = {transaction: 'transaction', action: 'action'};
+var gevLsnrAction = {};
+gevLsnrAction.name = 'gevlsnr-action';
+gevLsnrAction.event = 'ACTION';
+gevLsnrAction.mongoHost = gevLsnrMongo;
+gevLsnrAction.mongoPort = 27017;
+gevLsnrAction.mongoDB = 'popbox';
+gevLsnrAction.collection = 'PopBoxAction';
+gevLsnrAction.filter = null;
+gevLsnrAction.take = {transaction: 'transaction', action: 'action'};
 exports.evModules = [
-  { module: './ev_callback_lsnr'},
-  //{ module: './gevlsnr', config: gevlsnr},
-  //{ module: './gevlsnr', config: gevlsnr_action}
+  { module: './evCallbackLsnr'},
+  { module: './gevLsnr', config: gevLsnr},
+  { module: './gevLsnr', config: gevLsnrAction}
 ];
 
 
