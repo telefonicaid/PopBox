@@ -49,10 +49,14 @@ describe('#PUT', function() {
 
   it('should change payload,callback and expirationDate', function(done) {
 
+    var payload = 'MESSAGE1';
+    var callbackDir = 'www.fi.upm.es';
+    var expDate = 1447483646;
+
     var datos_PUT = {
-      'payload': 'MESSAGE 1',
-      'callback': 'www.fi.upm.es',
-      'expirationDate': 1447483646
+      'payload':  payload,
+      'callback': callbackDir,
+      'expirationDate': expDate
     };
 
     async.series([
@@ -84,9 +88,9 @@ describe('#PUT', function() {
           data.should.have.property('callback');
           data.should.have.property('expirationDate');
 
-          data.payload.should.be.equal('MESSAGE 1');
-          data.callback.should.be.equal('www.fi.upm.es');
-          data.expirationDate.should.be.equal('1447483646');
+          data.payload.should.be.equal(payload);
+          data.callback.should.be.equal(callbackDir);
+          data.expirationDate.should.be.equal(expDate.toString());
 
           callback();
         });
@@ -100,10 +104,14 @@ describe('#PUT', function() {
 
   it('should not change priority', function(done) {
 
+    var payload = 'MESSAGE2';
+    var priority = 'L';
+    var expDate = 1447483646;
+
     var datos_PUT = {
-      'payload': 'MESSAGE 2',
-      'priority': 'L',
-      'expirationDate': 1447483646
+      'payload':  payload,
+      'priority': priority,
+      'expirationDate': expDate
     };
 
     async.series([
@@ -136,9 +144,9 @@ describe('#PUT', function() {
           data.should.have.property('priority');
           data.should.have.property('expirationDate');
 
-          data.payload.should.be.equal('MESSAGE 2');
-          data.priority.should.not.be.equal('L');
-          data.expirationDate.should.be.equal('1447483646');
+          data.payload.should.be.equal(payload);
+          data.priority.should.not.be.equal(priority);
+          data.expirationDate.should.be.equal(expDate.toString());
 
           callback();
         });

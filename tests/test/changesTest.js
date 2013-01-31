@@ -92,6 +92,7 @@ describe('Changes: ', function() {
         done();
       });
     });
+
     after(function(done) {
       this.timeout(8000);
       var completed = 0;
@@ -188,8 +189,8 @@ describe('Changes: ', function() {
         response.statusCode.should.be.equal(200);
 
         data.should.have.property('expirationDate');
-        data.expirationDate.should.not.be.equal('1234567891111');
-
+        //data.expirationDate.should.not.be.equal('1234567891111');
+        data.expirationDate.should.be.equal(trans.value.expirationDate.toString());
         done();
       });
     });

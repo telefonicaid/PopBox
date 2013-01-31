@@ -110,9 +110,9 @@ describe('Provision', function() {
         data.should.have.property('callback');
         data.should.have.property('priority');
 
-        trans.value.payload.should.be.equal(data.payload);
-        trans.value.callback.should.be.equal(data.callback);
-        trans.value.priority.should.be.equal(data.priority);
+        data.payload.should.be.equal(trans.value.payload);
+        data.callback.should.be.equal(trans.value.callback);
+        data.priority.should.be.equal(trans.value.priority);
 
         done();
       });

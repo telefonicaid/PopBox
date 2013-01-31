@@ -75,6 +75,8 @@ describe('Bugs', function() {
 
   it('should not modify the expirationDate (out of range)', function(done) {
 
+    var expirationDate = Math.round(new Date().getTime() / 1000 + 60);
+
     var datos_PUT = {
       'expirationDate': 11111111111111
     };
@@ -88,7 +90,7 @@ describe('Bugs', function() {
         { 'id': 'q1' },
         { 'id': 'q2' }
       ],
-      'expirationDate': Math.round(new Date().getTime() / 1000 + 60)
+      'expirationDate': expirationDate
     };
 
     var hash_code;
@@ -128,7 +130,7 @@ describe('Bugs', function() {
         utils.makeRequest(options, null, function(err, response, data) {
           should.not.exist(err);
           response.statusCode.should.be.equal(200);
-          data.expirationDate.should.not.be.equal(1111111111111);
+          data.expirationDate.should.be.equal(expirationDate.toString());
           callback();
         });
       }
