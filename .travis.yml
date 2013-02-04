@@ -13,7 +13,7 @@ services:
  - redis-server
 
 install:
- - ./install.sh
+ - npm install
 
 before_script:
  - cd ./utils
