@@ -1,0 +1,34 @@
+h1 Welcome to PopBox
+p
+h2 Simple High-Performance High-Scalability Inbox Notification Service
+if show
+    p Node version: #{nodeVersion}
+    p V8 Version: #{v8Version}
+    p Number of cores: #{nCores}
+    p
+    p Redis queues hosts:
+        div
+            table
+                thead
+                    tr
+                        th Host
+                        th Port
+                        th Up
+                        th Errors
+                        th Info
+                tbody
+                    each host ,i in queuesRedisHosts
+                        tr(class=(i % 2 == 0) ? 'odd' : 'even')
+                            th #{host.host}
+                            th #{host.port}
+                            th #{host.up}
+                            if host.error
+                                th #{host.error}
+                                th
+                            else
+                                th
+                                th #{host.info}
+    p
+    p Redis transaction host: #{transRedisHost.host}:#{transRedisHost.port}
+    p Mongo host: #{mongoHost}:#{mongoPort}
+    p Mongo database: #{mongoDb}

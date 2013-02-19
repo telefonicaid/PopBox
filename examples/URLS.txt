@@ -211,4 +211,4 @@ Connection: keep-alive
 ------------------------------------------------
 ------------------------------------------------
 
-curl -v --header "Content-type: application/json" -d @Provision.json http://localhost:3001/trans
+curl -v --header "Content-type: application/json" -d @provision.json http://localhost:3001/trans

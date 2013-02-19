@@ -19,12 +19,10 @@
  please contact with::dtc_support@tid.es
  */
 
-function prefixer(prefix) {
-  'use strict';
-  return function(req, res, next) {
-    req.prefix = prefix;
-    next();
-  };
-}
+var PopBox = PopBox || {};
 
-exports.prefixer = prefixer;
+PopBox.Queue = function() {
+};
+
+PopBox.Queue.prototype = {'id': 'queue_id'};
+

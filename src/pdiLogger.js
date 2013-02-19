@@ -19,12 +19,27 @@
  please contact with::dtc_support@tid.es
  */
 
-function prefixer(prefix) {
+
+var config = require('./config.js');
+var path = require('path');
+var log = require('PDITCLogger');
+
+log.setConfig(config.logger);
+var logger = log.newLogger();
+logger.prefix = path.basename(module.filename, '.js');
+
+function pdiLogger() {
   'use strict';
   return function(req, res, next) {
-    req.prefix = prefix;
+    //console.dir(req);
+    req.info = {
+      ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+      method: req.method,
+      originalUrl: req.originalUrl,
+      httpVersion: req.httpVersion};
+
     next();
   };
 }
 
-exports.prefixer = prefixer;
+exports.pdiLogger = pdiLogger;

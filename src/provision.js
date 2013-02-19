@@ -19,12 +19,22 @@
  please contact with::dtc_support@tid.es
  */
 
-function prefixer(prefix) {
-  'use strict';
-  return function(req, res, next) {
-    req.prefix = prefix;
-    next();
-  };
-}
+var PopBox = PopBox || {};
 
-exports.prefixer = prefixer;
+PopBox.Provision = function() {
+};
+PopBox.Provision.prototype = {
+  'payload': '{\"spanish\": \"hola\", \"english\":' +
+      ' \"hello\", \"to\":\"Mr Lopez\"}',
+  'priority': 'H',
+  'callback': 'http://fool.bar',
+  'queue': [
+    {
+      'id': 'Ax'
+    },
+    {
+      'id': 'Bx'
+    }
+  ],
+  'expirationDelay': 360
+};

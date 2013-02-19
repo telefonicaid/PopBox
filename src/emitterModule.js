@@ -19,12 +19,19 @@
  please contact with::dtc_support@tid.es
  */
 
-function prefixer(prefix) {
-  'use strict';
-  return function(req, res, next) {
-    req.prefix = prefix;
-    next();
-  };
-}
+var events = require('events');
 
-exports.prefixer = prefixer;
+var eventEmitter = new events.EventEmitter();
+
+
+function getEmitter() {
+  'use strict';
+
+  return eventEmitter;
+}
+//public area
+/**
+ *
+ * @return {EventEmitter} returns a ''singleton instance'' of EventEmitter.
+ */
+exports.getEmitter = getEmitter;

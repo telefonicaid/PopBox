@@ -19,12 +19,31 @@
  please contact with::dtc_support@tid.es
  */
 
-function prefixer(prefix) {
+function sendRender() {
   'use strict';
   return function(req, res, next) {
-    req.prefix = prefix;
+    res.trueSend = res.send;
+    res.send = function(body, headers, status) {
+      if (typeof body !== 'object') {
+        res.trueSend(body, headers, status);
+      }
+      else {
+        if (req.template && req.accepts('text/html')) {
+          //args.template.layout = false;
+          res.render(req.template, body, function(err, text) {
+            if (err) {
+              console.log(err);
+            }
+            res.trueSend(text, headers, status);
+          });
+        }
+        else {
+          res.trueSend(body, headers, status);
+        }
+      }
+    };
     next();
   };
 }
 
-exports.prefixer = prefixer;
+exports.sendRender = sendRender;

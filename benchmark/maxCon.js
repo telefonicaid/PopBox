@@ -1,31 +1,33 @@
 var rest = require('restler');
 var config = require('./config.js');
 var http = require('http');
-http.globalAgent.maxSockets = config.max_con.numCon;
+http.globalAgent.maxSockets = config.maxCon.numCon;
 
-var numCon = config.max_con.numCon;
+var numCon = config.maxCon.numCon;
 var requestCompleted = 0;
 var ok = 0;
 
-var pop = function () {
-    rest.post(config.protocol + '://' + 'localhost' + ':' + '3001' + '/queue/qx/pop?timeout=120').
-        on('complete', function(result, response){
+var pop = function() {
+  rest.post(config.protocol + '://' + 'localhost' + ':' +
+      '3001' + '/queue/qx/pop?timeout=120').
+      on('complete', function(result, response) {
 
-            requestCompleted++;
+        requestCompleted++;
 
-            if (result.ok == true) {
-                ok++;
-            }
+        if (result.ok == true) {
+          ok++;
+        }
 
-            if (numCon == requestCompleted) {
-                console.log('The system can handle ' + ok + ' simultaneous connections.');
-            }
-        });
+        if (numCon == requestCompleted) {
+          console.log('The system can handle ' +
+              ok + ' simultaneous connections.');
+        }
+      });
 
-}
+};
 
-for(var i = 0; i < numCon; i++){
-    setTimeout(function(){
-        pop();
-    }, i*2);
+for (var i = 0; i < numCon; i++) {
+  setTimeout(function() {
+    pop();
+  }, i * 2);
 }

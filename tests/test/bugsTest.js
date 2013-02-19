@@ -1,168 +1,238 @@
 var should = require('should');
-var rest = require('restler');
 var async = require('async');
 var config = require('./config.js');
-var redis = require("redis"),rc = redis.createClient(6379,'localhost');
-
-var host = config.hostname;
-var port = config.port;
-var protocol = config.protocol;
+var redis = require('redis'),
+    rc = redis.createClient(6379, 'localhost');
+var utils = require('./utils.js');
 
 var trans, trans1 = {};
 
+var options = {};
+options.host = config.hostname;
+options.hostname = config.hostname;
+options.port = config.port;
+
+options.headers = {};
+options.headers['content-type'] = 'application/json';
+options.headers['accept'] = 'application/json';
+
 describe('Bugs', function() {
 
-    after(function (done) {
-        this.timeout(8000);
-        rc.flushall();
-        rc.end();
-        done();
+  after(function(done) {
+    this.timeout(8000);
+
+    rc.flushall(function(res) {
+      rc.end();
+      done();
     });
-    beforeEach(function (done) {
-        this.timeout(8000);
-        rc.flushall();
-        done();
+  });
+
+  beforeEach(function(done) {
+    this.timeout(8000);
+
+    rc.flushall(function(res) {
+      done();
     });
-        it('should return empty data', function(done) {
+  });
 
-            var datos_PUT = {
-                'priority': 'L'
-            };
+  it('should return empty data', function(done) {
 
-            async.series([
-                function(callback) {
-                    rest.put(protocol + '://' + host + ':' + port + '/trans/' + 'false',
-                        {headers: {'Content-Type': 'application/json',
-                            'Accept': 'application/json'},
-                            data: JSON.stringify(datos_PUT)})
-                        .on('complete', function(data, response) {
-                            //console.log(data.data+'\n')
-                            response.statusCode.should.be.equal(200);
-                            data.data.should.be.equal('empty data');
-                            callback();
-                        });
-                },
+    var datos_PUT = {
+      'priority': 'L'
+    };
 
-                function(callback) {
-                    rest.get(protocol + '://' + host + ':' + port + '/trans/' + 'false',
-                        {headers: {'Accept': 'application/json'}}).on('complete',
-                        function(data, response) {
-                            response.statusCode.should.be.equal(200);
-                            true.should.be.equal(data.data == null);
-                            callback();
-                        });
-                }
-            ],
-                function() {
-                    done();
-                });
+    async.series([
+      function(callback) {
+        options.method = 'PUT';
+        options.path = '/trans/fake';
 
+        utils.makeRequest(options, datos_PUT, function(err, response, data) {
+          should.not.exist(err);
+          response.statusCode.should.be.equal(200);
+          data.data.should.be.equal('empty data');
+          callback();
+        });
+      },
+
+      function(callback) {
+        options.method = 'GET';
+        options.path = '/trans/fake';
+
+        utils.makeRequest(options, null, function(err, response, data) {
+          should.not.exist(err);
+          response.statusCode.should.be.equal(200);
+          should.not.exist(data.data);
+          callback();
+        });
+      }
+    ],
+
+        function() {
+          done();
         });
 
-        it('should not modify the expirationDate (out of range)', function(done) {
+  });
 
-            var datos_PUT = {
-                'expirationDate': 11111111111111
-            };
+  it('should not modify the expirationDate (out of range)', function(done) {
 
-            var datos_POST = {
-                'payload': '{\"spanish\": \"prueba1\", \"english\": ' +
-                    '\"test1\", \"to\": \"Mr Lopez\"}',
-                'priority': 'H',
-                'callback': protocol + '://foo.bar',
-                'queue': [
-                    { 'id': 'q1' },
-                    { 'id': 'q2' }
-                ],
-                'expirationDate': Math.round(new Date().getTime() / 1000 + 60)
-            };
-            var hash_code;
-            async.series([
-                function(callback) {
-                    rest.post(protocol + '://' + host + ':' + port + '/trans/',
-                        {headers: {'Content-Type': 'application/json',
-                            'Accept': 'application/json'},
-                            data: JSON.stringify(datos_POST)})
-                        .on('complete', function(data, response) {
-                            response.statusCode.should.be.equal(200);
-                            hash_code = data.data;
-                            // console.log(hash_code);
-                            callback();
-                        });
-                },
-                function(callback) {
-                    rest.put(protocol + '://' + host + ':' + port + '/trans/' + hash_code,
-                        {headers: {'Content-Type': 'application/json',
-                            'Accept': 'application/json'},
-                            data: JSON.stringify(datos_PUT)})
-                        .on('complete', function(data, response) {
-                            response.statusCode.should.be.equal(400);
-                            data.errors.pop().should.be.equal('expirationDate out of range');
-                            callback();
-                        });
-                },
+    var expirationDate = Math.round(new Date().getTime() / 1000 + 60);
 
-                function(callback) {
-                    rest.get(protocol + '://' + host + ':' + port + '/trans/' + hash_code,
-                        {headers: {'Accept': 'application/json'}}).on('complete',
-                        function(data, response) {
-                            response.statusCode.should.be.equal(200);
-                            data.expirationDate.should.not.be.equal(1111111111111);
-                            callback();
-                        });
-                }
-            ],
-                function() {
-                    done();
-                });
+    var datos_PUT = {
+      'expirationDate': 11111111111111
+    };
 
+    var datos_POST = {
+      'payload': '{\"spanish\": \"prueba1\", \"english\": ' +
+          '\"test1\", \"to\": \"Mr Lopez\"}',
+      'priority': 'H',
+      'callback': 'http://foo.bar',
+      'queue': [
+        { 'id': 'q1' },
+        { 'id': 'q2' }
+      ],
+      'expirationDate': expirationDate
+    };
+
+    var hash_code;
+
+    async.series([
+      function(callback) {
+        options.method = 'POST';
+        options.path = '/trans';
+
+        utils.makeRequest(options, datos_POST, function(err, response, data) {
+          should.not.exist(err);
+          should.exist(data.data);
+          response.statusCode.should.be.equal(200);
+          hash_code = data.data;
+          callback();
+        });
+      },
+
+      function(callback) {
+        options.method = 'PUT';
+        options.path = '/trans/' + hash_code;
+
+        utils.makeRequest(options, datos_PUT, function(err, response, data) {
+          should.not.exist(err);
+          should.exist(data.errors);
+
+          response.statusCode.should.be.equal(400);
+          data.errors.should.include('expirationDate out of range');
+          callback();
+        });
+      },
+
+      function(callback) {
+        options.method = 'GET';
+        options.path = '/trans/' + hash_code;
+
+        utils.makeRequest(options, null, function(err, response, data) {
+          should.not.exist(err);
+          response.statusCode.should.be.equal(200);
+          data.expirationDate.should.be.equal(expirationDate.toString());
+          callback();
+        });
+      }
+    ],
+
+        function() {
+          done();
         });
 
-        it('should return errors (does not exist [id])', function(done) {
-            async.series([
-                function(callback) {
-                    rest.post(protocol + '://' + host + ':' + port + '/trans/' + 'false/' + 'expirationDate', {headers: {'Content-Type': 'application/json',
-                        'Accept': 'application/json'},
-                        data: 2147483645})
-                        .on('complete', function(data, response) {
-                            //response.statusCode.should.be.equal(400);
-                            data.errors.pop().should.be.equal('false does not exist');
-                            callback();
-                        });
-                },
-                function(callback) {
-                    rest.get(protocol + '://' + host + ':' + port + '/trans/' + 'false',
-                        {headers: {'Accept': 'application/json'}}).on('complete',
-                        function(data, response) {
-                            response.statusCode.should.be.equal(200);
-                            true.should.be.equal(data.data == null);
-                            callback();
-                        });
-                },
-                function(callback) {
-                    rest.post(protocol + '://' + host + ':' + port + '/trans/' + 'false/' + 'payload', {headers: {'Content-Type': 'application/json',
-                        'Accept': 'application/json'},
-                        data: '\"Hola\"'})
-                        .on('complete', function(data, response) {
-                            response.statusCode.should.be.equal(400);
-                            data.errors.pop().should.be.equal('false does not exist');
-                            callback();
-                        });
-                },
-                function(callback) {
-                    rest.get(protocol + '://' + host + ':' + port + '/trans/' + 'false',
-                        {headers: {'Accept': 'application/json'}}).on('complete',
-                        function(data, response) {
-                            response.statusCode.should.be.equal(200);
-                            true.should.be.equal(data.data == null);
-                            callback();
-                        });
-                }
+  });
 
-            ],
-                function() {
-                    done();
-                });
+  it('should return errors (does not exist [id])', function(done) {
 
+    async.series([
+
+      function(callback) {
+        options.method = 'POST';
+        options.path = '/trans/false/expirationDate';
+
+        utils.makeRequest(options, 2147483645, function(err, response, data) {
+          should.not.exist(err);
+          response.statusCode.should.be.equal(400);
+          data.errors.pop().should.be.equal('false does not exist');
+          callback();
         });
+      },
+
+      function(callback) {
+        options.method = 'GET';
+        options.path = '/trans/false';
+
+        utils.makeRequest(options, null, function(err, response, data) {
+          should.not.exist(err);
+          response.statusCode.should.be.equal(200);
+          should.not.exist(data.data);
+          callback();
+        });
+      },
+
+      function(callback) {
+        options.method = 'POST';
+        options.path = '/trans/false/payload';
+
+        utils.makeRequest(options, 'hola', function(err, response, data) {
+          should.not.exist(err);
+          response.statusCode.should.be.equal(400);
+          data.errors.pop().should.be.equal('false does not exist');
+          callback();
+        });
+      },
+
+      function(callback) {
+        options.method = 'GET';
+        options.path = '/trans/false';
+
+        utils.makeRequest(options, null, function(err, response, data) {
+          should.not.exist(err);
+          response.statusCode.should.be.equal(200);
+          should.not.exist(data.data);
+          callback();
+        });
+      }
+
+    ],
+
+        function() {
+          done();
+        });
+
+  });
+
+  it('Invalid Content-Type', function(done) {
+
+    var trans = {
+      'payload': '{\"spanish\": \"hola\", \"english\": ' +
+          '\"hello\", \"to\": \"Mr Lopez\"}',
+      'priority': 'H',
+      'callback': 'http' + '://foo.bar',
+      'queue': [
+        { 'id': 'q1' },
+        { 'id': 'q2' }
+      ],
+      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
+    };
+
+    var heads = {};
+    var options = { host: config.hostname, port: config.port,
+      path: '/trans/', method: 'POST', headers: heads};
+    var transParsed = JSON.stringify(trans);
+
+    utils.makeRequest(options, transParsed, function(error, response, data) {
+
+      response.statusCode.should.be.equal(400);
+      should.not.exist(error);
+
+
+      data.should.have.property('errors');
+      data.errors[0].should.be.equal('invalid content-type header');
+
+      done();
+
+    });
+
+  });
 });
