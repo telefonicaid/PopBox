@@ -32,9 +32,16 @@ logger.prefix = path.basename(module.filename, '.js');
 
 function postTrans(req, res) {
   'use strict';
-  var errors = validate.errorsTrans(req.body);
+
+  var errors = [];
   var ev = {};
   var prefix = req.prefix;
+
+  if (!req.headers['content-type'] || req.headers['content-type'] !== 'application/json') {
+    errors.push('invalid content-type header');
+  } else {
+    errors = validate.errorsTrans(req.body);
+  }
 
   req.connection.setTimeout(config.agent.provTimeout * 1000);
 

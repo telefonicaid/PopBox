@@ -201,4 +201,38 @@ describe('Bugs', function() {
         });
 
   });
+
+  it('Invalid Content-Type', function(done) {
+
+    var trans = {
+      'payload': '{\"spanish\": \"hola\", \"english\": ' +
+          '\"hello\", \"to\": \"Mr Lopez\"}',
+      'priority': 'H',
+      'callback': 'http' + '://foo.bar',
+      'queue': [
+        { 'id': 'q1' },
+        { 'id': 'q2' }
+      ],
+      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
+    };
+
+    var heads = {};
+    var options = { host: config.hostname, port: config.port,
+      path: '/trans/', method: 'POST', headers: heads};
+    var transParsed = JSON.stringify(trans);
+
+    utils.makeRequest(options, transParsed, function(error, response, data) {
+
+      response.statusCode.should.be.equal(400);
+      should.not.exist(error);
+
+
+      data.should.have.property('errors');
+      data.errors[0].should.be.equal('invalid content-type header');
+
+      done();
+
+    });
+
+  });
 });

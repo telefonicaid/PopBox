@@ -48,7 +48,7 @@ function errorsTrans(trans) {
     errors.push('invalid queue type');
   }
   else if (trans.queue.length > maxNumQueues) {
-    errors.push('too many queues: maximum ' + '' + maxNumQueues + ')');
+    errors.push('too many queues: maximum ' + '' + maxNumQueues);
   }
   else {
     if (! trans.queue.every(function(value) {
