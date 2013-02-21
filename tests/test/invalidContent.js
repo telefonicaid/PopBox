@@ -126,5 +126,78 @@ describe('Invalid Data in JSON', function() {
 
     executeTest(trans, 'too many queues: maximum 10000', done);
   });
+
+  it('Undefined Payload', function(done) {
+
+    var trans = {
+      'callback': 'http' + '://foo.bar',
+      'priority': 'H',
+      'queue': [
+        { 'id': 'q1' },
+        { 'id': 'q2' }
+      ],
+      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
+    };
+
+    executeTest(trans, 'undefined payload', done);
+  });
+
+  it('Undefined Payload', function(done) {
+
+    var payload = '';
+
+    while(payload.length < 1024 * 1024 + 5) {
+      payload += 'a';
+    }
+
+    var trans = {
+      'payload': payload,
+      'callback': 'http' + '://foo.bar',
+      'priority': 'H',
+      'queue': [
+        { 'id': 'q1' },
+        { 'id': 'q2' }
+      ],
+      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
+    };
+
+    executeTest(trans, 'payload greater than 1048576', done);
+  });
+
+  it('Invalid Expiration Date (it isn\'t a number', function(done) {
+
+    var trans = {
+      'payload': '{\"spanish\": \"hola\", \"english\": ' +
+          '\"hello\", \"to\": \"Mr Lopez\"}',
+      'callback': 'http' + '://foo.bar',
+      'priority': 'H',
+      'queue': [
+        { 'id': 'q1' },
+        { 'id': 'q2' }
+      ],
+      'expirationDate': 'telefonica digital'
+    };
+
+    executeTest(trans, 'expirationDate is not a number', done);
+  });
+
+
+
+  it('Invalid Expiration Date (it isn\'t a number', function(done) {
+
+    var trans = {
+      'payload': '{\"spanish\": \"hola\", \"english\": ' +
+          '\"hello\", \"to\": \"Mr Lopez\"}',
+      'callback': 'http' + '://foo.bar',
+      'priority': 'H',
+      'queue': [
+        { 'id': 'q1' },
+        { 'id': 'q2' }
+      ],
+      'expirationDate': 2147483647 + 5000
+    };
+
+    executeTest(trans, 'expirationDate out of range', done);
+  });
 });
 
