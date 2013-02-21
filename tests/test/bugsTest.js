@@ -147,10 +147,10 @@ describe('Bugs', function() {
     async.series([
 
       function(callback) {
-        options.method = 'POST';
-        options.path = '/trans/false/expirationDate';
+        options.method = 'PUT';
+        options.path = '/trans/false';
 
-        utils.makeRequest(options, 2147483645, function(err, response, data) {
+        utils.makeRequest(options, {expirationDate: 2147483645}, function(err, response, data) {
           should.not.exist(err);
           response.statusCode.should.be.equal(400);
           data.errors.pop().should.be.equal('false does not exist');
@@ -171,10 +171,10 @@ describe('Bugs', function() {
       },
 
       function(callback) {
-        options.method = 'POST';
-        options.path = '/trans/false/payload';
+        options.method = 'PUT';
+        options.path = '/trans/false';
 
-        utils.makeRequest(options, 'hola', function(err, response, data) {
+        utils.makeRequest(options, {payload: 'hola'}, function(err, response, data) {
           should.not.exist(err);
           response.statusCode.should.be.equal(400);
           data.errors.pop().should.be.equal('false does not exist');
@@ -202,7 +202,7 @@ describe('Bugs', function() {
 
   });
 
-  it('Invalid Content-Type', function(done) {
+  it('Invalid Content-Type creating a transaction', function(done) {
 
     var trans = {
       'payload': '{\"spanish\": \"hola\", \"english\": ' +
@@ -232,6 +232,59 @@ describe('Bugs', function() {
 
       done();
 
+    });
+
+  });
+
+  it('Invalid Content-Type modifying a transaction', function(done) {
+
+    //Create the transaction
+    var trans = {
+      'payload': 'Test',
+      'priority': 'H',
+      'callback': 'http://telefonica.com',
+      'queue': [
+        { 'id': 'q1' },
+        { 'id': 'q2' }
+      ],
+      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
+    };
+
+    var heads = {};
+    heads['content-type'] = 'application/json';
+    var options = { host: config.hostname, port: config.port,
+      path: '/trans/', method: 'POST', headers: heads};
+
+    utils.makeRequest(options, trans, function(error, response, data) {
+
+      response.statusCode.should.be.equal(200);
+      should.not.exist(error);
+
+      data.should.have.property('data');
+      var id = data.data;
+
+      var contentModified = {
+        'payload': 'hello',
+        'callback': 'http://telefonica.com'
+      };
+
+      var heads = {};
+      var options = { host: config.hostname, port: config.port,
+        path: '/trans/' + id, method: 'PUT', headers: heads};
+      var contentModifiedParsed = JSON.stringify(contentModified);
+
+      utils.makeRequest(options, contentModifiedParsed, function(error, response, data) {
+
+        response.statusCode.should.be.equal(400);
+        should.not.exist(error);
+
+
+        data.should.have.property('errors');
+        data.errors[0].should.be.equal('invalid content-type header');
+
+        done();
+
+      });
     });
 
   });

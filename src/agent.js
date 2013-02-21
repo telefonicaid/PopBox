@@ -141,9 +141,6 @@ if (cluster.isMaster && numCPUs !== 0) {
     //app.get('/trans/:id_trans/state/:state?', logic.transState);
     server.get('/trans/:id_trans', logic.transMeta);
     server.put('/trans/:id_trans', logic.putTransMeta);
-    server.post('/trans/:id_trans/payload', logic.payloadTrans);
-    server.post('/trans/:id_trans/expirationDate', logic.expirationDate);
-    server.post('/trans/:id_trans/callback', logic.callbackTrans);
     server.post('/trans', logic.postTransDelayed);
     server.get('/queue/:id', logic.getQueue);
     server.post('/queue/:id/pop', logic.popQueue);
