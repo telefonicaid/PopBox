@@ -2,7 +2,6 @@ var should = require('should');
 var async = require('async');
 var config = require('./config.js');
 var utils = require('./utils.js');
-var redis = require('redis'), rc = redis.createClient(6379, 'localhost');
 
 var HOST = config.hostname;
 var PORT = config.port;
@@ -164,7 +163,7 @@ describe('Invalid Data in JSON', function() {
     executeTest(trans, 'payload greater than 1048576', done);
   });
 
-  it('Invalid Expiration Date (it isn\'t a number', function(done) {
+  it('Invalid Expiration Date (it isn\'t a number)', function(done) {
 
     var trans = {
       'payload': '{\"spanish\": \"hola\", \"english\": ' +
@@ -183,7 +182,7 @@ describe('Invalid Data in JSON', function() {
 
 
 
-  it('Invalid Expiration Date (it isn\'t a number', function(done) {
+  it('Invalid Expiration Date (out of range)', function(done) {
 
     var trans = {
       'payload': '{\"spanish\": \"hola\", \"english\": ' +
