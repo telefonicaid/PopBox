@@ -126,10 +126,10 @@ describe('Changes: ', function() {
       var heads = {};
       heads['content-type'] = 'application/json';
       var options = { host: HOST, port: PORT,
-        path: '/trans/' + trans.id + '/payload', method: 'POST',
+        path: '/trans/' + trans.id, method: 'PUT',
         headers: heads};
 
-      utils.makeRequest(options, 'New Message 1',
+      utils.makeRequest(options, {payload: 'New Message 1'},
           function(error, response, data) {
         should.not.exist(error);
         response.statusCode.should.be.equal(200);
@@ -156,26 +156,60 @@ describe('Changes: ', function() {
       });
     });
 
-    it('Should not modify the expirationDate, it is out of range',
-        function(done) {
+    it('Should modify the callback', function(done) {
 
-          var heads = {};
-          heads['content-type'] = 'application/json';
-          var options = { host: HOST, port: PORT,
-            path: '/trans/' + trans.id + '/expirationDate', method: 'POST',
-            headers: heads};
+      var heads = {};
+      heads['content-type'] = 'application/json';
+      var options = { host: HOST, port: PORT,
+        path: '/trans/' + trans.id, method: 'PUT',
+        headers: heads};
 
-          utils.makeRequest(options, 1234567891111,
-              function(error, response, data) {
+      utils.makeRequest(options, {callback: 'http://telefonica.com'},
+          function(error, response, data) {
             should.not.exist(error);
-            response.statusCode.should.be.equal(400);
-
-            data.should.have.property('errors');
-            data.errors.should.include('expirationDate out of range');
+            response.statusCode.should.be.equal(200);
 
             done();
           });
-        });
+    });
+
+    it('Should return the correct callback', function(done) {
+
+      var heads = {};
+      heads['accept'] = 'application/json';
+      var options = { host: HOST, port: PORT,
+        path: '/trans/' + trans.id, method: 'GET', headers: heads};
+
+      utils.makeRequest(options, null, function(error, response, data) {
+        should.not.exist(error);
+        response.statusCode.should.be.equal(200);
+
+        data.should.have.property('callback');
+        data.callback.should.be.equal('http://telefonica.com');
+
+        done();
+      });
+    });
+
+    it('Should not modify the expirationDate, it is out of range', function(done) {
+
+      var heads = {};
+      heads['content-type'] = 'application/json';
+      var options = { host: HOST, port: PORT,
+        path: '/trans/' + trans.id, method: 'PUT',
+        headers: heads};
+
+      utils.makeRequest(options, {expirationDate: 1234567891111},
+          function(error, response, data) {
+        should.not.exist(error);
+        response.statusCode.should.be.equal(400);
+
+        data.should.have.property('errors');
+        data.errors.should.include('expirationDate out of range');
+
+        done();
+      });
+    });
 
     it('Should return the correct expirationDate', function(done) {
 

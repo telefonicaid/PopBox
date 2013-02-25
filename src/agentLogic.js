@@ -112,53 +112,58 @@ function putTransMeta(req, res) {
   var id = req.param('id_trans', null),
       empty = true, filteredReq = {}, errorsP, errorsExpDate, errors = [];
 
+  if (!req.headers['content-type'] || req.headers['content-type'] !== 'application/json') {
+    errors.push('invalid content-type header');
+    logger.info('putTransMeta', [req.info, {errors: errors}, 400]);
+    res.send({errors: errors}, 400);
+  } else {
+    filteredReq.payload = req.body.payload;
+    filteredReq.callback = req.body.callback;
+    filteredReq.expirationDate = req.body.expirationDate;
 
-  filteredReq.payload = req.body.payload;
-  filteredReq.callback = req.body.callback;
-  filteredReq.expirationDate = req.body.expirationDate;
+    empty = (filteredReq.payload === undefined) &&
+        (filteredReq.callback === undefined) &&
+        (filteredReq.expirationDate === undefined);
 
-  empty = (filteredReq.payload === undefined) &&
-      (filteredReq.callback === undefined) &&
-      (filteredReq.expirationDate === undefined);
+    if (empty) {
+      logger.info('putTransMeta', [
+        {ok: true, data: 'empty data'},
+        req.info
+      ]);
+      res.send({ok: true, data: 'empty data'});
 
-  if (empty) {
-    logger.info('putTransMeta', [
-      {ok: true, data: 'empty data'},
-      req.info
-    ]);
-    res.send({ok: true, data: 'empty data'});
-  }
-  else {
-    if (id === null) {
-      errors.push('missing id');
-    }
-    errorsP = validate.errorsPayload(filteredReq.payload, false);
-    errors = errors.concat(errorsP);
+    } else {
+      if (id === null) {
+        errors.push('missing id');
+      }
+      errorsP = validate.errorsPayload(filteredReq.payload, false);
+      errors = errors.concat(errorsP);
 
-    errorsExpDate = validate.errorsExpirationDate(filteredReq.expirationDate);
-    errors = errors.concat(errorsExpDate);
+      errorsExpDate = validate.errorsExpirationDate(filteredReq.expirationDate);
+      errors = errors.concat(errorsExpDate);
 
-    if (errors.length > 0) {
-      logger.info('putTransMeta', [req.info, {errors: errors}, 400]);
-      res.send({errors: errors}, 400);
-    }
-    else {
-      dataSrv.updateTransMeta(id, req.body, function(e, data) {
-        if (e) {
-          logger.info('putTransMeta', [
-            {errors: [String(e)]},
-            400,
-            req.info
-          ]);
-          res.send({errors: [String(e)]}, 400);
-        } else {
-          logger.info('putTransMeta', [
-            {ok: true, data: data},
-            req.info
-          ]);
-          res.send({ok: true, data: data});
-        }
-      });
+      if (errors.length > 0) {
+        logger.info('putTransMeta', [req.info, {errors: errors}, 400]);
+        res.send({errors: errors}, 400);
+      }
+      else {
+        dataSrv.updateTransMeta(id, req.body, function(e, data) {
+          if (e) {
+            logger.info('putTransMeta', [
+              {errors: [String(e)]},
+              400,
+              req.info
+            ]);
+            res.send({errors: [String(e)]}, 400);
+          } else {
+            logger.info('putTransMeta', [
+              {ok: true, data: data},
+              req.info
+            ]);
+            res.send({ok: true, data: data});
+          }
+        });
+      }
     }
   }
 }
@@ -285,126 +290,6 @@ function deleteTrans(req, res) {
   }
 }
 
-function payloadTrans(req, res) {
-  'use strict';
-  var id = req.param('id_trans', null);
-
-  if (! id) {
-    logger.info('payloadTrans', [
-      {errors: ['missing id']},
-      400,
-      req.info
-    ]);
-    res.send({errors: ['missing id']}, 400);
-  }
-  else if (! req.body) {
-    logger.info('payloadTrans', [
-      {errors: ['missing body']},
-      400,
-      req.info
-    ]);
-    res.send({errors: ['missing body']}, 400);
-  }
-  else {
-    dataSrv.setPayload(id, req.body, function(e) {
-      if (e) {
-        logger.info('payloadTrans', [
-          {errors: [String(e)]},
-          400,
-          req.info
-        ]);
-        res.send({errors: [String(e)]}, 400);
-      } else {
-        logger.info('payloadTrans', [
-          {ok: true},
-          req.info
-        ]);
-        res.send({ok: true});
-      }
-    });
-  }
-}
-
-function callbackTrans(req, res) {
-  'use strict';
-  var id = req.param('id_trans', null);
-
-  if (! id) {
-    logger.info('callbackTrans', [
-      {errors: ['missing id']},
-      400,
-      req.info
-    ]);
-    res.send({errors: ['missing id']}, 400);
-  }
-  else if (! req.body) {
-    logger.info('callbackTrans', [
-      {errors: ['missing body']},
-      400,
-      req.info
-    ]);
-    res.send({errors: ['missing body']}, 400);
-  }
-  else {
-    dataSrv.setUrlCallback(id, req.body, function(e) {
-      if (e) {
-        logger.info('callbackTrans', [
-          {errors: [String(e)]},
-          400,
-          req.info
-        ]);
-        res.send({errors: [String(e)]}, 400);
-      } else {
-        logger.info('callbackTrans', [
-          {ok: true},
-          req.info
-        ]);
-        res.send({ok: true});
-      }
-    });
-  }
-}
-function expirationDate(req, res) {
-  'use strict';
-  var id = req.param('id_trans', null),
-      errors;
-  if (id) {
-    errors = validate.errorsExpirationDate(req.body);
-    if (errors.length === 0) {
-      dataSrv.setExpirationDate(id, req.body, function(e) {
-        if (e) {
-          logger.info('expirationDate', [
-            {errors: [String(e)]},
-            400,
-            req.info
-          ]);
-          res.send({errors: [String(e)]}, 400);
-        } else {
-          logger.info('expirationDate', [
-            {ok: true},
-            req.info
-          ]);
-          res.send({ok: true});
-        }
-      });
-    }
-    else {
-      logger.info('expirationDate', [
-        {errors: errors},
-        400,
-        req.info
-      ]);
-      res.send({errors: errors}, 400);
-    }
-  } else {
-    logger.info('expirationDate', [
-      {errors: ['missing id']},
-      400,
-      req.info
-    ]);
-    res.send({errors: ['missing id']}, 400);
-  }
-}
 function queueSize(req, res) {
   'use strict';
   var queueId = req.param('id');
@@ -676,9 +561,6 @@ exports.peekQueue = peekQueue;
 exports.transState = transState;
 exports.postTrans = postTrans;
 exports.deleteTrans = deleteTrans;
-exports.expirationDate = expirationDate;
-exports.payloadTrans = payloadTrans;
-exports.callbackTrans = callbackTrans;
 exports.postQueue = postQueue;
 exports.checkPerm = checkPerm;
 exports.transMeta = transMeta;
