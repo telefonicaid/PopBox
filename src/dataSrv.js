@@ -419,13 +419,7 @@ function getPeekData(dataH, callback, queue) {
   retrieveData(queue, dataH, function onData(err, payloadWithNulls) {
     if (err) {
       manageError(err, callback);
-
     } else {
-      //Handle post-pop behaviour (callback)
-      cleanData = payloadWithNulls.filter(function notNull(elem) {
-        return elem !== null;
-      });
-
       if (callback) {
         callback(null, payloadWithNulls);
       }
