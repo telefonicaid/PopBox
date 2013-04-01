@@ -47,17 +47,17 @@ function postTrans(req, res) {
 
   if (errors.length === 0) {
     dataSrv.pushTransaction(prefix, req.body,
-        function onPushedTrans(err, trans_id) {
+        function onPushedTrans(err, transId) {
       if (err) {
         ev = {
-          'transaction': trans_id,
+          'transaction': transId,
           'postdata': req.body,
           'action': 'USERPUSH',
           'timestamp': new Date(),
           'error': err
         };
         emitter.emit('ACTION', ev);
-        res.send({errors: [err]}, 500);
+        res.send({errors: [String(err)]}, 500);
         logger.info('postTrans', [
           {error: [err]},
           500 ,
@@ -65,15 +65,15 @@ function postTrans(req, res) {
         ]);
       } else {
         ev = {
-          'transaction': trans_id,
+          'transaction': transId,
           'postdata': req.body,
           'action': 'USERPUSH',
           'timestamp': new Date()
         };
         emitter.emit('ACTION', ev);
-        res.send({ok: true, data: trans_id});
+        res.send({ok: true, data: transId});
         logger.info('postTrans', [
-          {id: trans_id} ,
+          {id: transId} ,
           req.info
         ]);
       }
@@ -195,7 +195,7 @@ function postQueue(req, res) {
           req.info
         ]);
         res.send([
-          {errors: [err]},
+          {errors: [String(err)]},
           500
         ]);
       } else {
