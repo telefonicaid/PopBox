@@ -414,7 +414,6 @@ var peek = function(appPrefix, queue, maxElems, callback) {
 
 function getPeekData(dataH, callback, queue) {
   'use strict';
-  var transactionId = null, dbTr = null, cleanData = null;
 
   retrieveData(queue, dataH, function onData(err, payloadWithNulls) {
     if (err) {

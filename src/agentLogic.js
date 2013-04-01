@@ -421,6 +421,7 @@ function peekQueue(req, res) {
   dataSrv.peek(appPrefix, {id: queueId}, maxMsgs,
       function onPeek(err, notifList) {
     var messageList = [];
+    var transactionIdList = [];
     var ev = {};
     //stablish the timeout depending on blocking time
 
@@ -434,12 +435,15 @@ function peekQueue(req, res) {
         messageList = notifList.map(function(notif) {
           return notif && notif.payload;
         });
+        transactionIdList = notifList.map(function(notif) {
+          return notif && notif.transactionId;
+        });
       }
       logger.info('peekQueue', [
         {ok: true, data: messageList} ,
         req.info
       ]);
-      res.send({ok: true, data: messageList});
+      res.send({ok: true, data: messageList, transactions: transactionIdList});
     }
   });
 }

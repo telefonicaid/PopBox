@@ -10,6 +10,15 @@ var N_TRANS = 5;
 var QUEUE_NAME = 'TESTQUEUE';
 var MESSAGE_INDEX = 'Message ';
 
+var checkTrans = function(ids, transactionsReceived) {
+  'use strict'
+
+  transactionsReceived.length.should.be.equal(ids.length);
+  for (var i = 0; i < ids.length; i++){
+    transactionsReceived.should.include(ids[i]);
+  }
+}
+
 var retrieveAllTranstactions = function(ids, done) {
   var options = { port: PORT, host: HOST,
     path: '/queue/' + QUEUE_NAME + '/peek', method: 'GET'};
@@ -20,6 +29,9 @@ var retrieveAllTranstactions = function(ids, done) {
 
     data.should.have.property('data');
     data.data.should.have.lengthOf(N_TRANS);
+
+    data.should.have.property('transactions');
+    checkTrans(ids, data.transactions);
 
     var completed = 0;
 
@@ -50,19 +62,22 @@ var retrieveAllTranstactions = function(ids, done) {
 
 };
 
-var retrieveSomeTransactions = function(N_PETS, done) {
+var retrieveSomeTransactions = function(ids, done) {
 
   var options = { port: PORT, host: HOST,
-    path: '/queue/' + QUEUE_NAME + '/peek?max=' + N_PETS, method: 'GET'};
+    path: '/queue/' + QUEUE_NAME + '/peek?max=' + ids.length, method: 'GET'};
 
   utils.makeRequest(options, null, function(error, response, data) {
     should.not.exist(error);
     response.statusCode.should.be.equal(200);
 
     data.should.have.property('data');
-    data.data.should.have.lengthOf(N_PETS);
+    data.data.should.have.lengthOf(ids.length);
 
-    for (var i = 0; i < N_PETS; i++) {
+    data.should.have.property('transactions');
+    checkTrans(ids, data.transactions);
+
+    for (var i = 0; i < ids.length; i++) {
       data.data[i].substring(0,
           MESSAGE_INDEX.length).should.be.equal(MESSAGE_INDEX);
     }
@@ -144,7 +159,12 @@ describe('Peek from High Priority Queue', function() {
   });
 
   it('Should retrieve 3 messages', function(done) {
-    retrieveSomeTransactions(3, done);
+    var idsToRetrive = [];
+    for (var i = 0; i < 3; i++) {
+      idsToRetrive.push(ids[i]);
+    }
+
+    retrieveSomeTransactions(ids, done);
   });
 
 });
@@ -196,14 +216,21 @@ describe('Peek from Low Priority Queue', function() {
   });
 
   it('Should retrieve 4 messages', function(done) {
-    retrieveSomeTransactions(4, done);
+    var idsToRetrive = [];
+    for (var i = 0; i < 4; i++) {
+      idsToRetrive.push(ids[i]);
+    }
+
+    retrieveSomeTransactions(ids, done);
   });
 
 });
 
 describe('Peek from High and Low Priority Queue', function() {
 
-  var ids = new Array(N_TRANS);
+  var ids = [];
+  var idsH = [];
+  var idsL = [];
   var rc;
 
   before(function(done) {
@@ -214,7 +241,7 @@ describe('Peek from High and Low Priority Queue', function() {
     for (var i = 0; i < N_TRANS; i++) {
       var trans = {
         'payload': MESSAGE_INDEX + i,
-        'priority': (i % 2 == 0) ? 'H' : 'L',
+        'priority': (i % 2 === 0) ? 'H' : 'L',
         'queue': [
           { 'id': QUEUE_NAME }
         ]
@@ -225,16 +252,23 @@ describe('Peek from High and Low Priority Queue', function() {
       var options = { port: PORT, host: HOST, path: '/trans', method: 'POST',
         headers: heads};
 
-      utils.makeRequest(options, trans, function(err, response, data) {
+      utils.makeRequest(options, trans, function(i, err, response, data) {
 
         data.should.have.property('data');
-        ids[completed] = data.data;
+        ids.push(data.data);
+
+        if (i % 2 === 0) {
+          idsH.push(data.data);
+        } else {
+          idsL.push(data.data);
+        }
+
         completed++;
 
         if (completed == N_TRANS) {
           done();
         }
-      });
+      }.bind({}, i));
     }
   });
 
@@ -284,6 +318,9 @@ describe('Peek from High and Low Priority Queue', function() {
       data.should.have.property('data');
       data.data.should.have.lengthOf(N_PETS);
 
+      data.should.have.property('transactions');
+      checkTrans(idsH, data.transactions);
+
       for (var i = 0; i < N_TRANS; i += 2) {
         data.data.should.include(MESSAGE_INDEX + i);
       }
@@ -308,6 +345,15 @@ describe('Peek from High and Low Priority Queue', function() {
 
       data.should.have.property('data');
       data.data.should.have.lengthOf(N_PETS);
+
+      data.should.have.property('transactions');
+      var idsToCheck = idsH, j = 0;
+
+      while(idsToCheck.length !== N_PETS) {
+        idsToCheck.push(idsL[j++]);
+      }
+
+      checkTrans(idsToCheck, data.transactions);
 
       for (var i = 0; i < N_TRANS; i += 2) {
         data.data.should.include(MESSAGE_INDEX + i);
@@ -334,6 +380,9 @@ describe('Peek from High and Low Priority Queue', function() {
 
       data.should.have.property('data');
       data.data.length.should.be.equal(N_TRANS);
+
+      data.should.have.property('transactions');
+      checkTrans(ids, data.transactions);
 
       for (var i = 0; i < N_TRANS; i++) {
         data.data.should.include(MESSAGE_INDEX + i);
