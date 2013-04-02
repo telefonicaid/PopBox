@@ -436,7 +436,7 @@ function peekQueue(req, res) {
           return notif && notif.payload;
         });
         transactionIdList = notifList.map(function(notif) {
-          return notif && notif.transactionId;
+          return notif && notif.extTransactionId;
         });
       }
       logger.info('peekQueue', [
