@@ -387,7 +387,7 @@ function popQueue(req, res) {
           return notif && notif.payload;
         });
         transactionIdList = notifList.map(function(notif) {
-          return notif && notif.transactionId;
+          return notif && notif.extTransactionId;
         });
       }
       ev = {
@@ -436,11 +436,11 @@ function peekQueue(req, res) {
           return notif && notif.payload;
         });
         transactionIdList = notifList.map(function(notif) {
-          return notif && notif.transactionId;
+          return notif && notif.extTransactionId;
         });
       }
       logger.info('peekQueue', [
-        {ok: true, data: messageList} ,
+        {ok: true, data: messageList, transactions: transactionIdList} ,
         req.info
       ]);
       res.send({ok: true, data: messageList, transactions: transactionIdList});

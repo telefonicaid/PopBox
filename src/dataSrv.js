@@ -450,7 +450,8 @@ function checkData(queue, dbTr, transactionId) {
         manageError(err, callback);
       } else {
         if (data && data.payload) {
-          data.transactionId = extTransactionId;
+          data.transactionId = transactionId;
+          data.extTransactionId = extTransactionId;
           //EMIT Delivered
           ev = {
             'transaction': extTransactionId,
