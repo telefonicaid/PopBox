@@ -286,6 +286,89 @@ describe('Bugs', function() {
 
       });
     });
+  });
+
+  it('Queue state in a transaction should be \'Delivered\' when the queue has been popped', function(done) {
+
+    var QUEUE_ID = 'q0', MESSAGE = 'MESSAGE 1', transID;
+    var transaction = {
+      'payload': MESSAGE,
+      'priority': 'H',
+      'queue': [
+        { 'id': QUEUE_ID }
+      ],
+      'expirationDate': 1990880820
+    };
+
+    var heads = {};
+    heads['content-type'] = 'application/json';
+    heads['accept'] = 'application/json';
+    var options = { host: config.hostname, port: config.port,
+      headers: heads};
+
+    options.method = 'POST';
+    options.path = '/trans';
+    utils.makeRequest(options, transaction, function(error, response, data) {
+
+      response.statusCode.should.be.equal(200);
+      should.not.exist(error);
+      transID = data.data;
+
+
+      //Check queue state before pop
+      checkState(transID, 'Pending', function() {
+        //Pop
+        popQueue(function() {
+          //Check queue state after pop
+          checkState(transID, 'Delivered', function() {
+            done();
+          });
+        });
+      });
+    });
+
+    function popQueue(cb) {
+      options.method = 'POST';
+      options.path = '/queue/' + QUEUE_ID + '/pop';
+      utils.makeRequest(options, '', function(error, response, data) {
+
+        should.not.exist(error);
+        response.statusCode.should.be.equal(200);
+
+        data.should.have.property('data');
+        data.data.should.include(MESSAGE);
+        data.should.have.property('transactions');
+        data.transactions.should.include(transID);
+
+        cb();
+
+      });
+    }
+
+    function checkState(id, expectedState, cb) {
+      options.method = 'GET';
+      options.path = '/trans/' + id + '?queues=' + expectedState;
+
+      utils.makeRequest(options, '', function(error, response, data) {
+
+        should.not.exist(error);
+        response.statusCode.should.be.equal(200);
+
+        data.should.have.property('payload', MESSAGE);
+
+        data.should.have.property('queues');
+        var queues = data.queues;
+        queues.should.have.property(QUEUE_ID);
+
+        var queue = queues[QUEUE_ID];
+        queue.should.have.property('state', expectedState);
+
+        cb();
+
+      });
+
+    }
+
 
   });
 });

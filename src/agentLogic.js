@@ -440,7 +440,7 @@ function peekQueue(req, res) {
         });
       }
       logger.info('peekQueue', [
-        {ok: true, data: messageList} ,
+        {ok: true, data: messageList, transactions: transactionIdList} ,
         req.info
       ]);
       res.send({ok: true, data: messageList, transactions: transactionIdList});
