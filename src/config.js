@@ -20,10 +20,8 @@
  */
 
 
-var dir_prefix = './';
-if (process.env.POPBOX_DIR_PREFIX) {
-  dir_prefix = process.env.POPBOX_DIR_PREFIX;
-}
+var dir_prefix = process.env.POPBOX_DIR_PREFIX || './';
+
 /**
  * Level for logger
  * debug
