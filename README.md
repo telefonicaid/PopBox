@@ -13,7 +13,7 @@ Up to 10K **concurrent** connections per node, no resource gets wasted
 Connect once and receive streamed notification messages
 ####Do you want it 100% H-Scalable?
 Scalability has been taken into account from the very beginning (not dynamic yet, but soon)
-####New add-ons may be included in order to suit any client dependency
+####New add-ons may be included in order to suit any client need
 For example invoke an external accounting system every time a mesage is consumed
 ### Dependencies:
     Requires node.js 
