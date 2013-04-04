@@ -344,6 +344,7 @@ function popQueue(req, res) {
   var maxMsgs = req.param('max', config.agent.maxMessages);
   var tOut = req.param('timeout', config.agent.popTimeout);
   var appPrefix = req.prefix;
+  var clientClosed = false;
 
   maxMsgs = parseInt(maxMsgs, 10);
   if (isNaN(maxMsgs)) {
@@ -362,11 +363,16 @@ function popQueue(req, res) {
   }
 
   req.connection.setTimeout((tOut + config.agent.graceTimeout) * 1000);
+  req.connection.addListener('close', function () {
+    clientClosed = true;
+  });
 
   dataSrv.blockingPop(appPrefix, {id: queueId}, maxMsgs,
       tOut, function onBlockingPop(err, notifList) {
+
     var messageList = [];
     var transactionIdList = [];
+    var priorities = [];
     var ev = {};
     //stablish the timeout depending on blocking time
 
@@ -380,7 +386,9 @@ function popQueue(req, res) {
       };
       emitter.emit('ACTION', ev);
       logger.info('popQueue', [String(err), 500, req.info]);
-      res.send({errors: [String(err)]}, 500);
+      if (!clientClosed) {
+        res.send({errors: [String(err)]}, 500);
+      }
     } else {
       if (notifList) {
         messageList = notifList.map(function(notif) {
@@ -388,6 +396,9 @@ function popQueue(req, res) {
         });
         transactionIdList = notifList.map(function(notif) {
           return notif && notif.extTransactionId;
+        });
+        priorities = notifList.map(function(notif) {
+          return notif && notif.priority;
         });
       }
       ev = {
@@ -402,7 +413,15 @@ function popQueue(req, res) {
         {ok: true, data: messageList, transactions: transactionIdList},
         req.info
       ]);
-      res.send({ok: true, data: messageList, transactions: transactionIdList});
+      if (!clientClosed) {
+        res.send({ok: true, data: messageList, transactions: transactionIdList});
+      } else {
+        //Reinsert transaction into the queue if the connection was closed
+        for (var i = 0; i < transactionIdList.length; i++) {
+          dataSrv.repushUndeliveredTransaction(appPrefix, {id: queueId}, priorities[i], transactionIdList[i]);
+        }
+      }
+
     }
   });
 }
@@ -446,6 +465,90 @@ function peekQueue(req, res) {
       res.send({ok: true, data: messageList, transactions: transactionIdList});
     }
   });
+}
+
+function subscribeQueue(req, res) {
+  'use strict';
+  var queueId = req.param('id');
+  var maxMsgs = 1;
+  var tOut = 0;     //Block indefinitely
+  var appPrefix = req.prefix;
+  var clientClosed = false;
+
+  req.connection.setTimeout(0); //the existing idle timeout is disabled
+  req.connection.addListener('close', function () {
+    // callback is fired when connection closed (e.g. closing the browser)
+    clientClosed = true;
+  });
+
+  var headers = {'Content-Type': 'application/json'};
+  res.writeHead(200, headers);
+
+  var popAux = function() {
+
+    dataSrv.blockingPop(appPrefix, {id: queueId}, maxMsgs, tOut,
+        function onBlockingPop(err, notifList) {
+
+          var message;
+          var transactionId;
+          var priority;
+          var ev = {};
+
+          if (err) {
+
+            ev = {
+              'queue': queueId,
+              'max_msg': maxMsgs,
+              'action': 'USERPOP',
+              'timestamp': new Date(),
+              'error': err
+            };
+
+            emitter.emit('ACTION', ev);
+            logger.info('subscribeQueue', [String(err), req.info]);
+
+            if (!clientClosed) {
+              res.write(JSON.stringify({errors: [String(err)]}));
+            }
+
+          } else {
+
+            //Messages are extracted one by one...
+            message = notifList[0].payload;
+            transactionId = notifList[0].extTransactionId;
+            priority = notifList[0].priority;
+
+            ev = {
+              'queue': queueId,
+              'max_msg': maxMsgs,
+              'total_msg': 1,
+              'action': 'USERPOP',
+              'timestamp': new Date()
+            };
+
+            emitter.emit('ACTION', ev);
+            logger.info('subscribeQueue', [
+              {ok: true, data: message, transaction: transactionId},
+              req.info
+            ]);
+
+            if (!clientClosed) {
+              res.write(JSON.stringify({ok: true, data: message, transaction: transactionId}));
+            } else {
+              //Reinsert transaction into the queue if the connection was closed
+              dataSrv.repushUndeliveredTransaction(appPrefix, {id: queueId}, priority, transactionId);
+            }
+          }
+
+          if (!clientClosed) {
+            process.nextTick(popAux);
+          } else {
+            res.end()
+          }
+        });
+  }
+
+  popAux();
 }
 
 function checkPerm(req, res, cb) {
@@ -562,6 +665,7 @@ function transMeta(req, res) {
 exports.getQueue = getQueue;
 exports.popQueue = popQueue;
 exports.peekQueue = peekQueue;
+exports.subscribeQueue = subscribeQueue;
 exports.transState = transState;
 exports.postTrans = postTrans;
 exports.deleteTrans = deleteTrans;

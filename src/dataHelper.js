@@ -69,11 +69,13 @@ var exists = function(db, id, callback) {
   });
 };
 
-var pushParallel = function(db, queue, priority, transaction_id) {
+var pushParallel = function(head, db, queue, priority, transaction_id) {
   'use strict';
   return function asyncPushParallel(callback) {
     var fullQueueId = config.dbKeyQueuePrefix + priority + queue.id;
-    db.rpush(fullQueueId, transaction_id, function onLpushed(err) {
+    var pusher = (head) ? db.lpush : db.rpush;
+
+    pusher.call(db, fullQueueId, transaction_id, function onLpushed(err) {
       if (err) {
         //error pushing
         logger.warning(err);
@@ -154,14 +156,23 @@ var setExpirationDate = function(dbTr, key, provision, callback) {
 //Public area
 
 /**
- *
+ * Inserts at the tail of the queue
  * @param {RedisClient} db valid redis client.
  * @param {PopBox.Queue} queue object.
  * @param {string} priority enum type 'H' || 'L' for high low priority.
  * @param {string} transaction_id valid transaction identifier.
  * @return {function(function)} asyncPushParallel ready for async module.
  */
-exports.pushParallel = pushParallel;
+exports.pushParallel = pushParallel.bind({}, false);
+/**
+ * Inserts at the head of the queue
+ * @param {RedisClient} db valid redis client.
+ * @param {PopBox.Queue} queue object.
+ * @param {string} priority enum type 'H' || 'L' for high low priority.
+ * @param {string} transaction_id valid transaction identifier.
+ * @return {function(function)} asyncPushParallel ready for async module.
+ */
+exports.pushHeadParallel = pushParallel.bind({}, true);
 /**
  *
  * @param {RedisClient} dbTr valid redis client.
