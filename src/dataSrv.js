@@ -47,7 +47,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
       transactionId = config.dbKeyTransPrefix + extTransactionId,
   //setting up the bach proceses for async module.
       processBatch = [],
-      dbTr = dbCluster.getTransactionDb(transactionId),
+      dbTr = dbCluster.getTransactionDb(extTransactionId),
       i,
       queue;
 
@@ -137,7 +137,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
 var updateTransMeta = function(extTransactionId, provision, callback) {
   'use strict';
   var transactionId = config.dbKeyTransPrefix +
-      extTransactionId, dbTr = dbCluster.getTransactionDb(transactionId);
+      extTransactionId, dbTr = dbCluster.getTransactionDb(extTransactionId);
 
   // curry for async (may be refactored)
 
@@ -340,7 +340,7 @@ function getPopData(dataH, callback, queue) {
       //SET NEW STATE for Every popped transaction
       newStateBatch = cleanData.map(function prepareStateBatch(elem) {
         transactionId = elem.transactionId;
-        dbTr = dbCluster.getTransactionDb(transactionId);
+        dbTr = dbCluster.getTransactionDb(elem.extTransactionId);
         return helper.hsetHashParallel(dbTr, queue, transactionId, ':state',
             'Delivered');
 
@@ -430,8 +430,9 @@ function retrieveData(queue, transactionList, callback) {
   'use strict';
   var ghostBusterBatch =
       transactionList.map(function prepareDataBatch(transaction) {
-        var dbTr = dbCluster.getTransactionDb(transaction);
-        return checkData(queue, dbTr, transaction);
+        var extTransactionId = transaction.split('|')[1], 
+          dbTr = dbCluster.getTransactionDb(extTransactionId);
+        return checkData(queue, dbTr, transaction, extTransactionId);
       });
   async.parallel(ghostBusterBatch,
       function retrieveDataAsyncEnd(err, foundMetadata) {
@@ -441,10 +442,10 @@ function retrieveData(queue, transactionList, callback) {
       });
 }
 
-function checkData(queue, dbTr, transactionId) {
+function checkData(queue, dbTr, transactionId, extTransactionId) {
   'use strict';
   return function(callback) {
-    var ev = null, extTransactionId = transactionId.split('|')[1];
+    var ev = null;
     dbTr.hgetall(transactionId + ':meta', function on_data(err, data) {
       if (err) {
         manageError(err, callback);
