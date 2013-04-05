@@ -269,8 +269,7 @@ gevLsnrAction.filter = null;
 gevLsnrAction.take = {transaction: 'transaction', action: 'action'};
 exports.evModules = [
   { module: './evCallbackLsnr'},
-  { module: './gevLsnr', config: gevLsnr},
-  { module: './gevLsnr', config: gevLsnrAction}
+
 ];
 
 
