@@ -1,27 +1,21 @@
 var should = require('should');
 var async = require('async');
-var config = require('./config.js');
 var utils = require('./utils.js');
-
-var HOST = config.hostname;
-var PORT = config.port;
-
-var trans, trans1 = {};
 
 describe('Invalid Data in JSON', function() {
 
-  var executeTest = function(trans, expectedError, done) {
-    var heads = {};
-    heads['content-type'] = 'application/json';
-    var options = { host: HOST, port: PORT,
-      path: '/trans/', method: 'POST', headers: heads};
+  var executeTest = function(trans, expectedErrors, done) {
+    'use strict';
 
-    utils.makeRequest(options, trans, function(error, response, data) {
+    utils.pushTransaction(trans, function(error, response, data) {
       response.statusCode.should.be.equal(400);
       should.not.exist(error);
 
       data.should.have.property('errors');
-      data.errors[0].should.be.equal(expectedError);
+
+      for (var i = 0; i < expectedErrors.length; i++) {
+        data.errors.should.include(expectedErrors[i]);
+      }
 
       done();
 
@@ -29,82 +23,38 @@ describe('Invalid Data in JSON', function() {
   }
 
   it('Invalid Priority', function(done) {
-
-    var trans = {
-      'payload': '{\"spanish\": \"hola\", \"english\": ' +
-          '\"hello\", \"to\": \"Mr Lopez\"}',
-      'priority': 'M',
-      'callback': 'http' + '://foo.bar',
-      'queue': [
-        { 'id': 'q1' },
-        { 'id': 'q2' }
-      ],
-      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
-    };
-
-    executeTest(trans, 'invalid priority', done);
+    var trans = utils.createTransaction('Message', 'M', [{ 'id': 'q1' }, { 'id': 'q2' }]);
+    executeTest(trans, ['invalid priority'], done);
   });
 
   it('Undefined Priority', function(done) {
+    var trans = utils.createTransaction('Message', 'H', [{ 'id': 'q1' }, { 'id': 'q2' }]);
+    delete trans.priority;
+    executeTest(trans, ['undefined priority'], done);
+  });
 
-    var trans = {
-      'payload': '{\"spanish\": \"hola\", \"english\": ' +
-          '\"hello\", \"to\": \"Mr Lopez\"}',
-      'callback': 'http' + '://foo.bar',
-      'queue': [
-        { 'id': 'q1' },
-        { 'id': 'q2' }
-      ],
-      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
-    };
-
-    executeTest(trans, 'undefined priority', done);
+  it('Undefined Priority and Payload', function(done) {
+    var trans = utils.createTransaction('Message', 'H', [{ 'id': 'q1' }, { 'id': 'q2' }]);
+    delete trans.payload
+    delete trans.priority;
+    executeTest(trans, ['undefined priority', 'undefined payload'], done);
   });
 
   it('Invalid queue', function(done) {
-
-    var trans = {
-      'payload': '{\"spanish\": \"hola\", \"english\": ' +
-          '\"hello\", \"to\": \"Mr Lopez\"}',
-      'callback': 'http' + '://foo.bar',
-      'priority': 'H',
-      'queue': {
-         'id': 'q1'
-      },
-      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
-    };
-
-    executeTest(trans, 'invalid queue type', done);
+    var trans = utils.createTransaction('Message', 'H', { 'id': 'q1' });
+    executeTest(trans, ['invalid queue type'], done);
   });
 
   it('Undefined queue', function(done) {
-
-    var trans = {
-      'payload': '{\"spanish\": \"hola\", \"english\": ' +
-          '\"hello\", \"to\": \"Mr Lopez\"}',
-      'callback': 'http' + '://foo.bar',
-      'priority': 'H',
-      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
-    };
-
-    executeTest(trans, 'undefined queue', done);
+    var trans = utils.createTransaction('Message', 'H', [{ 'id': 'q1' }]);
+    delete trans.queue;
+    executeTest(trans, ['undefined queue'], done);
   });
 
   it('Invalid Queue Element', function(done) {
 
-    var trans = {
-      'payload': '{\"spanish\": \"hola\", \"english\": ' +
-          '\"hello\", \"to\": \"Mr Lopez\"}',
-      'callback': 'http' + '://foo.bar',
-      'priority': 'H',
-      'queue': [
-        { 'identifier': 'q1' },
-        { 'id': 'q2' }
-      ],
-      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
-    };
-
-    executeTest(trans, 'invalid queue element', done);
+    var trans = utils.createTransaction('Message', 'H', [{ 'identifier': 'q1' }, { 'id': 'q2' }]);
+    executeTest(trans, ['invalid queue element'], done);
   });
 
   it('too many queues', function(done) {
@@ -114,89 +64,36 @@ describe('Invalid Data in JSON', function() {
       queues.push({id: 'q' + i});
     }
 
-    var trans = {
-      'payload': '{\"spanish\": \"hola\", \"english\": ' +
-          '\"hello\", \"to\": \"Mr Lopez\"}',
-      'callback': 'http' + '://foo.bar',
-      'priority': 'H',
-      'queue': queues,
-      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
-    };
-
-    executeTest(trans, 'too many queues: maximum 10000', done);
+    var trans = utils.createTransaction('Message', 'H', queues);
+    executeTest(trans, ['too many queues: maximum 10000'], done);
   });
 
   it('Undefined Payload', function(done) {
-
-    var trans = {
-      'callback': 'http' + '://foo.bar',
-      'priority': 'H',
-      'queue': [
-        { 'id': 'q1' },
-        { 'id': 'q2' }
-      ],
-      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
-    };
-
-    executeTest(trans, 'undefined payload', done);
+    var trans = utils.createTransaction('Message', 'H', [{ 'id': 'q1' }, { 'id': 'q2' }]);
+    delete trans.payload;
+    executeTest(trans, ['undefined payload'], done);
   });
 
-  it('Undefined Payload', function(done) {
+  it('Payload is too big', function(done) {
 
     var payload = '';
-
     while(payload.length < 1024 * 1024 + 5) {
       payload += 'a';
     }
 
-    var trans = {
-      'payload': payload,
-      'callback': 'http' + '://foo.bar',
-      'priority': 'H',
-      'queue': [
-        { 'id': 'q1' },
-        { 'id': 'q2' }
-      ],
-      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
-    };
-
-    executeTest(trans, 'payload greater than 1048576', done);
+    var trans = utils.createTransaction(payload, 'H', [{ 'id': 'q1' }, { 'id': 'q2' }]);
+    executeTest(trans, ['payload greater than 1048576'], done);
   });
 
   it('Invalid Expiration Date (it isn\'t a number)', function(done) {
-
-    var trans = {
-      'payload': '{\"spanish\": \"hola\", \"english\": ' +
-          '\"hello\", \"to\": \"Mr Lopez\"}',
-      'callback': 'http' + '://foo.bar',
-      'priority': 'H',
-      'queue': [
-        { 'id': 'q1' },
-        { 'id': 'q2' }
-      ],
-      'expirationDate': 'telefonica digital'
-    };
-
-    executeTest(trans, 'expirationDate is not a number', done);
+    var trans = utils.createTransaction('MSG', 'H', [{ 'id': 'q1' }, { 'id': 'q2' }], 'tef', 'http://foo.bar');
+    executeTest(trans, ['expirationDate is not a number'], done);
   });
 
-
-
   it('Invalid Expiration Date (out of range)', function(done) {
-
-    var trans = {
-      'payload': '{\"spanish\": \"hola\", \"english\": ' +
-          '\"hello\", \"to\": \"Mr Lopez\"}',
-      'callback': 'http' + '://foo.bar',
-      'priority': 'H',
-      'queue': [
-        { 'id': 'q1' },
-        { 'id': 'q2' }
-      ],
-      'expirationDate': 2147483647 + 5000
-    };
-
-    executeTest(trans, 'expirationDate out of range', done);
+    var expDate = 2147483647 + 5000;
+    var trans = utils.createTransaction('MSG', 'H', [{ 'id': 'q1' }], expDate, 'http://foo.bar');
+    executeTest(trans, ['expirationDate out of range'], done);
   });
 });
 

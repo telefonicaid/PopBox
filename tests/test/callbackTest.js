@@ -1,12 +1,7 @@
 var should = require('should');
 var async = require('async');
 var http = require('http');
-var config = require('./config.js');
 var utils = require('./utils.js');
-
-var HOST = config.hostname;
-var PORT = config.port;
-
 
 describe('Invalid Data in JSON', function() {
 
@@ -17,26 +12,14 @@ describe('Invalid Data in JSON', function() {
     var CALLBACK = 'http://localhost:' + PORT_CALLBACK;
     var PAYLOAD = 'TEST MESSAGE';
     var QUEUES = ['q1', 'q2'];
+    var EXP_DATE = Math.round(new Date().getTime() / 1000 + 60);
     var receivedPetitions = 0;
 
-    var trans = {
-      'payload': PAYLOAD,
-      'priority': 'H',
-      'callback': CALLBACK,
-      'queue': [
-        { 'id': QUEUES[0] },
-        { 'id': QUEUES[1] }
-      ],
-      'expirationDate': Math.round(new Date().getTime() / 1000 + 2)
-    };
+    var trans = utils.createTransaction(PAYLOAD, 'H', [ { 'id': QUEUES[0] },{ 'id': QUEUES[1] } ], EXP_DATE, CALLBACK);
 
-    var heads = {};
-    heads['content-type'] = 'application/json';
-    var options = { host: HOST, port: PORT,
-      path: '/trans/', method: 'POST', headers: heads};
 
     var insertAndPop = function() {
-      utils.makeRequest(options, trans, function(error, response, data) {
+      utils.pushTransaction(trans, function(error, response, data) {
         response.statusCode.should.be.equal(200);
         should.not.exist(error);
 
@@ -48,10 +31,7 @@ describe('Invalid Data in JSON', function() {
 
         //Pop element from all queues
         for (var i = 0; i < QUEUES.length; i++) {
-          var options = { host: HOST, port: PORT,
-            path: '/queue/' + QUEUES[i] + '/pop', method: 'POST', headers: heads};
-
-          utils.makeRequest(options, trans, function(error, response, data) {
+          utils.pop(QUEUES[i], function(error, response, data) {
             data.should.have.property('ok', true);
             data.should.have.property('data');
             data.should.have.property('transactions');

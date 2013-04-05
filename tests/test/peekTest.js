@@ -1,10 +1,6 @@
 var should = require('should');
 var async = require('async');
-var config = require('./config.js');
 var utils = require('./utils.js');
-
-var HOST = config.hostname;
-var PORT = config.port;
 
 var N_TRANS = 5;
 var QUEUE_NAME = 'TESTQUEUE';
@@ -20,10 +16,9 @@ var checkTrans = function(ids, transactionsReceived) {
 }
 
 var retrieveAllTranstactions = function(ids, done) {
-  var options = { port: PORT, host: HOST,
-    path: '/queue/' + QUEUE_NAME + '/peek', method: 'GET'};
+  'use strict';
 
-  utils.makeRequest(options, null, function(error, response, data) {
+  utils.peek(QUEUE_NAME, function(error, response, data) {
     should.not.exist(error);
     response.statusCode.should.be.equal(200);
 
@@ -38,14 +33,7 @@ var retrieveAllTranstactions = function(ids, done) {
     for (var i = 0; i < N_TRANS; i++) {
       data.data.should.include(MESSAGE_INDEX + i);
 
-      //Test the state of the queue
-      var heads = {};
-      heads['accept'] = 'application/json';
-      var optionsState = { host: HOST, port: PORT,
-        path: '/trans/' + ids[i] + '?queues=Pending',
-        headers: heads };
-
-      utils.makeRequest(optionsState, null, function(error, response, data) {
+      utils.getTransState(ids[i], 'Pending', function(error, response, data) {
         should.not.exist(error);
 
         data.should.have.property('queues');
@@ -59,15 +47,12 @@ var retrieveAllTranstactions = function(ids, done) {
       });
     }
   });
-
 };
 
 var retrieveSomeTransactions = function(ids, done) {
+  'use strict';
 
-  var options = { port: PORT, host: HOST,
-    path: '/queue/' + QUEUE_NAME + '/peek?max=' + ids.length, method: 'GET'};
-
-  utils.makeRequest(options, null, function(error, response, data) {
+  utils.peek(QUEUE_NAME, function(error, response, data) {
     should.not.exist(error);
     response.statusCode.should.be.equal(200);
 
@@ -78,8 +63,7 @@ var retrieveSomeTransactions = function(ids, done) {
     checkTrans(ids, data.transactions);
 
     for (var i = 0; i < ids.length; i++) {
-      data.data[i].substring(0,
-          MESSAGE_INDEX.length).should.be.equal(MESSAGE_INDEX);
+      data.data[i].substring(0, MESSAGE_INDEX.length).should.be.equal(MESSAGE_INDEX);
     }
 
     done();
@@ -87,70 +71,48 @@ var retrieveSomeTransactions = function(ids, done) {
   });
 };
 
-var afterAll = function(rc, done) {
+var afterAll = function(done) {
 
-  var heads = {};
-  heads['accept'] = 'application/json';
-  var options = { port: PORT, host: HOST,
-    path: '/queue/' + QUEUE_NAME, method: 'GET',
-    headers: heads };
-
-  utils.makeRequest(options, null, function(error, response, data) {
+  utils.getQueueState(QUEUE_NAME, function(error, response, data) {
     //Test that pop date hasn't be modified
     should.not.exist(data.lastPop);
     //Test that the queue has the 5 transactions
     data.should.have.property('size', N_TRANS);
 
     //Clean BBDD
-    rc.flushall(function(res) {
-      rc.end();
-
-      //Test completed
-      done();
-    });
+    utils.cleanBBDD(done);
   });
 };
 
 describe('Peek from High Priority Queue', function() {
 
   var ids = new Array(N_TRANS);
-  var rc;
 
   before(function(done) {
 
-    var completed = 0;
-    rc = require('redis').createClient(6379, 'localhost');
+    utils.cleanBBDD(function(){
+      var completed = 0;
 
-    for (var i = 0; i < N_TRANS; i++) {
-      var trans = {
-        'payload': MESSAGE_INDEX + i,
-        'priority': 'H',
-        'queue': [
-          { 'id': QUEUE_NAME }
-        ]
-      };
+      for (var i = 0; i < N_TRANS; i++) {
 
-      var heads = {};
-      heads['content-type'] = 'application/json';
-      var options = { port: PORT, host: HOST, path: '/trans', method: 'POST',
-        headers: heads};
+        var trans = utils.createTransaction(MESSAGE_INDEX + i, 'H', [{ 'id': QUEUE_NAME }]);
+        utils.pushTransaction(trans, function(err, response, data) {
 
-      utils.makeRequest(options, trans, function(err, response, data) {
+          should.not.exist(err);
+          data.should.have.property('data');
+          ids[completed] = data.data;
+          completed++;
 
-        should.not.exist(err);
-        data.should.have.property('data');
-        ids[completed] = data.data;
-        completed++;
-
-        if (completed == N_TRANS) {
-          done();
-        }
-      });
-    }
+          if (completed == N_TRANS) {
+            done();
+          }
+        });
+      }
+    });
   });
 
   after(function(done) {
-    afterAll(rc, done);
+    afterAll(done);
   });
 
   it('Should retrieve all the messages and trans' +
@@ -172,42 +134,31 @@ describe('Peek from High Priority Queue', function() {
 describe('Peek from Low Priority Queue', function() {
 
   var ids = new Array(N_TRANS);
-  var rc;
 
   before(function(done) {
 
-    var completed = 0;
-    rc = require('redis').createClient(6379, 'localhost');
+    utils.cleanBBDD(function() {
+      var completed = 0;
 
-    for (var i = 0; i < N_TRANS; i++) {
-      var trans = {
-        'payload': MESSAGE_INDEX + i,
-        'priority': 'L',
-        'queue': [
-          { 'id': QUEUE_NAME }
-        ]
-      };
+      for (var i = 0; i < N_TRANS; i++) {
 
-      var heads = {};
-      heads['content-type'] = 'application/json';
-      var options = { port: PORT, host: HOST, path: '/trans', method: 'POST',
-        headers: heads};
+        var trans = utils.createTransaction(MESSAGE_INDEX + i, 'L', [{ 'id': QUEUE_NAME }]);
+        utils.pushTransaction(trans, function(err, response, data) {
 
-      utils.makeRequest(options, trans, function(err, response, data) {
+          data.should.have.property('data');
+          ids[completed] = data.data;
+          completed++;
 
-        data.should.have.property('data');
-        ids[completed] = data.data;
-        completed++;
-
-        if (completed == N_TRANS) {
-          done();
-        }
-      });
-    }
+          if (completed == N_TRANS) {
+            done();
+          }
+        });
+      }
+    });
   });
 
   after(function(done) {
-    afterAll(rc, done);
+    afterAll(done);
   });
 
   it('Should retrieve all the messages and trans' +
@@ -231,70 +182,41 @@ describe('Peek from High and Low Priority Queue', function() {
   var ids = [];
   var idsH = [];
   var idsL = [];
-  var rc;
 
   before(function(done) {
 
-    var completed = 0;
-    rc = require('redis').createClient(6379, 'localhost');
+    utils.cleanBBDD(function() {
 
-    for (var i = 0; i < N_TRANS; i++) {
-      var trans = {
-        'payload': MESSAGE_INDEX + i,
-        'priority': (i % 2 === 0) ? 'H' : 'L',
-        'queue': [
-          { 'id': QUEUE_NAME }
-        ]
-      };
+      var pushTransFuncs = [];
 
-      var heads = {};
-      heads['content-type'] = 'application/json';
-      var options = { port: PORT, host: HOST, path: '/trans', method: 'POST',
-        headers: heads};
+      var pushTrans = function(trans, cb) {
+        utils.pushTransaction(trans, function(err, response, data) {
 
-      utils.makeRequest(options, trans, function(i, err, response, data) {
+          data.should.have.property('data');
+          ids.push(data.data);
 
-        data.should.have.property('data');
-        ids.push(data.data);
+          if (trans.priority === 'H') {
+            idsH.push(data.data);
+          } else {
+            idsL.push(data.data);
+          }
 
-        if (i % 2 === 0) {
-          idsH.push(data.data);
-        } else {
-          idsL.push(data.data);
-        }
+          cb();
 
-        completed++;
+        })
+      }
 
-        if (completed == N_TRANS) {
-          done();
-        }
-      }.bind({}, i));
-    }
+      for (var i = 0; i < N_TRANS; i++) {
+        var trans = utils.createTransaction(MESSAGE_INDEX + i, (i % 2 === 0) ? 'H' : 'L', [{ 'id': QUEUE_NAME }]);
+        pushTransFuncs.push(pushTrans.bind({}, trans));
+      }
+
+      async.series(pushTransFuncs, done);
+    });
   });
 
   after(function(done) {
-
-    var heads = {};
-    heads['accept'] = 'application/json';
-    var options = { port: PORT, host: HOST,
-      path: '/queue/' + QUEUE_NAME, method: 'GET',
-      headers: heads };
-
-    utils.makeRequest(options, null, function(error, response, data) {
-      //Test that pop date hasn't be modified
-      should.not.exist(data.lastPop);
-      //Test that the queue has the 5 transactions
-      data.should.have.property('size', N_TRANS);
-
-      //Clean BBDD
-      rc.flushall(function(res) {
-        rc.end();
-
-        //Test completed
-        done();
-      });
-    });
-
+    afterAll(done);
   });
 
   it('Should retrieve all the messages and trans' +
@@ -306,13 +228,7 @@ describe('Peek from High and Low Priority Queue', function() {
 
     var N_PETS = 3;
 
-    var heads = {};
-    heads['accept'] = 'application/json';
-    var options = { port: PORT, host: HOST,
-      path: '/queue/' + QUEUE_NAME + '/peek?max=' + N_PETS, method: 'GET',
-      headers: heads };
-
-    utils.makeRequest(options, null, function(error, response, data) {
+    utils.peek(QUEUE_NAME, N_PETS, function(error, response, data) {
       response.statusCode.should.be.equal(200);
 
       data.should.have.property('data');
@@ -334,13 +250,7 @@ describe('Peek from High and Low Priority Queue', function() {
 
     var N_PETS = 4;
 
-    var heads = {};
-    heads['accept'] = 'application/json';
-    var options = { port: PORT, host: HOST,
-      path: '/queue/' + QUEUE_NAME + '/peek?max=' + N_PETS, method: 'GET',
-      headers: heads };
-
-    utils.makeRequest(options, null, function(error, response, data) {
+    utils.peek(QUEUE_NAME, N_PETS, function(error, response, data) {
       response.statusCode.should.be.equal(200);
 
       data.should.have.property('data');
@@ -369,13 +279,7 @@ describe('Peek from High and Low Priority Queue', function() {
 
     var N_PETS = 8;
 
-    var heads = {};
-    heads['accept'] = 'application/json';
-    var options = { port: PORT, host: HOST,
-      path: '/queue/' + QUEUE_NAME + '/peek?max=' + N_PETS, method: 'GET',
-      header: heads };
-
-    utils.makeRequest(options, null, function(error, response, data) {
+    utils.peek(QUEUE_NAME, N_PETS, function(error, response, data) {
       response.statusCode.should.be.equal(200);
 
       data.should.have.property('data');
@@ -396,15 +300,16 @@ describe('Peek from High and Low Priority Queue', function() {
 
 describe('Peek from an empty queue', function() {
 
+  before(function(done) {
+    utils.cleanBBDD(done);
+  });
+
   it('Should return an empty response immediately ' +
       'when the queue is empty', function(done) {
 
     this.timeout(1000);
 
-    var options = { port: PORT, host: HOST,
-      path: '/queue/' + QUEUE_NAME + '/peek', method: 'GET'};
-
-    utils.makeRequest(options, null, function(error, response, data) {
+    utils.peek(QUEUE_NAME, function(error, response, data) {
       response.statusCode.should.be.equal(200);
       data.should.have.property('data');
       data.data.length.should.be.equal(0);

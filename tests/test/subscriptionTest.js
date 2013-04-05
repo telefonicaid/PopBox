@@ -1,93 +1,27 @@
 var should = require('should');
 var http = require('http');
-var config = require('./config.js');
 var utils = require('./utils.js');
-var redis = require('redis'),
-    rc = redis.createClient(6379, 'localhost');
-
-var HOST = config.hostname;
-var PORT = config.port;
 
 describe('Subscription Test', function() {
 
   var sendRequest = function(queue, message, cb) {
-    //Insert transaction
-    var heads = {};
-    heads['content-type'] = 'application/json';
-    heads['accept'] = 'application/json';
-    var options = { host: config.hostname, port: config.port,
-      path: '/trans', method: 'POST', headers: heads};
+    'use strict';
 
-    var transaction = {
-      'payload': message,
-      'priority': 'H',
-      'queue': [
-        { 'id': queue }
-      ],
-      'expirationDate': 1990880820
-    };
+    var transaction = utils.createTransaction(message, 'H', [{'id': queue}]);
+    utils.pushTransaction(transaction, function(error, response, data) {
 
-    utils.makeRequest(options, transaction, function(error, response, data) {
-
-      response.statusCode.should.be.equal(200);
       should.not.exist(error);
+      response.statusCode.should.be.equal(200);
 
       cb(error, data.data);
     });
 
   };
 
-  var subscribe = function(nPets, queue, cb) {
-
-    var optionsSubscribe = {
-      port: PORT,
-      host: HOST,
-      path: '/queue/' + queue + '/subscribe',
-      method: 'POST',
-      headers: {
-        'Connection':'keep-alive'
-      }
-    };
-
-    var req = http.request(optionsSubscribe, function(res) {
-
-      var counter = 0;
-      res.setEncoding('utf8');
-      var messages = [];
-
-      res.on('data', function(chunk) {
-
-        counter++;
-        messages.push(JSON.parse(String(chunk)));
-
-        if (counter === nPets) {
-          cb(null, messages);
-        }
-      });
-
-      res.on('end', function() {
-
-      });
-    });
-
-    req.end();
-
-    return req;
-  };
-
   function checkState(id, payload, queueID, expectedState, cb) {
+    'use strict';
 
-    var options = {
-      port: PORT,
-      host: HOST,
-      path: '/trans/' + id + '?queues=' + expectedState,
-      method: 'GET',
-      headers: {
-        'Accept':'application/json'
-      }
-    };
-
-    utils.makeRequest(options, '', function(error, response, data) {
+    utils.getTransState(id, expectedState, function(error, response, data) {
 
       should.not.exist(error);
       response.statusCode.should.be.equal(200);
@@ -107,16 +41,11 @@ describe('Subscription Test', function() {
   };
 
   beforeEach(function(done) {
-    rc.flushall(function(res) {
-      done();
-    });
+    utils.cleanBBDD(done);
   });
 
   after(function(done) {
-    rc.flushall(function(res) {
-      rc.end();
-      done();
-    })
+    utils.cleanBBDD(done);
   });
 
   it('Should receive all transaction in less than two seconds', function(done) {
@@ -127,7 +56,7 @@ describe('Subscription Test', function() {
         transactionIDList = [];
 
     //Subscribe to the queue
-    var req = subscribe(N_PETS, QUEUE_ID, function(err, messages) {
+    utils.subscribe(N_PETS, QUEUE_ID, function(err, messages) {
 
       var interval;
 
@@ -161,8 +90,6 @@ describe('Subscription Test', function() {
       }
 
       interval = setInterval(testTransactionList, 1);
-
-      req.abort();
     });
 
 
@@ -182,16 +109,13 @@ describe('Subscription Test', function() {
         transactionID, transactionIDPending;
 
     //Subscribe to the queue
-    var req = subscribe(1, QUEUE_ID, function(err, messages) {
+    utils.subscribe(1, QUEUE_ID, function(err, messages) {
 
       should.not.exist(err);
 
       var message = messages[0];
       message.should.have.property('data', MESSAGE);
       message.should.have.property('transaction', transactionID);
-
-      //Close the connection
-      req.abort();
 
       //Insert a new transaction
       sendRequest(QUEUE_ID, MESSAGE_PENDING, function(err, data) {
@@ -202,7 +126,7 @@ describe('Subscription Test', function() {
         //Timeout is needed because transaction needs to be repushed into the queue
         setTimeout(function() {
           checkState(transactionIDPending, MESSAGE_PENDING, QUEUE_ID, 'Pending', function() {
-            req = subscribe(1, QUEUE_ID, function(err, messages) {
+            utils.subscribe(1, QUEUE_ID, function(err, messages) {
               should.not.exist(err);
 
               var message = messages[0];
@@ -210,7 +134,6 @@ describe('Subscription Test', function() {
               message.should.have.property('transaction', transactionIDPending);
 
               checkState(transactionIDPending, MESSAGE_PENDING, QUEUE_ID, 'Delivered', function() {
-                req.abort();
                 done();
               });
             });
@@ -223,9 +146,5 @@ describe('Subscription Test', function() {
     sendRequest(QUEUE_ID, MESSAGE, function(err, data) {
       transactionID = data;
     });
-
-
   });
-
-
 });

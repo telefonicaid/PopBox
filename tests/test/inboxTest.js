@@ -1,200 +1,117 @@
 var should = require('should');
 var async = require('async');
-var config = require('./config.js');
 var utils = require('./utils');
-var redis = require('redis'), rc = redis.createClient(6379, 'localhost');
-
-var HOST = config.hostname;
-var PORT = config.port;
-
-var trans, trans1 = {};
 
 describe('Inbox', function() {
 
-  after(function(done) {
-    this.timeout(8000);
-
-    rc.flushall(function(res) {
-      rc.end();
-      done();
+  var insertTrans = function(trans, cb) {
+    utils.pushTransaction(trans, function(error, response, data) {
+      response.statusCode.should.be.equal(200);
+      cb();
     });
-  });
+  }
 
   beforeEach(function(done) {
-    this.timeout(8000);
+    utils.cleanBBDD(done);
+  });
 
-    rc.flushall(function(res) {
-      done();
-    });
+  after(function(done) {
+    utils.cleanBBDD(done);
   });
 
 
   it('Should return all the transactions', function(done) {
-    this.timeout(8000); //Mocha timeout
 
-    var trans = {
-      'payload': 'Test',
-      'priority': 'H',
-      'callback': 'http' + '://foo.bar',
-      'queue': [
-        { 'id': 'q1' },
-        { 'id': 'q2' }
-      ]
+    var MESSAGE_INDEX = 'Test ',
+        N_TRANS = 2,
+        QUEUES =  [ { 'id': 'q1' }, { 'id': 'q2' }],
+        insertTransFuncs = [], popQueueAndTestFuncs = [];
+
+    var popQueueAndTest = function(queue, cb) {
+      utils.pop(queue, function(error, response, data) {
+
+        should.not.exist(error);
+
+        data.should.not.have.property('error');
+        data.should.have.property('ok');
+        data.should.have.property('data');
+        data.data.length.should.be.equal(N_TRANS);
+
+        for (var i = 0; i < N_TRANS; i++) {
+          data.data.should.include(MESSAGE_INDEX + i);
+        }
+
+        cb();
+      });
     };
 
-    async.series([
-      function(callback) {
+    for (var i = 0; i < N_TRANS; i++) {
+      var trans = utils.createTransaction(MESSAGE_INDEX + i, 'H', QUEUES);
+      insertTransFuncs.push(insertTrans.bind({}, trans));
+    }
 
-        var heads = {};
-        heads['content-type'] = 'application/json';
-        var options = { host: HOST, port: PORT,
-          path: '/trans/', method: 'POST', headers: heads};
-        utils.makeRequest(options, trans, function(error, response, data) {
-          callback();
-        });
+    for (var i = 0; i < QUEUES.length; i++) {
+      popQueueAndTestFuncs.push(popQueueAndTest.bind({}, QUEUES[i].id))
+    }
 
-      },
-
-      function(callback) {
-
-        trans.payload = 'Test 2';
-
-        var heads = {};
-        heads['content-type'] = 'application/json';
-        var options = { host: HOST, port: PORT,
-          path: '/trans/', method: 'POST', headers: heads};
-        utils.makeRequest(options, trans, function(error, response, data) {
-          callback();
-        });
-
-      },
-
-      function(callback) {
-
-        var checkQueue = function(queue, callback) {
-
-          var heads = {};
-          heads['accept'] = 'application/json';
-          var options = { host: HOST, port: PORT,
-            path: '/queue/' + queue + '/pop', method: 'POST',
-            headers: heads};
-          utils.makeRequest(options, '', function(error, response, data) {
-            should.not.exist(error);
-
-            data.should.not.have.property('error');
-            data.should.have.property('ok');
-            data.should.have.property('data');
-            data.data.length.should.be.equal(2);
-            data.data.should.include('Test');
-            data.data.should.include('Test 2');
-
-            callback();
-          });
-        };
-
-        checkQueue('q1', checkQueue.bind({}, 'q2', callback));
-      }
-    ],
-
+    //Insert two transactions in the queues
+    async.series(insertTransFuncs,
         function() {
-          done();
+          //Pop queues once the transactions have been pushed. Queues are tested to have the correct content
+          async.parallel(popQueueAndTestFuncs, done);
         });
   });
 
   it('Should return the high priority transaction', function(done) {
 
-    var transLow = {
-      'payload': 'Low priority',
-      'priority': 'L',
-      'callback': 'http' + '://foo.bar',
-      'queue': [
-        { 'id': 'q1' },
-        { 'id': 'q2' }
-      ]
-    };
+    var QUEUE =  { 'id': 'q1' }, insertTransFuncs = [];
 
-    var transHigh = {
-      'payload': 'High priority',
-      'priority': 'H',
-      'callback': 'http' + '://foo.bar',
-      'queue': [
-        { 'id': 'q1' }
-      ]
-    };
+    var transLow = utils.createTransaction('Low Priority', 'L', [ QUEUE ]);
+    var transHigh = utils.createTransaction('High Priority', 'H', [ QUEUE ]);
 
-    async.series([
-      function(callback) {
-        var heads = {};
-        heads['content-type'] = 'application/json';
-        var options = { host: HOST, port: PORT,
-          path: '/trans/', method: 'POST', headers: heads};
-        utils.makeRequest(options, transLow, function(error, response, data) {
-          callback();
-        });
-      },
+    insertTransFuncs.push(insertTrans.bind({}, transLow));
+    insertTransFuncs.push(insertTrans.bind({}, transHigh));
 
-      function(callback) {
-        var heads = {};
-        heads['content-type'] = 'application/json';
-        var options = { host: HOST, port: PORT,
-          path: '/trans/', method: 'POST', headers: heads};
-        utils.makeRequest(options, transHigh, function(error, response, data) {
-          callback();
-        });
-      },
+    async.parallel(insertTransFuncs,
 
-      function(callback) {
-
-        var heads = {};
-        heads['accept'] = 'application/json';
-        var options = { host: HOST, port: PORT,
-          path: '/queue/q1/pop?max=1', method: 'POST', headers: heads};
-        utils.makeRequest(options, '', function(error, response, data) {
+      function() {
+        utils.pop(QUEUE.id, 1, function(error, response, data) {
           should.not.exist(error);
 
           data.should.not.have.property('error');
           data.should.have.property('ok');
           data.should.have.property('data');
           data.data.length.should.be.equal(1);
-          (data.data.pop()).should.be.equal('High priority');
+          (data.data.pop()).should.be.equal('High Priority');
 
-          callback();
-        });
-      }
-    ],
-
-        function() {
           done();
         });
+      });
   });
 
-  it('Should return empty data (timeout)', function(done) {
-    this.timeout(8000); //Mocha timeout
+  var testTimeOut = function(timeToInsert, timeToWait, done) {
+    'use strict';
 
-    var trans5 = {
-      'payload': 'Test timeout',
-      'priority': 'L',
-      'callback': 'http' + '://foo.bar',
-      'queue': [
-        { 'id': 'q1' }
-      ]
-    };
+    var MESSAGE = 'Test timeout';
+    var QUEUE =  { 'id': 'q1' }
+    var trans = utils.createTransaction('Test timeout', 'L', [ QUEUE ]);
 
-    var funcs = [
+    async.parallel([
+
       function(cb) {
+        utils.popTimeout(QUEUE.id, timeToWait, function(error, response, data) {
 
-        var heads = {};
-        heads['accept'] = 'application/json';
-        var options = { host: HOST, port: PORT,
-          path: '/queue/q1/pop?timeout=1', method: 'POST',
-          headers: heads};
-        utils.makeRequest(options, '', function(error, response, data) {
           should.not.exist(error);
-
           data.should.not.have.property('error');
           data.should.have.property('ok');
           data.should.have.property('data');
-          data.data.length.should.be.equal(0);
+
+          if (timeToWait <= timeToInsert) {
+            data.data.length.should.be.equal(0);
+          } else {
+            data.data.length.should.be.equal(1);
+            data.data.should.include(MESSAGE);
+          }
 
           cb();
         });
@@ -202,81 +119,19 @@ describe('Inbox', function() {
 
       function(cb) {
         setTimeout(function() {
-
-          var heads = {};
-          heads['content-type'] = 'application/json';
-          var options = { host: HOST, port: PORT,
-            path: '/trans/', method: 'POST', headers: heads};
-          utils.makeRequest(options, trans5, function(error, response, data) {
-            cb();
-          });
-
-        }, 2000);
-
+          insertTrans(trans, cb);
+        }, timeToInsert * 1000);
       }
-    ];
+    ], done);
+  };
 
-    var cb = function() {
-      done();
-    };
-
-    async.parallel(funcs, cb);
+  it('Should return empty data (timeout)', function(done) {
+    this.timeout(5000); //Mocha timeout
+    testTimeOut(3, 1, done);
   });
 
   it('Should not return empty data (timeout)', function(done) {
-    this.timeout(8000); //Mocha timeout
-
-    var trans6 = {
-      'payload': 'Test timeout - NOT empty data',
-      'priority': 'L',
-      'callback': 'http' + '://foo.bar',
-      'queue': [
-        { 'id': 'q1' }
-      ]
-    };
-
-    var funcs = [
-      function(cb) {
-
-        var heads = {};
-        heads['accept'] = 'application/json';
-        var options = { host: HOST, port: PORT,
-          path: '/queue/q1/pop?timeout=3', method: 'POST',
-          headers: heads};
-
-        utils.makeRequest(options, '', function(error, response, data) {
-          should.not.exist(error);
-
-          data.should.not.have.property('error');
-          data.should.have.property('ok');
-          data.should.have.property('data');
-          data.data.length.should.be.equal(1);
-          data.data.should.include('Test timeout - NOT empty data');
-
-          cb();
-        });
-      },
-
-      function(cb) {
-        setTimeout(function() {
-
-          var heads = {};
-          heads['content-type'] = 'application/json';
-          var options = { host: HOST, port: PORT,
-            path: '/trans/', method: 'POST', headers: heads};
-          utils.makeRequest(options, trans6, function(error, response, data) {
-            cb();
-          });
-        }, 1000);
-      }
-    ];
-
-    var cb = function() {
-      done();
-    };
-
-    async.parallel(funcs, cb);
+    this.timeout(5000); //Mocha timeout
+    testTimeOut(1, 3, done);
   });
-
-
 });
