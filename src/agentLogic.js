@@ -377,16 +377,16 @@ function popQueue(req, res) {
     //stablish the timeout depending on blocking time
 
     if (err) {
-      ev = {
-        'queue': queueId,
-        'max_msg': maxMsgs,
-        'action': 'USERPOP',
-        'timestamp': new Date(),
-        'error': err
-      };
-      emitter.emit('ACTION', ev);
-      logger.info('popQueue', [String(err), 500, req.info]);
       if (!clientClosed) {
+        ev = {
+          'queue': queueId,
+          'max_msg': maxMsgs,
+          'action': 'USERPOP',
+          'timestamp': new Date(),
+          'error': err
+        };
+        emitter.emit('ACTION', ev);
+        logger.info('popQueue', [String(err), 500, req.info]);
         res.send({errors: [String(err)]}, 500);
       }
     } else {
@@ -401,22 +401,25 @@ function popQueue(req, res) {
           return notif && notif.priority;
         });
       }
-      ev = {
-        'queue': queueId,
-        'max_msg': maxMsgs,
-        'total_msg': messageList.length,
-        'action': 'USERPOP',
-        'timestamp': new Date()
-      };
-      emitter.emit('ACTION', ev);
-      logger.info('popQueue', [
-        {ok: true, data: messageList, transactions: transactionIdList},
-        req.info
-      ]);
-      if (!clientClosed) {
+
+      if(!clientClosed) {
+        ev = {
+          'queue': queueId,
+          'max_msg': maxMsgs,
+          'total_msg': messageList.length,
+          'action': 'USERPOP',
+          'timestamp': new Date()
+        };
+        emitter.emit('ACTION', ev);
+        logger.info('popQueue', [
+          {ok: true, data: messageList, transactions: transactionIdList},
+          req.info
+        ]);
         res.send({ok: true, data: messageList, transactions: transactionIdList});
       } else {
         //Reinsert transaction into the queue if the connection was closed
+        logger.info('popQueue - repushTrans', {queue: queueId,  transactions: transactionIdList,
+          priorities: priorities});
         for (var i = 0; i < transactionIdList.length; i++) {
           dataSrv.repushUndeliveredTransaction(appPrefix, {id: queueId}, priorities[i], transactionIdList[i]);
         }
@@ -496,18 +499,19 @@ function subscribeQueue(req, res) {
 
           if (err) {
 
-            ev = {
-              'queue': queueId,
-              'max_msg': maxMsgs,
-              'action': 'USERPOP',
-              'timestamp': new Date(),
-              'error': err
-            };
-
-            emitter.emit('ACTION', ev);
-            logger.info('subscribeQueue', [String(err), req.info]);
-
             if (!clientClosed) {
+
+              ev = {
+                'queue': queueId,
+                'max_msg': maxMsgs,
+                'action': 'USERPOP',
+                'timestamp': new Date(),
+                'error': err
+              };
+
+              emitter.emit('ACTION', ev);
+              logger.info('subscribeQueue', [String(err), req.info]);
+
               res.write(JSON.stringify({errors: [String(err)]}));
             }
 
@@ -518,24 +522,26 @@ function subscribeQueue(req, res) {
             transactionId = notifList[0].extTransactionId;
             priority = notifList[0].priority;
 
-            ev = {
-              'queue': queueId,
-              'max_msg': maxMsgs,
-              'total_msg': 1,
-              'action': 'USERPOP',
-              'timestamp': new Date()
-            };
-
-            emitter.emit('ACTION', ev);
-            logger.info('subscribeQueue', [
-              {ok: true, data: message, transaction: transactionId},
-              req.info
-            ]);
-
             if (!clientClosed) {
+
+              ev = {
+                'queue': queueId,
+                'max_msg': maxMsgs,
+                'total_msg': 1,
+                'action': 'USERPOP',
+                'timestamp': new Date()
+              };
+
+              emitter.emit('ACTION', ev);
+              logger.info('subscribeQueue', [
+                {ok: true, data: message, transaction: transactionId},
+                req.info
+              ]);
+
               res.write(JSON.stringify({ok: true, data: message, transaction: transactionId}));
             } else {
               //Reinsert transaction into the queue if the connection was closed
+              logger.info('popQueue - repushTrans', {queue: queueId,  transaction: transactionId, priority: priority});
               dataSrv.repushUndeliveredTransaction(appPrefix, {id: queueId}, priority, transactionId);
             }
           }

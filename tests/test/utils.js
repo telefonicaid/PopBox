@@ -80,6 +80,8 @@ var makeRequest = function(options, content, cb) {
   }
 
   req.end();
+
+  return req;
 };
 
 var popBoxRequest = function(method, path, content, cb) {
@@ -96,7 +98,7 @@ var popBoxRequest = function(method, path, content, cb) {
     }
   };
 
-  makeRequest(options, content, cb);
+  return makeRequest(options, content, cb);
 };
 
 var pushTransaction = function(trans, cb) {
@@ -156,7 +158,7 @@ var popTimeout = function(queueID, timeout, cb) {
     path += '?timeout=' + timeout;
   }
 
-  popBoxRequest('POST', path, '', cb);
+  return popBoxRequest('POST', path, '', cb);
 };
 
 var peek = function(queueID, nPets, cb) {

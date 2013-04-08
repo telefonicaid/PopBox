@@ -45,10 +45,7 @@ describe('Bugs', function() {
             callback();
           });
         }
-    ],
-        function() {
-          done();
-        });
+    ], done);
 
   });
 
@@ -85,10 +82,7 @@ describe('Bugs', function() {
         checkState,
         modifyTrans.bind({}, {payload: 'hello'}),
         checkState
-      ],
-        function() {
-          done();
-        });
+      ], done);
   });
 
   it('Invalid Content-Type creating a transaction', function(done) {

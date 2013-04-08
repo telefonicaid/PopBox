@@ -45,11 +45,7 @@ describe('PUT', function() {
           callback();
         });
       }
-    ],
-
-        function() {
-          done();
-        });
+    ], done);
   }
 
   beforeEach(function(done) {

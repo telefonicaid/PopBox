@@ -8,15 +8,14 @@ describe('Invalid Data in JSON', function() {
   it('Callback should be called', function(done) {
 
     var id;
-    var PORT_CALLBACK = 54218;
-    var CALLBACK = 'http://localhost:' + PORT_CALLBACK;
+    var CALLBACK_PORT = 54218;
+    var CALLBACK = 'http://localhost:' + CALLBACK_PORT;
     var PAYLOAD = 'TEST MESSAGE';
     var QUEUES = ['q1', 'q2'];
     var EXP_DATE = Math.round(new Date().getTime() / 1000 + 60);
     var receivedPetitions = 0;
 
     var trans = utils.createTransaction(PAYLOAD, 'H', [ { 'id': QUEUES[0] },{ 'id': QUEUES[1] } ], EXP_DATE, CALLBACK);
-
 
     var insertAndPop = function() {
       utils.pushTransaction(trans, function(error, response, data) {
@@ -67,6 +66,6 @@ describe('Invalid Data in JSON', function() {
           done();
         }
       });
-    }).listen(PORT_CALLBACK, insertAndPop);
+    }).listen(CALLBACK_PORT, insertAndPop);
   });
 });

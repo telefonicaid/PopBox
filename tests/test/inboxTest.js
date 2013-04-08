@@ -1,13 +1,18 @@
 var should = require('should');
 var async = require('async');
+var http = require('http');
 var utils = require('./utils');
 
 describe('Inbox', function() {
 
   var insertTrans = function(trans, cb) {
     utils.pushTransaction(trans, function(error, response, data) {
+
+      should.not.exist(error);
       response.statusCode.should.be.equal(200);
-      cb();
+      data.should.have.property('data');
+
+      cb(error, data.data);
     });
   }
 
@@ -89,6 +94,46 @@ describe('Inbox', function() {
       });
   });
 
+  it('Transaction should be popped on the second pop', function(done) {
+    this.timeout(5000);
+
+    var QUEUE =  { 'id': 'q1' };
+    var MESSAGE = 'LOW PRIORITY MESSAGE!';
+    var trans = utils.createTransaction(MESSAGE, 'L', [ QUEUE ]);
+
+    //Pop queue q0
+    var req = utils.popTimeout(QUEUE.id, 2000, function() { });
+
+    //Timeout is required to ensure that the petition is received by PopBox
+    setTimeout(function() {
+      //Cancel petition
+      req.abort();
+
+      //Insert the transaction when pop finish
+      insertTrans(trans, function(err, id) {
+
+        utils.popTimeout(QUEUE.id, 1, function(error2P, response2P, data2P) {
+
+          should.not.exist(error2P);
+
+          data2P.should.not.have.property('error');
+          data2P.should.have.property('ok');
+          data2P.should.have.property('data');
+          data2P.data.length.should.be.equal(1);
+          data2P.should.have.property('transactions');
+          data2P.transactions.length.should.be.equal(1);
+
+          data2P.data.should.include(MESSAGE);
+          data2P.transactions.should.include(id);
+
+          done();
+        });
+      });
+
+    }, 500);
+
+  });
+
   var testTimeOut = function(timeToInsert, timeToWait, done) {
     'use strict';
 
@@ -134,4 +179,5 @@ describe('Inbox', function() {
     this.timeout(5000); //Mocha timeout
     testTimeOut(1, 3, done);
   });
+
 });

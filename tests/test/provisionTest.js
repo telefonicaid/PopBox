@@ -1,5 +1,4 @@
 var should = require('should');
-var async = require('async');
 var config = require('./config.js');
 var utils = require('./utils.js');
 
