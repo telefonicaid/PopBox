@@ -15,6 +15,13 @@ Connect once and receive streamed notification messages
 Scalability has been taken into account from the very beginning (not dynamic yet, but soon)
 ####New add-ons may be included in order to suit any client need
 For example invoke an external accounting system every time a mesage is consumed
+
+**PopBox has been developed using:**
+
+[![WebStorm](http://www.jetbrains.com/webstorm/documentation/webstorm_banners/webstorm1/webstorm210x60_white.gif)](http://www.jetbrains.com/webstorm/)
+
+Ask us for your OpenSource License
+
 ### Dependencies:
     Requires node.js 
         npm install package.json to install node modules dependencies
