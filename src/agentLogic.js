@@ -35,6 +35,7 @@ function postTrans(req, res) {
 
   var errors = [];
   var ev = {};
+  var pendingEv = {};
   var prefix = req.prefix;
 
   if (!req.headers['content-type'] || req.headers['content-type'] !== 'application/json') {
@@ -71,6 +72,20 @@ function postTrans(req, res) {
           'timestamp': new Date()
         };
         emitter.emit('ACTION', ev);
+
+        //Emmit pending event
+        var queues = req.body.queue;
+        for (var i = 0; i < queues.length; i += 1) {
+          pendingEv = {
+            'transaction': transId,
+            'queue': queues[i].id,
+            'state': 'Pending',
+            'timestamp': new Date()
+          };
+          emitter.emit('NEWSTATE', pendingEv);
+        }
+
+        //Send response
         res.send({ok: true, data: transId});
         logger.info('postTrans', [
           {id: transId} ,
@@ -338,6 +353,37 @@ function getQueue(req, res) {
   });
 }
 
+function emmitDeliveredExpiredEvent(queueID, notifList) {
+
+  if (notifList) {
+    for (var i = 0; i < notifList.length; i++) {
+
+      var notif = notifList[i];
+      var ev = {};
+
+      if (!notif.payload) {
+        ev = {
+          'transaction': notif.extTransactionId,
+          'queue': queueID,
+          'state': 'Expired',
+          'timestamp': new Date()
+        };
+      } else {
+        //EMIT Delivered
+        ev = {
+          'transaction': notif.extTransactionId,
+          'queue': queueID,
+          'state': 'Delivered',
+          'callback': notif.callback,
+          'timestamp': new Date()
+        };
+      }
+
+      emitter.emit('NEWSTATE', ev);
+    }
+  }
+}
+
 function popQueue(req, res) {
   'use strict';
   var queueId = req.param('id');
@@ -403,6 +449,11 @@ function popQueue(req, res) {
       }
 
       if(!clientClosed) {
+
+        //Emmit Delivered or Expired
+        emmitDeliveredExpiredEvent(queueId, notifList);
+
+        //Emmit Action
         ev = {
           'queue': queueId,
           'max_msg': maxMsgs,
@@ -411,11 +462,14 @@ function popQueue(req, res) {
           'timestamp': new Date()
         };
         emitter.emit('ACTION', ev);
+
+        //Send response
         logger.info('popQueue', [
           {ok: true, data: messageList, transactions: transactionIdList},
           req.info
         ]);
         res.send({ok: true, data: messageList, transactions: transactionIdList});
+
       } else {
         //Reinsert transaction into the queue if the connection was closed
         logger.info('popQueue - repushTrans', {queue: queueId,  transactions: transactionIdList,
@@ -524,6 +578,10 @@ function subscribeQueue(req, res) {
 
             if (!clientClosed) {
 
+              //Emmit Delivered or Expired
+              emmitDeliveredExpiredEvent(queueId, notifList);
+
+              //Emmit Action
               ev = {
                 'queue': queueId,
                 'max_msg': maxMsgs,
@@ -533,6 +591,8 @@ function subscribeQueue(req, res) {
               };
 
               emitter.emit('ACTION', ev);
+
+              //Write new message
               logger.info('subscribeQueue', [
                 {ok: true, data: message, transaction: transactionId},
                 req.info
@@ -541,7 +601,7 @@ function subscribeQueue(req, res) {
               res.write(JSON.stringify({ok: true, data: message, transaction: transactionId}));
             } else {
               //Reinsert transaction into the queue if the connection was closed
-              logger.info('popQueue - repushTrans', {queue: queueId,  transaction: transactionId, priority: priority});
+              logger.info('subscribeQueue - repushTrans', {queue: queueId,  transaction: transactionId, priority: priority});
               dataSrv.repushUndeliveredTransaction(appPrefix, {id: queueId}, priority, transactionId);
             }
           }

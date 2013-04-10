@@ -3,7 +3,7 @@ var async = require('async');
 var utils = require('./utils.js');
 
 var N_TRANS = 5;
-var QUEUE_NAME = 'TESTQUEUE';
+var QUEUE_NAME = 'peekQueue';
 var MESSAGE_INDEX = 'Message ';
 
 var checkTrans = function(ids, transactionsReceived) {
@@ -38,7 +38,7 @@ var retrieveAllTranstactions = function(ids, done) {
 
         data.should.have.property('queues');
         data.queues.should.have.property(QUEUE_NAME);
-        data.queues.TESTQUEUE.should.have.property('state', 'Pending');
+        data.queues[QUEUE_NAME].should.have.property('state', 'Pending');
 
         completed++;
         if (completed == N_TRANS) {
@@ -298,14 +298,13 @@ describe('Peek from High and Low Priority Queue', function() {
   });
 });
 
-describe('Peek from an empty queue', function() {
+describe('Peek - Generic tests', function() {
 
   before(function(done) {
     utils.cleanBBDD(done);
   });
 
-  it('Should return an empty response immediately ' +
-      'when the queue is empty', function(done) {
+  it('Should return an empty response immediately when the queue is empty', function(done) {
 
     this.timeout(1000);
 
@@ -315,6 +314,39 @@ describe('Peek from an empty queue', function() {
       data.data.length.should.be.equal(0);
 
       done();
+    });
+  });
+
+  it('Should return empty message - Transaction is expired', function(done) {
+
+    var QUEUE =  { 'id': 'q1' }, insertTransFuncs = [], id;
+    var trans = utils.createTransaction('Low Priority', 'L', [ QUEUE ]);
+    trans.expirationDate = Math.round(new Date().getTime() / 1000) - 5;
+
+    utils.pushTransaction(trans, function(error, response, data) {
+
+      should.not.exist(error);
+      response.statusCode.should.be.equal(200);
+      data.should.have.property('data');
+
+      id = data.data;
+
+      utils.peek(QUEUE.id, function(error, response, data) {
+
+        should.not.exist(error);
+        response.statusCode.should.be.equal(200);
+
+        data.should.have.property('transactions');
+        data.transactions.should.include(id);
+        data.transactions.length.should.be.equal(1);
+
+        data.should.have.property('data');
+        data.data.length.should.be.equal(1);
+
+        done();
+
+      });
+
     });
   });
 });

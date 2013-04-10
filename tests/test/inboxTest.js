@@ -94,6 +94,39 @@ describe('Inbox', function() {
       });
   });
 
+  it('Should return empty message - Transaction is expired', function(done) {
+
+    var QUEUE =  { 'id': 'q1' }, insertTransFuncs = [], id;
+    var trans = utils.createTransaction('Low Priority', 'L', [ QUEUE ]);
+    trans.expirationDate = Math.round(new Date().getTime() / 1000) - 5;
+
+    utils.pushTransaction(trans, function(error, response, data) {
+
+      should.not.exist(error);
+      response.statusCode.should.be.equal(200);
+      data.should.have.property('data');
+
+      id = data.data;
+
+      utils.pop(QUEUE.id, function(error, response, data) {
+
+        should.not.exist(error);
+        response.statusCode.should.be.equal(200);
+
+        data.should.have.property('transactions');
+        data.transactions.should.include(id);
+        data.transactions.length.should.be.equal(1);
+
+        data.should.have.property('data');
+        data.data.length.should.be.equal(1);
+
+        done();
+
+      });
+
+    });
+  });
+
   it('Transaction should be popped on the second pop', function(done) {
     this.timeout(5000);
 
@@ -131,7 +164,6 @@ describe('Inbox', function() {
       });
 
     }, 500);
-
   });
 
   var testTimeOut = function(timeToInsert, timeToWait, done) {

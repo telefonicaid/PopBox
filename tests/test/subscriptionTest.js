@@ -4,7 +4,7 @@ var utils = require('./utils.js');
 
 describe('Subscription Test', function() {
 
-  var sendRequest = function(queue, message, cb) {
+  var pushTransaction = function(queue, message, cb) {
     'use strict';
 
     var transaction = utils.createTransaction(message, 'H', [{'id': queue}]);
@@ -95,7 +95,7 @@ describe('Subscription Test', function() {
 
     //Insert transactions
     for (var i = 0; i < N_PETS; i++) {
-      sendRequest(QUEUE_ID, MESSAGE_PREFIX + i, function(err, data) {
+      pushTransaction(QUEUE_ID, MESSAGE_PREFIX + i, function(err, data) {
         transactionIDList.push(data);
       })
     }
@@ -118,7 +118,7 @@ describe('Subscription Test', function() {
       message.should.have.property('transaction', transactionID);
 
       //Insert a new transaction
-      sendRequest(QUEUE_ID, MESSAGE_PENDING, function(err, data) {
+      pushTransaction(QUEUE_ID, MESSAGE_PENDING, function(err, data) {
 
         transactionIDPending = data;
 
@@ -143,7 +143,7 @@ describe('Subscription Test', function() {
     });
 
     //Insert transaction
-    sendRequest(QUEUE_ID, MESSAGE, function(err, data) {
+    pushTransaction(QUEUE_ID, MESSAGE, function(err, data) {
       transactionID = data;
     });
   });
