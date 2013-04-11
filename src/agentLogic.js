@@ -418,7 +418,6 @@ function popQueue(req, res) {
 
     var messageList = [];
     var transactionIdList = [];
-    var priorities = [];
     var ev = {};
     //stablish the timeout depending on blocking time
 
@@ -442,9 +441,6 @@ function popQueue(req, res) {
         });
         transactionIdList = notifList.map(function(notif) {
           return notif && notif.extTransactionId;
-        });
-        priorities = notifList.map(function(notif) {
-          return notif && notif.priority;
         });
       }
 
@@ -471,12 +467,25 @@ function popQueue(req, res) {
         res.send({ok: true, data: messageList, transactions: transactionIdList});
 
       } else {
-        //Reinsert transaction into the queue if the connection was closed
-        logger.info('popQueue - repushTrans', {queue: queueId,  transactions: transactionIdList,
-          priorities: priorities});
-        for (var i = 0; i < transactionIdList.length; i++) {
-          dataSrv.repushUndeliveredTransaction(appPrefix, {id: queueId}, priorities[i], transactionIdList[i]);
-        }
+
+        if (notifList) {
+          for (var i = 0; i < notifList.length; i++) {
+            if (notifList[i].priority) {    //The transaction is not expired
+
+              dataSrv.repushUndeliveredTransaction(appPrefix, {id: queueId}, notifList[i].priority,
+                  notifList[i].extTransactionId, function(i, err) {
+
+                    if (!err) {
+                      logger.info('popQueue - repushTrans',   {queue: queueId,
+                        transaction: notifList[i].extTransactionId, priority: notifList[i].priority});
+                    } else {
+                      logger.info('popQueue - repushTrans', [String(err)]);
+                    }
+
+                  }.bind({}, i));
+            } //End if transaction expired
+          } //End for
+        } //End if notifList
       }
 
     }
@@ -600,9 +609,19 @@ function subscribeQueue(req, res) {
 
               res.write(JSON.stringify({ok: true, data: message, transaction: transactionId}));
             } else {
-              //Reinsert transaction into the queue if the connection was closed
-              logger.info('subscribeQueue - repushTrans', {queue: queueId,  transaction: transactionId, priority: priority});
-              dataSrv.repushUndeliveredTransaction(appPrefix, {id: queueId}, priority, transactionId);
+              //Reinsert transaction into the queue if the connection was closed if the transaction is not expired
+              if (priority) {
+                dataSrv.repushUndeliveredTransaction(appPrefix, {id: queueId}, priority, transactionId, function(err) {
+
+                  if (!err) {
+                    logger.info('subscribeQueue - repushTrans',
+                        {queue: queueId,  transaction: transactionId, priority: priority});
+                  } else {
+                    logger.info('subscribeQueue - repushTrans', [String(err)]);
+                  }
+
+                });
+              }
             }
           }
 
