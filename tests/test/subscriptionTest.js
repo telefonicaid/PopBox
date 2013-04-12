@@ -63,11 +63,11 @@ describe('Subscription Test', function() {
       should.not.exist(err);
 
       var payloads = messages.map(function(msg) {
-        return msg && msg.data;
+        return msg && msg.data[0];
       });
 
       var transactions = messages.map(function(msg) {
-        return msg && msg.transaction;
+        return msg && msg.transactions[0];
       });
 
       for (var i = 0; i < payloads.length; i++) {
@@ -114,8 +114,12 @@ describe('Subscription Test', function() {
       should.not.exist(err);
 
       var message = messages[0];
-      message.should.have.property('data', MESSAGE);
-      message.should.have.property('transaction', transactionID);
+      message.should.have.property('data');
+      message['data'].length.should.be.equal(1);
+      message['data'].should.include(MESSAGE);
+      message.should.have.property('transactions');
+      message['transactions'].length.should.be.equal(1);
+      message['transactions'].should.include(transactionID);
 
       //Insert a new transaction
       pushTransaction(QUEUE_ID, MESSAGE_PENDING, function(err, data) {
@@ -130,8 +134,12 @@ describe('Subscription Test', function() {
               should.not.exist(err);
 
               var message = messages[0];
-              message.should.have.property('data', MESSAGE_PENDING);
-              message.should.have.property('transaction', transactionIDPending);
+              message.should.have.property('data');
+              message['data'].length.should.be.equal(1);
+              message['data'].should.include(MESSAGE_PENDING);
+              message.should.have.property('transactions');
+              message['transactions'].length.should.be.equal(1);
+              message['transactions'].should.include(transactionIDPending);
 
               checkState(transactionIDPending, MESSAGE_PENDING, QUEUE_ID, 'Delivered', function() {
                 done();

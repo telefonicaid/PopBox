@@ -136,8 +136,10 @@ describe('Callback Test', function() {
           messages.length.should.be.equal(1);
           var message = messages[0];
 
-          message.data.should.be.equal(PAYLOAD);
-          message.transaction.should.be.equal(id);
+          message.data.length.should.be.equal(1);
+          message.data.should.have.include(PAYLOAD);
+          message.transactions.length.should.be.equal(1);
+          message.transactions.should.have.include(id);
         });
       }
     };

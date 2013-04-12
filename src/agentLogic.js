@@ -607,7 +607,7 @@ function subscribeQueue(req, res) {
                 req.info
               ]);
 
-              res.write(JSON.stringify({ok: true, data: message, transaction: transactionId}));
+              res.write(JSON.stringify({ok: true, data: [ message ], transactions: [ transactionId ] }));
             } else {
               //Reinsert transaction into the queue if the connection was closed if the transaction is not expired
               if (priority) {

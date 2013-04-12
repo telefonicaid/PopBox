@@ -10,7 +10,7 @@ Array.prototype.contains = function(element) {
   'use strict';
 
   for (var i = 0; i < this.length; i++) {
-    if (this[i] == element) {
+    if (this[i] === element) {
       return true;
     }
   }
@@ -51,7 +51,7 @@ var makeRequest = function(options, content, cb) {
   'use strict';
 
   var req = http.request(options, function(res) {
-
+1
     var data = ''; //returned object from request
     res.setEncoding('utf8');
 
