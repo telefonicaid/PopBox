@@ -15,16 +15,16 @@ Connect once and receive streamed notification messages
 Scalability has been taken into account from the very beginning (not dynamic yet, but soon)
 ####New add-ons may be included in order to suit any client need
 For example invoke an external accounting system every time a mesage is consumed
-### Dependencies:
-    Requires node.js 
-        npm install package.json to install node modules dependencies
-        node agent.js to launch a PopBox Agent.
-    Requires REDIS
-    Optional MongoDB (historic data support)
-#####Edit src/config.js for configuration Options
+
+**PopBox has been developed using:**
+
+[![WebStorm](http://www.jetbrains.com/webstorm/documentation/webstorm_banners/webstorm1/webstorm210x60_white.gif)](http://www.jetbrains.com/webstorm/)
+
+Ask us for your OpenSource License
+
 ### You can find some usage examples at examples folder
 
-[API DOC](https://github.com/telefonicaid/PopBox/wiki/User-Manual)
+[HTTP API DOCUMENTAION](https://github.com/telefonicaid/PopBox/wiki/User-Manual)
 
 #Installation Notes
 First draft of the installation manual. Please contact us at dtc_support@tid.es if you have any trouble to include further refinements.

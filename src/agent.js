@@ -129,6 +129,8 @@ if (cluster.isMaster && numCPUs !== 0) {
     if (config.connectLogger) {
       server.use(express.logger(config.connectLogger));
     }
+    server.set('views', __dirname + '/views');
+    server.set('view engine', 'jade');
     server.use(express.query());
     server.use(express.bodyParser());
     server.use(express.limit(config.agent.maxReqSize));
