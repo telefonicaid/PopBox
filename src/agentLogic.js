@@ -38,7 +38,7 @@ function postTrans(req, res) {
   var pendingEv = {};
   var prefix = req.prefix;
 
-  if (!req.headers['content-type'] || req.headers['content-type'] !== 'application/json') {
+  if (!req.headers['content-type'] || req.headers['content-type'].indexOf('application/json') !== 0 ) {
     errors.push('invalid content-type header');
   } else {
     errors = validate.errorsTrans(req.body);

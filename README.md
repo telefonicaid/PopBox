@@ -5,12 +5,16 @@ POPBox [![Build Status](https://travis-ci.org/telefonicaid/PopBox.png)](https://
 No configuration needed, just name your queue and use it
 ####Do you need huge amounts of really fast inboxes for all your clients?
 Redis support really shines at this
-####Do yo need to track the state of your notification messages?
+####Do you need to track the state of your notification messages?
 Transient and historic state management
 ####Are you looking for a http client blocking communication mechanism?
 Up to 10K **concurrent** connections per node, no resource gets wasted
+####Stablish a SUBSCRIBE/PUSH notification mechanism over your notification boxes
+Connect once and receive streamed notification messages
 ####Do you want it 100% H-Scalable?
 Scalability has been taken into account from the very beginning (not dynamic yet, but soon)
+####New add-ons may be included in order to suit any client need
+For example invoke an external accounting system every time a mesage is consumed
 ### Dependencies:
     Requires node.js 
         npm install package.json to install node modules dependencies
