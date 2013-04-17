@@ -73,7 +73,7 @@ var pushTransaction = function(appPrefix, provision, callback) {
       for (i = 0; i < queues.length; i += 1) {
         queue = queues[i];
         //launch push/set:state in parallel for one ID
-        processBatch.push(processOneId(dbTr, transactionId, queue, priority));
+        processBatch.push(processOneId(dbTr, transactionId, queue, priority, provision.expirationDate));
       }
       async.parallel(processBatch,
           function pushEnd(err) {
@@ -98,12 +98,12 @@ var pushTransaction = function(appPrefix, provision, callback) {
     }
   });
 
-  function processOneId(dbTr, transactionId, queue, priority) {
+  function processOneId(dbTr, transactionId, queue, priority, expirationDate) {
     return function processOneIdAsync(callback) {
       var db = dbCluster.getDb(queue.id); //different DB for different Ids
       async.parallel([
         helper.pushParallel(db, {id: appPrefix + queue.id}, priority,
-            transactionId),
+            transactionId, expirationDate),
         helper.hsetHashParallel(dbTr, queue, transactionId, ':state', 'Pending')
       ], function parallel_end(err) {
         var ev = null;

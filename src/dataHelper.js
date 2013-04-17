@@ -28,6 +28,15 @@ var log = require('PDITCLogger');
 var logger = log.newLogger();
 logger.prefix = path.basename(module.filename, '.js');
 
+var expireIf = "\
+local proposedTtl = 0+ARGV[1]\n\
+local key = KEYS[1]\n\
+local ttl = redis.call('ttl',key)\n\
+if ttl< proposedTtl then\n\
+ redis.call('expire',key, proposedTtl)\n\
+end\n\
+";
+
 var setKey = function(db, id, value, callback) {
   'use strict';
   db.set(id, value, function onSet(err) {
@@ -69,19 +78,25 @@ var exists = function(db, id, callback) {
   });
 };
 
-var pushParallel = function(head, db, queue, priority, transaction_id) {
+var pushParallel = function(head, db, queue, priority, transactionID, expirationDate) {
   'use strict';
   return function asyncPushParallel(callback) {
     var fullQueueId = config.dbKeyQueuePrefix + priority + queue.id;
     var pusher = (head) ? db.lpush : db.rpush;
 
-    pusher.call(db, fullQueueId, transaction_id, function onLpushed(err) {
+    pusher.call(db, fullQueueId, transactionID, function onLpushed(err) {
       if (err) {
         //error pushing
         logger.warning(err);
-      }
-      if (callback) {
         callback(err);
+      } else {
+        if(expirationDate) {
+          db.eval(expireIf, 1, fullQueueId, expirationDate, function(err, data) {
+            callback(err);
+          });
+        } else {
+          callback()
+        }
       }
     });
   };
@@ -97,6 +112,7 @@ var hsetHashParallel = function(dbTr, queue, transactionId, sufix, datastr) {
       }
 
       if (callback) {
+
         callback(err);
       }
     });
