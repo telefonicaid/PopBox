@@ -65,9 +65,9 @@ Optionally you may indicate a MongoDB in order to keep track of historic data.
 ##Links and resources dependencies
 
 ```
-Redis: http://redis.googlecode.com/files/redis-2.4.15.tar.gz
+Redis: http://http://redis.io/ (v2.6 or higher required)
 Mongo: http://www.mongodb.org/downloads
-Node: http://nodejs.org (preferred v6.* not tested in v8)
+Node: http://nodejs.org (tested in v6.* v8.* and v10.*)
 ```
 ###HTTPS Support
 Popbox is expecting server certificates in order to stablish secure comunitions with secure boxes (BasicAuth-HTTPS).

@@ -75,17 +75,26 @@ var setQueueExpirationDate = function(db, queue, priority, expirationDate, callb
 local proposedTtl = 0+ARGV[1]\n\
 local key = KEYS[1]\n\
 local ttl = redis.call('ttl',key)\n\
-if ttl< proposedTtl then\n\
+if ttl == -1 or ttl < proposedTtl then\n\
  redis.call('expire',key, proposedTtl)\n\
 end\n\
 ";
 
-  var fullQueueId = config.dbKeyQueuePrefix + priority + queue.id;
+  if (config.garbageCollector) {
+    var fullQueueId = config.dbKeyQueuePrefix + priority + queue.id;
+    var ttlActualTrans = expirationDate - Math.round(new Date().getTime() / 1000);
 
-  db.eval(expireIf, 1, fullQueueId, expirationDate, function(err, data) {
-    callback(err);
-  });
-}
+    db.eval(expireIf, 1, fullQueueId, ttlActualTrans, function(err, data) {
+      if (callback) {
+        callback(err);
+      }
+    });
+  } else {
+    if (callback) {
+      callback(null);
+    }
+  }
+};
 
 var pushParallel = function(head, db, queue, priority, transactionID, expirationDate) {
   'use strict';
@@ -97,15 +106,15 @@ var pushParallel = function(head, db, queue, priority, transactionID, expiration
 
       if (!err && expirationDate) {
         setQueueExpirationDate(db, queue, priority, expirationDate, callback);
-      } else if (err) {
-        logger.warning(err);
+      } else {
+        if (err) {
+          //error pushing
+          logger.warning(err);
+        }
         if (callback) {
           callback(err);
         }
-      } else {
-        if(callback) {
-          callback(err);
-        }
+
       }
     });
   };

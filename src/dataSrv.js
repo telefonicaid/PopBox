@@ -166,7 +166,14 @@ var updateTransMeta = function(appPrefix, extTransactionId, provision, callback)
                       if (!err5) {
 
                         for (queue in data3) {
-                          processBatch.push(processOneId(queue, priority, expirationDate));
+                          if (data3.hasOwnProperty(queue)) {
+
+                            //Queue expiration date is only modified if the transaction has not been delivered
+                            //in that queue
+                            if (data3[queue] === 'Pending') {
+                              processBatch.push(processOneId(queue, priority, expirationDate));
+                            }
+                          }
                         }
 
                         async.parallel(processBatch,
