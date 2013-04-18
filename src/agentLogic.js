@@ -124,7 +124,7 @@ function postTransDelayed(req, res) {
 
 function putTransMeta(req, res) {
   'use strict';
-  var id = req.param('id_trans', null),
+  var id = req.param('id_trans', null), appPrefix = req.prefix,
       empty = true, filteredReq = {}, errorsP, errorsExpDate, errors = [];
 
   if (!req.headers['content-type'] || req.headers['content-type'] !== 'application/json') {
@@ -162,7 +162,7 @@ function putTransMeta(req, res) {
         res.send({errors: errors}, 400);
       }
       else {
-        dataSrv.updateTransMeta(id, req.body, function(e, data) {
+        dataSrv.updateTransMeta(appPrefix, id, req.body, function(e, data) {
           if (e) {
             logger.info('putTransMeta', [
               {errors: [String(e)]},

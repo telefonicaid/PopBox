@@ -118,21 +118,26 @@ var pushTransaction = function(appPrefix, provision, callback) {
   }
 };
 /**
- *
+ * @param appPrefix
  * @param extTransactionId
  * @param provision
  * @param callback
  */
 
-var updateTransMeta = function(extTransactionId, provision, callback) {
+var updateTransMeta = function(appPrefix, extTransactionId, provision, callback) {
   'use strict';
-  var transactionId = config.dbKeyTransPrefix +
-      extTransactionId, dbTr = dbCluster.getTransactionDb(extTransactionId);
+  var transactionId = config.dbKeyTransPrefix +  extTransactionId,
+      processBatch = [],
+      priority,
+      queue,
+      expirationDate = provision.expirationDate,
+      dbTr = dbCluster.getTransactionDb(extTransactionId);
 
   // curry for async (may be refactored)
 
   delete provision.queue;
   delete provision.priority;
+
 
   helper.exists(dbTr, transactionId + ':meta', function(errE, value) {
     if (errE) {
@@ -140,24 +145,62 @@ var updateTransMeta = function(extTransactionId, provision, callback) {
     }
     else if (! value) {
       callback(extTransactionId + ' does not exist');
-    }
-    else {
-      helper.hsetMetaHashParallel(dbTr, transactionId, ':meta',
-          provision)(function(err) {
+    } else {
+      helper.hsetMetaHashParallel(dbTr, transactionId, ':meta', provision)(function(err) {
         if (err) {
           callback(err);
         } else {
-          helper.setExpirationDate(dbTr, transactionId + ':meta', provision,
-              function(err2) {
-                helper.setExpirationDate(dbTr, transactionId +
-                    ':state', provision, function(err3) {
-                      callback(err2 || err3);
+          helper.setExpirationDate(dbTr, transactionId + ':meta', provision, function(err2) {
+            helper.setExpirationDate(dbTr, transactionId + ':state', provision, function(err3) {
+              if (err2 || err3 || !expirationDate) {
+                callback(err2 || err3);
+              } else {
+                //Get transaction priority
+                dbTr.hgetall(transactionId + ':meta', function on_data(err4, data2) {
+
+                  if(!err4) {
+                    priority = data2.priority + ':';
+
+                    //Get queues
+                    dbTr.hgetall(transactionId + ':state', function on_data(err5, data3) {
+                      if (!err5) {
+
+                        for (queue in data3) {
+                          processBatch.push(processOneId(queue, priority, expirationDate));
+                        }
+
+                        async.parallel(processBatch,
+                            function pushEnd(err6) {
+                              callback(err6);
+                            });
+                      } else {
+                        callback(err5);
+                      }
                     });
-              });
+                  } else {
+                    callback(err4);
+                  }
+                });
+              }
+            });
+          });
         }
       });
     }
   });
+
+  function processOneId(queue, priority, expirationDate) {
+
+    return function processOneIdAsync(callback) {
+
+      var db = dbCluster.getDb(queue); //different DB for different Ids
+
+      helper.setQueueExpirationDate(db, {id: appPrefix + queue}, priority, expirationDate, function(err) {
+        dbCluster.free(db);
+        callback(err);
+      });
+    };
+  }
 
 };
 

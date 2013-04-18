@@ -28,15 +28,6 @@ var log = require('PDITCLogger');
 var logger = log.newLogger();
 logger.prefix = path.basename(module.filename, '.js');
 
-var expireIf = "\
-local proposedTtl = 0+ARGV[1]\n\
-local key = KEYS[1]\n\
-local ttl = redis.call('ttl',key)\n\
-if ttl< proposedTtl then\n\
- redis.call('expire',key, proposedTtl)\n\
-end\n\
-";
-
 var setKey = function(db, id, value, callback) {
   'use strict';
   db.set(id, value, function onSet(err) {
@@ -78,6 +69,24 @@ var exists = function(db, id, callback) {
   });
 };
 
+var setQueueExpirationDate = function(db, queue, priority, expirationDate, callback) {
+
+  var expireIf = "\
+local proposedTtl = 0+ARGV[1]\n\
+local key = KEYS[1]\n\
+local ttl = redis.call('ttl',key)\n\
+if ttl< proposedTtl then\n\
+ redis.call('expire',key, proposedTtl)\n\
+end\n\
+";
+
+  var fullQueueId = config.dbKeyQueuePrefix + priority + queue.id;
+
+  db.eval(expireIf, 1, fullQueueId, expirationDate, function(err, data) {
+    callback(err);
+  });
+}
+
 var pushParallel = function(head, db, queue, priority, transactionID, expirationDate) {
   'use strict';
   return function asyncPushParallel(callback) {
@@ -85,17 +94,17 @@ var pushParallel = function(head, db, queue, priority, transactionID, expiration
     var pusher = (head) ? db.lpush : db.rpush;
 
     pusher.call(db, fullQueueId, transactionID, function onLpushed(err) {
-      if (err) {
-        //error pushing
+
+      if (!err && expirationDate) {
+        setQueueExpirationDate(db, queue, priority, expirationDate, callback);
+      } else if (err) {
         logger.warning(err);
-        callback(err);
+        if (callback) {
+          callback(err);
+        }
       } else {
-        if(expirationDate) {
-          db.eval(expireIf, 1, fullQueueId, expirationDate, function(err, data) {
-            callback(err);
-          });
-        } else {
-          callback()
+        if(callback) {
+          callback(err);
         }
       }
     });
@@ -170,6 +179,15 @@ var setExpirationDate = function(dbTr, key, provision, callback) {
 };
 
 //Public area
+
+/**
+ * Inserts at the tail of the queue
+ * @param {RedisClient} db valid redis client.
+ * @param {PopBox.Queue} queue object.
+ * @param {string} priority enum type 'H' || 'L' for high low priority.
+ * @param {integer} queue new expiration date
+ */
+exports.setQueueExpirationDate = setQueueExpirationDate;
 
 /**
  * Inserts at the tail of the queue
