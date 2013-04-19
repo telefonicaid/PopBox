@@ -96,6 +96,8 @@ describe('Inbox', function() {
 
   it('Should return empty message - Transaction is expired', function(done) {
 
+    this.timeout(10000);
+
     var QUEUE =  { 'id': 'q1' }, insertTransFuncs = [], id;
     var trans = utils.createTransaction('Low Priority', 'L', [ QUEUE ]);
     trans.expirationDate = Math.round(new Date().getTime() / 1000) - 5;
@@ -112,13 +114,17 @@ describe('Inbox', function() {
 
         should.not.exist(error);
         response.statusCode.should.be.equal(200);
-
         data.should.have.property('transactions');
-        data.transactions.should.include(id);
-        data.transactions.length.should.be.equal(1);
-
         data.should.have.property('data');
-        data.data.length.should.be.equal(1);
+
+        if (data.transactions.length === 1) {   //Garbage collector is disabled
+          data.transactions.should.include(id);
+          data.data.length.should.be.equal(1);
+          should.not.exist(data.data.pop());
+        } else {                                //Garbage collection is enabled
+          data.transactions.length.should.be.equal(0);
+          data.data.length.should.be.equal(0);
+        }
 
         done();
 

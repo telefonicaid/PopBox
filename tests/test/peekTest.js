@@ -337,11 +337,16 @@ describe('Peek - Generic tests', function() {
         response.statusCode.should.be.equal(200);
 
         data.should.have.property('transactions');
-        data.transactions.should.include(id);
-        data.transactions.length.should.be.equal(1);
-
         data.should.have.property('data');
-        data.data.length.should.be.equal(1);
+
+        if (data.transactions.length === 1) {     //Garbage collector is disabled
+          data.transactions.should.include(id);
+          data.data.length.should.be.equal(1);
+          should.not.exist(data.data.pop());
+        } else {                                  //Garbage collector is enabled
+          data.transactions.length.should.be.equal(0);
+          data.data.length.should.be.equal(0);
+        }
 
         done();
 
