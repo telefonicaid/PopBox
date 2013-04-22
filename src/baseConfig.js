@@ -227,7 +227,7 @@ exports.MAX_TIMESTAMP = 2147483647; // 32-bit, 19 January 2038
  *
  * @type {boolean}
  */
-exports.garbageCollector = false;
+exports.garbageCollector = true;
 
 /**
  *

@@ -711,6 +711,9 @@ function transMeta(req, res) {
         ]);
         res.send({errors: [errM]}, 400);
       } else {
+
+        dataM = dataM || {};
+
         if (queues !== null) {
           dataSrv.getTransaction(id, queues, summary, function(errQ, dataQ) {
             if (errQ) {

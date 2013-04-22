@@ -139,11 +139,10 @@ var updateTransMeta = function(appPrefix, extTransactionId, provision, callback)
   delete provision.priority;
 
 
-  helper.exists(dbTr, transactionId + ':meta', function(errE, value) {
+  dbTr.hgetall(transactionId + ':meta', function(errE, value) {
     if (errE) {
       callback(errE);
-    }
-    else if (! value) {
+    } else if (!value) {
       callback(extTransactionId + ' does not exist');
     } else {
       helper.hsetMetaHashParallel(dbTr, transactionId, ':meta', provision)(function(err) {
@@ -155,35 +154,27 @@ var updateTransMeta = function(appPrefix, extTransactionId, provision, callback)
               if (err2 || err3 || !expirationDate) {
                 callback(err2 || err3);
               } else {
-                //Get transaction priority
-                dbTr.hgetall(transactionId + ':meta', function on_data(err4, data2) {
+                //Get queues
+                dbTr.hgetall(transactionId + ':state', function on_data(err4, data) {
+                  if (!err4) {
 
-                  if(!err4) {
-                    priority = data2.priority + ':';
+                    priority = value.priority + ':';
 
-                    //Get queues
-                    dbTr.hgetall(transactionId + ':state', function on_data(err5, data3) {
-                      if (!err5) {
+                    for (queue in data) {
+                      if (data.hasOwnProperty(queue)) {
 
-                        for (queue in data3) {
-                          if (data3.hasOwnProperty(queue)) {
-
-                            //Queue expiration date is only modified if the transaction has not been delivered
-                            //in that queue
-                            if (data3[queue] === 'Pending') {
-                              processBatch.push(processOneId(queue, priority, expirationDate));
-                            }
-                          }
+                        //Queue expiration date is only modified if the transaction has not been delivered
+                        //in that queue
+                        if (data[queue] === 'Pending') {
+                          processBatch.push(processOneId(queue, priority, expirationDate));
                         }
-
-                        async.parallel(processBatch,
-                            function pushEnd(err6) {
-                              callback(err6);
-                            });
-                      } else {
-                        callback(err5);
                       }
-                    });
+                    }
+
+                    async.parallel(processBatch,
+                        function pushEnd(err5) {
+                          callback(err5);
+                        });
                   } else {
                     callback(err4);
                   }
