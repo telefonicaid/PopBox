@@ -28,7 +28,7 @@
         "hooker":"*",
         "logger":"https://github.com/telefonicaid/pditclogger/tarball/master",
         "performanceFramework":"https://github.com/PDI-DGS-Protolab/performanceFramework/tarball/master",
-	"should"
+	"should": "1.2.2"
     },
   "bugs": {
     "url": "https://github.com/telefonicaid/PopBox/issues"
