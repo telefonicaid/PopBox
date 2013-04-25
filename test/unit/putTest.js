@@ -1,6 +1,7 @@
 var should = require('should');
 var async = require('async');
-var utils = require('./utils');
+var utils = require('./../utils');
+var agent = require('../../.');
 
 describe('PUT', function() {
 
@@ -63,8 +64,14 @@ describe('PUT', function() {
     });
   });
 
+  before(function(done){
+    agent.start(done);
+  });
+
   after(function(done) {
-    utils.cleanBBDD(done);
+    utils.cleanBBDD(function() {
+      agent.stop(done);
+    });
   });
 
   it('should change payload, callback and expirationDate', function(done) {

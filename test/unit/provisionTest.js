@@ -1,6 +1,8 @@
 var should = require('should');
-var config = require('./config.js');
-var utils = require('./utils.js');
+var config = require('./../config.js');
+var utils = require('./../utils.js');
+
+var agent = require('../../.');
 
 describe('Provision', function() {
 
@@ -9,6 +11,16 @@ describe('Provision', function() {
   var callback = 'http://foo.bar';
   var priority = 'H';
   var queues = [ { 'id': 'q1' }, { 'id': 'q2' } ]
+
+  before(function(done){
+    agent.start(done);
+  });
+
+    after(function(done) {
+      utils.cleanBBDD(function() {
+        agent.stop(done);
+      });
+    });
 
   beforeEach(function(done) {
 

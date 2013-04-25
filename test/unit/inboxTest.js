@@ -1,7 +1,8 @@
 var should = require('should');
 var async = require('async');
 var http = require('http');
-var utils = require('./utils');
+var utils = require('./../utils');
+var agent = require('../../.');
 
 describe('Inbox', function() {
 
@@ -20,10 +21,15 @@ describe('Inbox', function() {
     utils.cleanBBDD(done);
   });
 
-  after(function(done) {
-    utils.cleanBBDD(done);
+  before(function(done){
+      agent.start(done);
   });
 
+  after(function(done) {
+      utils.cleanBBDD(function() {
+          agent.stop(done);
+      } );
+  });
 
   it('Should return all the transactions', function(done) {
 
@@ -114,12 +120,13 @@ describe('Inbox', function() {
 
         should.not.exist(error);
         response.statusCode.should.be.equal(200);
+
         data.should.have.property('transactions');
         data.should.have.property('data');
 
         if (data.transactions.length === 1) {   //Garbage collector is disabled
           data.transactions.should.include(id);
-          data.data.length.should.be.equal(1);
+        data.data.length.should.be.equal(1);
           should.not.exist(data.data.pop());
         } else {                                //Garbage collection is enabled
           data.transactions.length.should.be.equal(0);
