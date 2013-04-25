@@ -28,7 +28,8 @@
         "hooker":"*",
         "logger":"https://github.com/telefonicaid/pditclogger/tarball/master",
         "performanceFramework":"https://github.com/PDI-DGS-Protolab/performanceFramework/tarball/master",
-	"should": "1.2.2"
+		"should": "1.2.2"
+		
     },
   "bugs": {
     "url": "https://github.com/telefonicaid/PopBox/issues"
@@ -57,7 +58,8 @@
     "sinon": "~1.6.0",
     "istanbul": "~0.1.34",
     "grunt-exec": "~0.4.0",
-    "dox-foundation": "*"
+    "dox-foundation": "*",
+	"grunt-cli": "0.1.7"
   },
   "keywords": []
 }
