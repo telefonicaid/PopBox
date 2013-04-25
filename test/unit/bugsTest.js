@@ -58,7 +58,7 @@ describe('Bugs', function() {
   });
 
     // MISTERIO
- /*
+
   it('should return errors (does not exist [id])', function(done) {
 
     var transID = 'false';
@@ -68,7 +68,13 @@ describe('Bugs', function() {
       utils.putTransaction(transID, {expirationDate: 2147483645}, function(err, response, data) {
 
         should.not.exist(err);
+
+        console.log(data);
+
         response.statusCode.should.be.equal(400);
+
+
+
         data.errors.pop().should.be.equal(transID + ' does not exist');
 
         cb();
@@ -94,7 +100,7 @@ describe('Bugs', function() {
         checkState
       ], done);
   });
-   */
+
   it('Invalid Content-Type creating a transaction', function(done) {
 
     var trans = utils.createTransaction('Message', 'H',  [ { 'id': 'q1' } ]);
