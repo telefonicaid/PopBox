@@ -1,4 +1,4 @@
-POPBox [![Build Status](https://travis-ci.org/telefonicaid/PopBox.png)](https://travis-ci.org/telefonicaid/PopBox)
+POPBox [![Build Status](https://travis-ci.org/telefonicaid/PopBox.png)](https://travis-ci.org/telefonicaid/PopBox) [![Dependency Status](https://david-dm.org/telefonicaid/Popbox.png)](https://david-dm.org/telefonicaid/Popbox)
 ===
 ##Simple High-Performance High-Scalability Inbox Notification Service
 ####Do you need really simple queues to distribute your work through a P&C schema?
