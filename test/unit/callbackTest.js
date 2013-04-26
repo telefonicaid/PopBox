@@ -1,13 +1,16 @@
 var should = require('should');
 var async = require('async');
 var http = require('http');
-var utils = require('./utils.js');
+var utils = require('./../utils.js');
+var agent = require('../../.');
+
 
 var TIMEOUT = 2500;
 var CALLBACK_PORT = 54218;
 var CALLBACK = 'http://localhost:' + CALLBACK_PORT;
 var PAYLOAD = 'TEST MESSAGE';
 var QUEUES = ['q1', 'q2'];
+
 
 
 function createServer(timeOut, onConnected, cb) {
@@ -53,6 +56,16 @@ describe('Callback Test', function() {
     }
   };
 
+  before(function(done){
+    agent.start(done);
+  });
+
+  after(function(done) {
+    utils.cleanBBDD(function() {
+      agent.stop(done);
+    });
+  });
+
   beforeEach(function(done) {
 
     trans = utils.createTransaction(PAYLOAD, 'H', [ { 'id': QUEUES[0] },{ 'id': QUEUES[1] } ], null, CALLBACK);
@@ -75,6 +88,7 @@ describe('Callback Test', function() {
     srv.close();
     utils.cleanBBDD(done);
   });
+
 
   it('Callback should be called on pop', function(done) {
     this.timeout(TIMEOUT * 2);
@@ -155,6 +169,14 @@ describe('Callback Test', function() {
 describe('Callback test on blocked request', function() {
 
   var id, srv;
+
+  before(function(done){
+    agent.start(done);
+  });
+
+  after(function(done) {
+    agent.stop(done);
+  });
 
   afterEach(function(done) {
     srv.close();

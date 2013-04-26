@@ -1,0 +1,27 @@
+{
+  "quotmark": "single",
+  "bitwise": true,
+  "indent": 2,
+  "camelcase": true,
+  "strict": true,
+  "trailing": true,
+  "curly": true,
+  "eqeqeq": true,
+  "immed": true,
+  "latedef": true,
+  "newcap": true,
+  "noempty": true,
+  "unused": true,
+  "noarg": true,
+  "sub": true,
+  "undef": true,
+  "maxdepth": 4,
+  "maxlen": 120,
+  "node": true,
+  "white": false,
+  "globals": {
+    "describe":true,
+    "it": true,
+    "expect": true
+  }
+}

@@ -1,13 +1,21 @@
 var should = require('should');
 var async = require('async');
-var config = require('./config.js')
-var utils = require('./utils.js');
+var config = require('./../config.js')
+var utils = require('./../utils.js');
+
+var agent = require('../../.');
 
 describe('Bugs', function() {
 
-  after(function(done) {
-    utils.cleanBBDD(done);
-  });
+    before(function(done){
+        agent.start(done);
+    });
+
+    after(function(done) {
+        utils.cleanBBDD(function() {
+            agent.stop(done);
+        } );
+    });
 
   beforeEach(function(done) {
     utils.cleanBBDD(done);
@@ -49,6 +57,8 @@ describe('Bugs', function() {
 
   });
 
+    // MISTERIO
+
   it('should return errors (does not exist [id])', function(done) {
 
     var transID = 'false';
@@ -58,7 +68,13 @@ describe('Bugs', function() {
       utils.putTransaction(transID, {expirationDate: 2147483645}, function(err, response, data) {
 
         should.not.exist(err);
+
+        console.log(data);
+
         response.statusCode.should.be.equal(400);
+
+
+
         data.errors.pop().should.be.equal(transID + ' does not exist');
 
         cb();

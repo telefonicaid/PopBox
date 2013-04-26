@@ -1,6 +1,7 @@
 var should = require('should');
 var http = require('http');
-var utils = require('./utils.js');
+var utils = require('./../utils.js');
+var agent = require('../../.');
 
 describe('Subscription Test', function() {
 
@@ -44,9 +45,15 @@ describe('Subscription Test', function() {
     utils.cleanBBDD(done);
   });
 
-  after(function(done) {
-    utils.cleanBBDD(done);
-  });
+    before(function(done){
+        agent.start(done);
+    });
+
+    after(function(done) {
+        utils.cleanBBDD(function() {
+            agent.stop(done);
+        } );
+    });
 
   it('Should receive all transaction in less than two seconds', function(done) {
 

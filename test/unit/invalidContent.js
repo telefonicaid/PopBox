@@ -1,8 +1,20 @@
 var should = require('should');
 var async = require('async');
-var utils = require('./utils.js');
+var utils = require('./../utils.js');
+var agent = require('../../.');
 
 describe('Invalid Data in JSON', function() {
+
+
+  before(function(done){
+      agent.start(done);
+  });
+
+  after(function(done) {
+    utils.cleanBBDD(function() {
+      agent.stop(done);
+    });
+  });
 
   var executeTest = function(trans, expectedErrors, done) {
     'use strict';

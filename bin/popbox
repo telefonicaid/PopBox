@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+
+var agent = require('../.');
+
+agent.start(function(){
+    console.log("Popbox started");
+});
+

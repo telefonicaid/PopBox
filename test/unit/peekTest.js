@@ -1,6 +1,8 @@
 var should = require('should');
 var async = require('async');
-var utils = require('./utils.js');
+var utils = require('./../utils.js');
+
+var agent = require('../../.');
 
 var N_TRANS = 5;
 var QUEUE_NAME = 'peekQueue';
@@ -90,30 +92,35 @@ describe('Peek from High Priority Queue', function() {
 
   before(function(done) {
 
-    utils.cleanBBDD(function(){
-      var completed = 0;
+    agent.start(function() {
+      utils.cleanBBDD(function(){
+        var completed = 0;
 
-      for (var i = 0; i < N_TRANS; i++) {
+        for (var i = 0; i < N_TRANS; i++) {
 
-        var trans = utils.createTransaction(MESSAGE_INDEX + i, 'H', [{ 'id': QUEUE_NAME }]);
-        utils.pushTransaction(trans, function(err, response, data) {
+          var trans = utils.createTransaction(MESSAGE_INDEX + i, 'H', [{ 'id': QUEUE_NAME }]);
+          utils.pushTransaction(trans, function(err, response, data) {
 
-          should.not.exist(err);
-          data.should.have.property('data');
-          ids[completed] = data.data;
-          completed++;
+            should.not.exist(err);
+            data.should.have.property('data');
+            ids[completed] = data.data;
+            completed++;
 
-          if (completed == N_TRANS) {
-            done();
-          }
-        });
-      }
+            if (completed == N_TRANS) {
+              done();
+            }
+          });
+        }
+      });
     });
   });
 
   after(function(done) {
-    afterAll(done);
+    afterAll(function() {
+      agent.stop(done);
+    });
   });
+
 
   it('Should retrieve all the messages and trans' +
       ' state should not change', function(done) {
@@ -137,28 +144,32 @@ describe('Peek from Low Priority Queue', function() {
 
   before(function(done) {
 
-    utils.cleanBBDD(function() {
-      var completed = 0;
+    agent.start(function() {
+      utils.cleanBBDD(function() {
+        var completed = 0;
 
-      for (var i = 0; i < N_TRANS; i++) {
+        for (var i = 0; i < N_TRANS; i++) {
 
-        var trans = utils.createTransaction(MESSAGE_INDEX + i, 'L', [{ 'id': QUEUE_NAME }]);
-        utils.pushTransaction(trans, function(err, response, data) {
+          var trans = utils.createTransaction(MESSAGE_INDEX + i, 'L', [{ 'id': QUEUE_NAME }]);
+          utils.pushTransaction(trans, function(err, response, data) {
 
-          data.should.have.property('data');
-          ids[completed] = data.data;
-          completed++;
+            data.should.have.property('data');
+            ids[completed] = data.data;
+            completed++;
 
-          if (completed == N_TRANS) {
-            done();
-          }
-        });
-      }
+            if (completed == N_TRANS) {
+              done();
+            }
+          });
+        }
+      });
     });
   });
 
   after(function(done) {
-    afterAll(done);
+    afterAll(function() {
+      agent.stop(done);
+    });
   });
 
   it('Should retrieve all the messages and trans' +
@@ -185,38 +196,42 @@ describe('Peek from High and Low Priority Queue', function() {
 
   before(function(done) {
 
-    utils.cleanBBDD(function() {
+    agent.start(function() {
+      utils.cleanBBDD(function() {
 
-      var pushTransFuncs = [];
+        var pushTransFuncs = [];
 
-      var pushTrans = function(trans, cb) {
-        utils.pushTransaction(trans, function(err, response, data) {
+        var pushTrans = function(trans, cb) {
+          utils.pushTransaction(trans, function(err, response, data) {
 
-          data.should.have.property('data');
-          ids.push(data.data);
+            data.should.have.property('data');
+            ids.push(data.data);
 
-          if (trans.priority === 'H') {
-            idsH.push(data.data);
-          } else {
-            idsL.push(data.data);
-          }
+            if (trans.priority === 'H') {
+              idsH.push(data.data);
+            } else {
+              idsL.push(data.data);
+            }
 
-          cb();
+            cb();
 
-        })
-      }
+          })
+        }
 
-      for (var i = 0; i < N_TRANS; i++) {
-        var trans = utils.createTransaction(MESSAGE_INDEX + i, (i % 2 === 0) ? 'H' : 'L', [{ 'id': QUEUE_NAME }]);
-        pushTransFuncs.push(pushTrans.bind({}, trans));
-      }
+        for (var i = 0; i < N_TRANS; i++) {
+          var trans = utils.createTransaction(MESSAGE_INDEX + i, (i % 2 === 0) ? 'H' : 'L', [{ 'id': QUEUE_NAME }]);
+          pushTransFuncs.push(pushTrans.bind({}, trans));
+        }
 
-      async.series(pushTransFuncs, done);
+        async.series(pushTransFuncs, done);
+      });
     });
   });
 
   after(function(done) {
-    afterAll(done);
+    afterAll(function() {
+      agent.stop(done);
+    });
   });
 
   it('Should retrieve all the messages and trans' +
@@ -301,7 +316,13 @@ describe('Peek from High and Low Priority Queue', function() {
 describe('Peek - Generic tests', function() {
 
   before(function(done) {
-    utils.cleanBBDD(done);
+    agent.start(function() {
+      utils.cleanBBDD(done);
+    });
+  });
+
+  after(function(done) {
+    agent.stop(done);
   });
 
   it('Should return an empty response immediately when the queue is empty', function(done) {
@@ -337,11 +358,11 @@ describe('Peek - Generic tests', function() {
         response.statusCode.should.be.equal(200);
 
         data.should.have.property('transactions');
-        data.should.have.property('data');
 
+        data.should.have.property('data');
         if (data.transactions.length === 1) {     //Garbage collector is disabled
           data.transactions.should.include(id);
-          data.data.length.should.be.equal(1);
+        data.data.length.should.be.equal(1);
           should.not.exist(data.data.pop());
         } else {                                  //Garbage collector is enabled
           data.transactions.length.should.be.equal(0);
