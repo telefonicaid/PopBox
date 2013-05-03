@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <script src="/socket.io/socket.io.js">
+    </script>
+</head>
+<body>
+  <script>
+      var socket = io.connect();
+      socket.on('hola', function(data){
+          console.log("conectado con el servidor");
+          socket.emit('recupera', 'Ax');
+          socket.on('data', function(data) {
+            document.getElementById('salida').innerHTML += JSON.stringify(data)+ "<br>";
+          });
+      });
+  </script>
+  <div id="salida">
+      (Inicio)
+  </div>
+</body>
+</html>
