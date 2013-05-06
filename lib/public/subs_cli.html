@@ -8,9 +8,9 @@
 <body>
   <script>
       var socket = io.connect();
-      socket.on('hola', function(data){
-          console.log("conectado con el servidor");
-          socket.emit('recupera', 'Ax');
+      socket.on('connected', function(data){
+          console.log("connected");
+          socket.emit('subscribe', 'Ax');
           socket.on('data', function(data) {
             document.getElementById('salida').innerHTML += JSON.stringify(data)+ "<br>";
           });
