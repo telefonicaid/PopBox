@@ -5,30 +5,30 @@
     <script src="/socket.io/socket.io.js">
     </script>
     <script>
-        var socket;
-        function dress(socket){
-            socket.on('connected', function(data){
+        var iosocket;
+        function dress(iosocket){
+            iosocket.on('connect', function(data){
                 console.log("connected");
                 document.getElementById('estado').innerHTML = 'connected';
-                socket.emit('subscribe', 'Ax');
-                socket.on('data', function(data) {
+                iosocket.emit('subscribe', 'Ax');
+                iosocket.on('data', function(data) {
                     document.getElementById('salida').innerHTML += JSON.stringify(data)+ "<br>";
                 });
             });
         }
         function connect_first() {
             document.getElementById('estado').innerHTML = 'connecting first time';
-            socket = io.connect('http://localhost:3001');
-            dress(socket);
+            iosocket = io.connect();
+            dress(iosocket);
 
         }
         function connect() {
             document.getElementById('estado').innerHTML = 'reconnecting';
-            socket.socket.reconnect('http://localhost:3001');
-            dress(socket);
+            iosocket.socket.connect();
+            dress(iosocket);
         }
         function disconnect() {
-            socket.disconnect();
+            iosocket.disconnect();
             document.getElementById('estado').innerHTML = 'disconnected';
         }
         document.addEventListener('DOMContentLoaded', function() {
