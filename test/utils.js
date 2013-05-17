@@ -181,6 +181,11 @@ var peek = function(queueID, nPets, cb) {
   popBoxRequest('GET', path, null, cb);
 };
 
+var queueState = function(queueID, cb) {
+  'use strict';
+  popBoxRequest('GET', '/queue/' + queueID, null, cb);
+};
+
 var subscribe = function(nPets, queueID, cb) {
   'use strict';
 
@@ -223,4 +228,5 @@ exports.getQueueState = getQueueState;
 exports.pop = pop;
 exports.popTimeout = popTimeout;
 exports.peek = peek;
+exports.queueState = queueState;
 exports.subscribe = subscribe;
