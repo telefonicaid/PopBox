@@ -96,20 +96,13 @@ var subscribe = function(nPets, queue, username, password, cb) {
     res.setEncoding('utf8');
     var content = '';
 
-    var completed = false;
-
     res.on('data', function(chunk) {
 
       try {
 
         messages.push(JSON.parse(String(chunk)));
+
         if (messages.length === nPets){
-
-          if (!completed) {
-            cb(null, messages);
-            completed = true;
-          }
-
           req.abort();
         }
 
@@ -119,9 +112,10 @@ var subscribe = function(nPets, queue, username, password, cb) {
     });
 
     res.on('end', function() {
-      if(!completed) {
+      if (messages.length > 0) {
+        cb(null, messages);
+      } else {
         cb(null, res, content);
-        completed = true;
       }
     });
   });
