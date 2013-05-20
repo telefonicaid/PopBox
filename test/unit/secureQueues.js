@@ -39,6 +39,7 @@ var httpReq = function (options, content, cb) {
   if (typeof content === 'function') {
     cb = content;
     content = null;
+    delete options.headers['content-type'];
   }
 
   var req = https.request(options, function(res) {
@@ -88,7 +89,9 @@ var pop = function(queue, username, password, cb) {
 
 var subscribe = function(nPets, queue, username, password, cb) {
   'use strict';
+
   var options = getOptions('POST', '/queue/' + queue + '/subscribe', username, password);
+  delete options.headers['content-type'];
 
   var req = https.request(options, function(res) {
 
