@@ -50,6 +50,10 @@ var getQueueState = function(queueID, cb) {
 var makeRequest = function(options, content, cb) {
   'use strict';
 
+  if (!content) {
+    delete options.headers['content-type'];
+  }
+
   var req = http.request(options, function(res) {
 
     var data = ''; //returned object from request
@@ -71,7 +75,7 @@ var makeRequest = function(options, content, cb) {
     cb(e, null, null);
   });
 
-  if (options.method === 'POST' || options.method === 'PUT') {
+  if (content && options.method === 'POST' || options.method === 'PUT') {
     if (options.headers && options.headers['content-type'] === 'application/json') {
       content = JSON.stringify(content);
     }
@@ -121,7 +125,7 @@ var getTransState = function(transID, state, cb) {
     path += '?queues=' + state;
   }
 
-  popBoxRequest('GET', path , '', cb);
+  popBoxRequest('GET', path , null, cb);
 };
 
 var putTransaction = function(transID, trans, cb) {
@@ -142,7 +146,7 @@ var pop = function(queueID, nPets, cb) {
     path += '?max=' + nPets;
   }
 
-  popBoxRequest('POST', path, '', cb);
+  popBoxRequest('POST', path, null, cb);
 };
 
 var popTimeout = function(queueID, timeout, cb) {
@@ -158,7 +162,7 @@ var popTimeout = function(queueID, timeout, cb) {
     path += '?timeout=' + timeout;
   }
 
-  return popBoxRequest('POST', path, '', cb);
+  return popBoxRequest('POST', path, null, cb);
 };
 
 var peek = function(queueID, nPets, cb) {
@@ -174,7 +178,12 @@ var peek = function(queueID, nPets, cb) {
     path += '?max=' + nPets;
   }
 
-  popBoxRequest('GET', path, '', cb);
+  popBoxRequest('GET', path, null, cb);
+};
+
+var queueState = function(queueID, cb) {
+  'use strict';
+  popBoxRequest('GET', '/queue/' + queueID, null, cb);
 };
 
 var subscribe = function(nPets, queueID, cb) {
@@ -186,8 +195,7 @@ var subscribe = function(nPets, queueID, cb) {
     path: '/queue/' + queueID + '/subscribe',
     method: 'POST',
     headers: {
-      'accept': 'application/json',
-      'content-type': 'application/json'
+      'accept': 'application/json'
     }
   };
 
@@ -220,4 +228,5 @@ exports.getQueueState = getQueueState;
 exports.pop = pop;
 exports.popTimeout = popTimeout;
 exports.peek = peek;
+exports.queueState = queueState;
 exports.subscribe = subscribe;
