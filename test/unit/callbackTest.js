@@ -6,7 +6,7 @@ var agent = require('../../.');
 
 
 var TIMEOUT = 2500;
-var CALLBACK_PORT = 54218;
+var CALLBACK_PORT = 54217;
 var CALLBACK = 'http://localhost:' + CALLBACK_PORT;
 var PAYLOAD = 'TEST MESSAGE';
 var QUEUES = ['q1', 'q2'];

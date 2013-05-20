@@ -89,7 +89,8 @@ describe('Queue State', function() {
       msg.data.length.should.be.equal(1);
       msg.transactions.length.should.be.equal(1);
 
-      checkState(false, done);
+      //Timeout is needed: sometimes true is returned because the value has not been updated.
+      setTimeout(checkState.bind({}, false, done), 100);
     });
 
     setTimeout(function() {
