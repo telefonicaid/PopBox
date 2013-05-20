@@ -26,6 +26,22 @@ Ask us for your OpenSource License
 
 [HTTP API DOCUMENTAION](https://github.com/telefonicaid/PopBox/wiki/User-Manual)
 
+#Getting Started
+The default configuration should be suitable to get started (to customize your installation see "Setup the config file"
+section below). Before starting the agents:
+* Make sure there is a Redis (v2.6) instance running on your machine.
+* Update PopBox dependencies executing following command from the PopBox folder:
+
+```
+    npm install
+```  
+
+Once the environment is ready, start the Agent:
+```
+    bin/popbox
+```
+Your agent should be ready to accept requests!
+
 #Installation Notes
 First draft of the installation manual. Please contact us at dtc_support@tid.es if you have any trouble to include further refinements.
 
@@ -38,7 +54,7 @@ The overall architecture may be seen as a central DB cluster (with specialised n
 
 
 ##Setup the config file
-    At PopBox/src/config.js
+    At PopBox/lib/baseConfig.js
 
 In this file it is mandatory to stablish where reside the Redis DBs by stabilising the following properties:
 ###Queue Servers
