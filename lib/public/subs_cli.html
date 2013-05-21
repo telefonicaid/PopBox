@@ -6,26 +6,24 @@
     </script>
     <script>
         var iosocket;
-        function dress(iosocket){
-            iosocket.on('connect', function(data){
-                console.log("connected");
-                document.getElementById('estado').innerHTML = 'connected';
-                iosocket.emit('subscribe', 'Ax');
-                iosocket.on('data', function(data) {
-                    document.getElementById('salida').innerHTML += JSON.stringify(data)+ "<br>";
-                });
-            });
-        }
+
         function connect_first() {
             document.getElementById('estado').innerHTML = 'connecting first time';
             iosocket = io.connect();
-            dress(iosocket);
 
+            iosocket.on('connect', function(data) {
+                document.getElementById('estado').innerHTML = 'connected';
+                iosocket.emit('subscribe', 'Ax');
+            });
+
+            iosocket.on('data', function(data) {
+                document.getElementById('salida').innerHTML += JSON.stringify(data)+ "<br>";
+            });
         }
+
         function connect() {
             document.getElementById('estado').innerHTML = 'reconnecting';
             iosocket.socket.connect();
-            dress(iosocket);
         }
         function disconnect() {
             iosocket.disconnect();
@@ -42,7 +40,7 @@
   <button onclick="disconnect()">disconnect</button><br>
   <div id="estado">?</div>
   <div id="salida">
-      (Inicio)<br>
+    (Inicio)<br>
   </div>
 </body>
 </html>
