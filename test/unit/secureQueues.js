@@ -194,7 +194,7 @@ describe('Secure Queues - GET', function() {
     get(QUEUE_ID, USERNAME, 'invalid' , function(err, res, data) {
 
       res.statusCode.should.be.equal(401);
-      data.should.be.equal('Unauthorized ' + USERNAME);
+      data.should.be.equal('Unauthorized');
 
       done();
     });
@@ -206,7 +206,7 @@ describe('Secure Queues - GET', function() {
     get(QUEUE_ID, user, PASSWORD, function(err, res, data) {
 
       res.statusCode.should.be.equal(401);
-      data.should.be.equal('Unauthorized ' + user);
+      data.should.be.equal('Unauthorized');
 
       done();
     });
@@ -248,7 +248,7 @@ describe('Secure Queues - GET', function() {
     peek(QUEUE_ID, USERNAME, 'invalid' , function(err, res, data) {
 
       res.statusCode.should.be.equal(401);
-      data.should.be.equal('Unauthorized ' + USERNAME);
+      data.should.be.equal('Unauthorized');
 
       done();
     });
@@ -260,7 +260,7 @@ describe('Secure Queues - GET', function() {
     peek(QUEUE_ID, user, PASSWORD, function(err, res, data) {
 
       res.statusCode.should.be.equal(401);
-      data.should.be.equal('Unauthorized ' + user);
+      data.should.be.equal('Unauthorized');
 
       done();
     });
@@ -297,12 +297,32 @@ describe('Secure Queues - GET', function() {
     });
   });
 
+    it('POP queue - admin credentials', function(done) {
+
+        pop(QUEUE_ID, "marcos", "marcos", function(err, res, data) {
+
+            res.statusCode.should.be.equal(200);
+
+            var data = JSON.parse(data);
+            data.should.have.property('ok', true);
+
+            data.should.have.property('data');
+            data.data.should.include(MESSAGE);
+            data.data.length.should.be.equal(1);
+
+            data.transactions.should.include(transID);
+            data.transactions.length.should.be.equal(1);
+
+            done();
+        });
+    });
+
   it('POP queue - invalid pass', function(done) {
 
     pop(QUEUE_ID, USERNAME, 'invalid' , function(err, res, data) {
 
       res.statusCode.should.be.equal(401);
-      data.should.be.equal('Unauthorized ' + USERNAME);
+      data.should.be.equal('Unauthorized');
 
       done();
     });
@@ -314,7 +334,7 @@ describe('Secure Queues - GET', function() {
     pop(QUEUE_ID, user, PASSWORD, function(err, res, data) {
 
       res.statusCode.should.be.equal(401);
-      data.should.be.equal('Unauthorized ' + user);
+      data.should.be.equal('Unauthorized');
 
       done();
     });
@@ -348,13 +368,30 @@ describe('Secure Queues - GET', function() {
       done();
     });
   });
+  it('SUBSCRIBE queue - admin credentials', function(done) {
+
+        subscribe(1, QUEUE_ID, "marcos", "marcos", function(err, messages) {
+
+            var message = messages.pop();
+            message.should.have.property('ok', true);
+
+            message.should.have.property('data');
+            message.data.should.include(MESSAGE);
+            message.data.length.should.be.equal(1);
+
+            message.transactions.should.include(transID);
+            message.transactions.length.should.be.equal(1);
+
+            done();
+        });
+    });
 
   it('SUBSCRIBE queue - invalid pass', function(done) {
 
     subscribe(1, QUEUE_ID, USERNAME, 'invalid' , function(err, res, data) {
 
       res.statusCode.should.be.equal(401);
-      data.should.be.equal('Unauthorized ' + USERNAME);
+      data.should.be.equal('Unauthorized');
 
       done();
     });
@@ -366,7 +403,7 @@ describe('Secure Queues - GET', function() {
     subscribe(1, QUEUE_ID, user, PASSWORD, function(err, res, data) {
 
       res.statusCode.should.be.equal(401);
-      data.should.be.equal('Unauthorized ' + user);
+      data.should.be.equal('Unauthorized');
 
       done();
     });
