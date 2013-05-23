@@ -299,7 +299,7 @@ describe('Secure Queues - GET', function() {
 
     it('POP queue - admin credentials', function(done) {
 
-        pop(QUEUE_ID, "marcos", "marcos", function(err, res, data) {
+        pop(QUEUE_ID, "popbox", "itscool", function(err, res, data) {
 
             res.statusCode.should.be.equal(200);
 
@@ -370,7 +370,7 @@ describe('Secure Queues - GET', function() {
   });
   it('SUBSCRIBE queue - admin credentials', function(done) {
 
-        subscribe(1, QUEUE_ID, "marcos", "marcos", function(err, messages) {
+        subscribe(1, QUEUE_ID, "popbox", "itscool", function(err, messages) {
 
             var message = messages.pop();
             message.should.have.property('ok', true);
