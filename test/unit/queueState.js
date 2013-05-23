@@ -61,38 +61,36 @@ describe('Queue State', function() {
     });
 
     setTimeout(function() {
-      checkState(true, function() {
-        var trans = utils.createTransaction('MESSAGE', 'L', [ {id: queueID} ]);
-        utils.pushTransaction(trans, function(err, response, data) {
-          should.not.exist(err);
-          response.statusCode.should.be.equal(200);
-        })
-      })
-    }, 1000)
+      checkState(true, pushTrans);
+    }, 1000);
   });
 
   it('Blocked is true until the last pop ends', function(done) {
     this.timeout(5000);
 
-    utils.pop(queueID, function(err, response, data) {
+    var firstPop = true;
+
+    var checkPop = function(err, response, data) {
+
       should.not.exist(err);
       response.statusCode.should.be.equal(200);
 
       data.data.length.should.be.equal(1);
       data.transactions.length.should.be.equal(1);
 
-      checkState(true, pushTrans);
-    });
 
-    utils.pop(queueID, function(err, response, data) {
-      should.not.exist(err);
-      response.statusCode.should.be.equal(200);
+      if (firstPop) {
+        checkState(true, pushTrans);
+      } else {
+        checkState(false, done);
+      }
 
-      data.data.length.should.be.equal(1);
-      data.transactions.length.should.be.equal(1);
+      firstPop = false;
+    };
 
-      checkState(false, done);
-    });
+    //Parallel pops
+    utils.pop(queueID, checkPop);
+    utils.pop(queueID, checkPop);
 
     setTimeout(function() {
       checkState(true, pushTrans);
@@ -130,41 +128,37 @@ describe('Queue State', function() {
     });
 
     setTimeout(function() {
-      checkState(true, function() {
-        var trans = utils.createTransaction('MESSAGE', 'L', [ {id: queueID} ]);
-        utils.pushTransaction(trans, function(err, response, data) {
-          should.not.exist(err);
-          response.statusCode.should.be.equal(200);
-        })
-      })
-    }, 1000)
+      checkState(true, pushTrans);
+    }, 1000);
   });
 
 
   it('Blocked until the last subscription ends', function(done) {
     this.timeout(5000);
 
-    utils.subscribe(1, queueID, function(err, messages) {
+    var firstSubscription = true;
+
+    var checkSubscription = function(err, messages) {
       should.not.exist(err);
 
       var msg = messages.pop();
       msg.data.length.should.be.equal(1);
       msg.transactions.length.should.be.equal(1);
 
-      //Timeout is needed: sometimes true is returned because the value has not been updated.
-      setTimeout(checkState.bind({}, true, pushTrans), 100);
-    });
+      if (firstSubscription) {
+        //Timeout is needed: sometimes true is returned because the value has not been updated.
+        setTimeout(checkState.bind({}, true, pushTrans), 100);
+      } else {
+        //Timeout is needed: sometimes true is returned because the value has not been updated.
+        setTimeout(checkState.bind({}, false, done), 100);
+      }
 
-    utils.subscribe(1, queueID, function(err, messages) {
-      should.not.exist(err);
+      firstSubscription = false;
+    }
 
-      var msg = messages.pop();
-      msg.data.length.should.be.equal(1);
-      msg.transactions.length.should.be.equal(1);
-
-      //Timeout is needed: sometimes true is returned because the value has not been updated.
-      setTimeout(checkState.bind({}, false, done), 100);
-    });
+    //Parallel subscriptions
+    utils.subscribe(1, queueID, checkSubscription);
+    utils.subscribe(1, queueID, checkSubscription);
 
     setTimeout(function() {
       checkState(true, pushTrans);
