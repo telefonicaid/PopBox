@@ -28,9 +28,9 @@
         "hooker":"*",
         "logger":"https://github.com/telefonicaid/pditclogger/tarball/master",
         "performanceFramework":"https://github.com/PDI-DGS-Protolab/performanceFramework/tarball/master",
-		"should": "1.2.2",
-        "socket.io": "0.8.7"
-		
+		    "should": "1.2.2",
+        "socket.io": "0.8.7",
+        "socket.io-client": "0.9.11"
     },
   "bugs": {
     "url": "https://github.com/telefonicaid/PopBox/issues"
