@@ -19,6 +19,14 @@ var checkState = function(expectedState, cb) {
   });
 }
 
+var pushTrans = function() {
+  var trans = utils.createTransaction('MESSAGE', 'L', [ {id: queueID} ]);
+  utils.pushTransaction(trans, function(err, response, data) {
+    should.not.exist(err);
+    response.statusCode.should.be.equal(200);
+  });
+}
+
 describe('Queue State', function() {
 
   before(function(done){
@@ -63,6 +71,34 @@ describe('Queue State', function() {
     }, 1000)
   });
 
+  it('Blocked is true until the last pop ends', function(done) {
+    this.timeout(5000);
+
+    utils.pop(queueID, function(err, response, data) {
+      should.not.exist(err);
+      response.statusCode.should.be.equal(200);
+
+      data.data.length.should.be.equal(1);
+      data.transactions.length.should.be.equal(1);
+
+      checkState(true, pushTrans);
+    });
+
+    utils.pop(queueID, function(err, response, data) {
+      should.not.exist(err);
+      response.statusCode.should.be.equal(200);
+
+      data.data.length.should.be.equal(1);
+      data.transactions.length.should.be.equal(1);
+
+      checkState(false, done);
+    });
+
+    setTimeout(function() {
+      checkState(true, pushTrans);
+    }, 1000)
+  });
+
   it('Blocked is true when pop operations is being processed and false when is completed (timeout)', function(done) {
     this.timeout(5000);
 
@@ -101,6 +137,37 @@ describe('Queue State', function() {
           response.statusCode.should.be.equal(200);
         })
       })
+    }, 1000)
+  });
+
+
+  it('Blocked until the last subscription ends', function(done) {
+    this.timeout(5000);
+
+    utils.subscribe(1, queueID, function(err, messages) {
+      should.not.exist(err);
+
+      var msg = messages.pop();
+      msg.data.length.should.be.equal(1);
+      msg.transactions.length.should.be.equal(1);
+
+      //Timeout is needed: sometimes true is returned because the value has not been updated.
+      setTimeout(checkState.bind({}, true, pushTrans), 100);
+    });
+
+    utils.subscribe(1, queueID, function(err, messages) {
+      should.not.exist(err);
+
+      var msg = messages.pop();
+      msg.data.length.should.be.equal(1);
+      msg.transactions.length.should.be.equal(1);
+
+      //Timeout is needed: sometimes true is returned because the value has not been updated.
+      setTimeout(checkState.bind({}, false, done), 100);
+    });
+
+    setTimeout(function() {
+      checkState(true, pushTrans);
     }, 1000)
   });
 
