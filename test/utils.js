@@ -42,10 +42,14 @@ var createTransaction = function(payload, priority, queues, expDate, callback) {
   return trans;
 };
 
-var getQueueState = function(queueID, cb) {
-  'use strict';
-  popBoxRequest('GET', '/queue/' + queueID, '', cb);
-};
+var orgPath = function(org, path) {
+
+  if (org) {
+    path = '/org/' + org + path;
+  }
+
+  return path;
+}
 
 var makeRequest = function(options, content, cb) {
   'use strict';
@@ -105,14 +109,21 @@ var popBoxRequest = function(method, path, content, cb) {
   return makeRequest(options, content, cb);
 };
 
-var pushTransaction = function(trans, cb) {
+var getQueueState = function(org, queueID, cb) {
+  'use strict';
+  var path = orgPath(org, '/queue/' + queueID);
+  popBoxRequest('GET', path, '', cb);
+};
+
+var pushTransaction = function(org, trans, cb) {
   'use strict';
 
   //Can be replaced by introducing items into the database directly
-  popBoxRequest('POST', '/trans', trans, cb);
+  var path = orgPath(org, '/trans');
+  popBoxRequest('POST', path, trans, cb);
 };
 
-var getTransState = function(transID, state, cb) {
+var getTransState = function(org, transID, state, cb) {
   'use strict';
 
   if (typeof state === 'function') {
@@ -125,15 +136,17 @@ var getTransState = function(transID, state, cb) {
     path += '?queues=' + state;
   }
 
+  path = orgPath(org, path);
   popBoxRequest('GET', path , null, cb);
 };
 
-var putTransaction = function(transID, trans, cb) {
+var putTransaction = function(org, transID, trans, cb) {
   'use strict';
-  popBoxRequest('PUT', '/trans/' + transID, trans, cb);
+  var path = orgPath(org, '/trans/' + transID);
+  popBoxRequest('PUT', path, trans, cb);
 };
 
-var pop = function(queueID, nPets, cb) {
+var pop = function(org, queueID, nPets, cb) {
   'use strict';
 
   if (typeof nPets === 'function') {
@@ -146,10 +159,11 @@ var pop = function(queueID, nPets, cb) {
     path += '?max=' + nPets;
   }
 
+  path = orgPath(org, path);
   popBoxRequest('POST', path, null, cb);
 };
 
-var popTimeout = function(queueID, timeout, cb) {
+var popTimeout = function(org, queueID, timeout, cb) {
   'use strict';
 
   if (typeof timeout === 'function') {
@@ -162,10 +176,11 @@ var popTimeout = function(queueID, timeout, cb) {
     path += '?timeout=' + timeout;
   }
 
+  path = orgPath(org, path);
   return popBoxRequest('POST', path, null, cb);
 };
 
-var peek = function(queueID, nPets, cb) {
+var peek = function(org, queueID, nPets, cb) {
   'use strict';
 
   if (typeof nPets === 'function') {
@@ -178,15 +193,11 @@ var peek = function(queueID, nPets, cb) {
     path += '?max=' + nPets;
   }
 
+  path = orgPath(org, path);
   popBoxRequest('GET', path, null, cb);
 };
 
-var queueState = function(queueID, cb) {
-  'use strict';
-  popBoxRequest('GET', '/queue/' + queueID, null, cb);
-};
-
-var subscribe = function(nPets, queueID, cb) {
+var subscribe = function(org, nPets, queueID, cb) {
   'use strict';
 
   var options = {
@@ -198,6 +209,7 @@ var subscribe = function(nPets, queueID, cb) {
       'accept': 'application/json'
     }
   };
+  options.path = orgPath(org, options.path);
 
   var req = http.request(options, function(res) {
 
@@ -216,17 +228,29 @@ var subscribe = function(nPets, queueID, cb) {
   });
 
   req.end();
+  return req;
 };
 
 exports.createTransaction = createTransaction;
 exports.cleanBBDD = cleanBBDD;
 exports.makeRequest = makeRequest;
-exports.pushTransaction = pushTransaction;
-exports.getTransState = getTransState;
-exports.putTransaction = putTransaction;
-exports.getQueueState = getQueueState;
-exports.pop = pop;
-exports.popTimeout = popTimeout;
-exports.peek = peek;
-exports.queueState = queueState;
-exports.subscribe = subscribe;
+
+//Without ORG
+exports.pushTransaction = pushTransaction.bind({}, null);
+exports.getTransState = getTransState.bind({}, null);
+exports.putTransaction = putTransaction.bind({}, null);
+exports.getQueueState = getQueueState.bind({}, null);
+exports.pop = pop.bind({}, null);
+exports.popTimeout = popTimeout.bind({}, null);
+exports.peek = peek.bind({}, null);
+exports.subscribe = subscribe.bind({}, null);
+
+//With ORG
+exports.pushTransactionOrg = pushTransaction;
+exports.getTransStateOrg = getTransState;
+exports.putTransactionOrg = putTransaction;
+exports.getQueueStateOrg = getQueueState;
+exports.popOrg = pop;
+exports.popTimeoutOrg = popTimeout;
+exports.peekOrg = peek;
+exports.subscribeOrg = subscribe;

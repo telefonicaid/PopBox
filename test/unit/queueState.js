@@ -6,7 +6,7 @@ var agent = require('../../.');
 var queueID = 'q1';
 
 var checkState = function(expectedState, cb) {
-  utils.queueState('q1', function(err, response, data) {
+  utils.getQueueState('q1', function(err, response, data) {
 
     should.not.exist(err);
     response.statusCode.should.be.equal(200);
