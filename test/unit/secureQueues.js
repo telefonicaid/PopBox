@@ -164,7 +164,7 @@ describe('Secure Queues - GET', function() {
     });
   });
 
-  it('Should return error when a ', function(done) {
+  it('Error is returned when an existing queue is recreated', function(done) {
     var queue = { queue: QUEUE_ID, user: 'usename2', password: 'password2' };
     postQueue(queue, function(err, res, data) {
 
