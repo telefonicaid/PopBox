@@ -25,6 +25,7 @@ describe('Organization Test', function() {
   });
 
   beforeEach(function(done) {
+
     //Clean BBDD and push a transaction in one organization
     utils.cleanBBDD(function() {
       var trans = utils.createTransaction(PAYLOAD, PRIORITY,  [ { 'id': QUEUE } ]);
@@ -42,187 +43,200 @@ describe('Organization Test', function() {
     });
   });
 
-  it('GET /trans/id only works for ' + ORG_A, function(done) {
+  it('GET /trans/id works for ' + ORG_A, function(done) {
 
-    var orgATest = function(done) {
-      utils.getTransStateOrg(ORG_A, transID, function(err, response, data) {
+    utils.getTransStateOrg(ORG_A, transID, function(err, response, data) {
 
-        should.not.exist(err);
-        response.statusCode.should.be.equal(200);
+      should.not.exist(err);
+      response.statusCode.should.be.equal(200);
 
-        data.should.have.property('payload');
-        data.should.have.property('priority');
+      data.should.have.property('payload');
+      data.should.have.property('priority');
 
-        data.payload.should.be.equal(PAYLOAD);
-        data.priority.should.be.equal(PRIORITY);
+      data.payload.should.be.equal(PAYLOAD);
+      data.priority.should.be.equal(PRIORITY);
 
-        done();
+      done();
 
-      });
-    };
-
-    var orgBTest = function(done) {
-      utils.getTransStateOrg(ORG_B, transID, function(err, response, data) {
-
-        should.not.exist(err);
-        response.statusCode.should.be.equal(200);
-
-        Object.keys(data).length.should.be.equal(0);
-
-        done();
-
-      });
-    }
-
-    async.parallel([orgATest, orgBTest], done);
-
+    });
   });
 
-  it('PUT /trans/id only works for ' + ORG_A, function(done) {
+  it('GET /trans/id does not work for ' + ORG_B, function(done) {
+
+    utils.getTransStateOrg(ORG_B, transID, function(err, response, data) {
+
+      should.not.exist(err);
+      response.statusCode.should.be.equal(200);
+
+      Object.keys(data).length.should.be.equal(0);
+
+      done();
+
+    });
+  });
+
+  it('PUT /trans/id works for ' + ORG_A, function(done) {
 
     var trans = utils.createTransaction(PAYLOAD, PRIORITY,  [ { 'id': QUEUE } ]);
 
-    var orgATest = function(done) {
-      utils.putTransactionOrg(ORG_A, transID, trans, function(err, response, data) {
+    utils.putTransactionOrg(ORG_A, transID, trans, function(err, response, data) {
 
-        should.not.exist(err);
-        response.statusCode.should.be.equal(200);
+      should.not.exist(err);
+      response.statusCode.should.be.equal(200);
 
-        data.should.have.property('ok', true);
+      data.should.have.property('ok', true);
 
-        done();
+      done();
 
-      });
-    };
-
-    var orgBTest = function(done) {
-      utils.putTransactionOrg(ORG_B, transID, trans, function(err, response, data) {
-
-        should.not.exist(err);
-        response.statusCode.should.be.equal(400);
-
-        data.should.have.property('errors');
-        data.errors.length.should.be.equal(1);
-        data.errors.should.include(transID + ' does not exist');
-
-        done();
-
-      });
-    }
-
-    async.parallel([orgATest, orgBTest], done);
+    });
   });
 
-  it('GET /queue/' + QUEUE + ' only works for ' + ORG_A, function(done) {
-    var orgATest = function(done) {
-      utils.getQueueStateOrg(ORG_A, QUEUE, function(err, response, data) {
+  it('PUT /trans/id does not work for ' + ORG_B, function(done) {
 
-        should.not.exist(err);
-        response.statusCode.should.be.equal(200);
+    var trans = utils.createTransaction(PAYLOAD, PRIORITY,  [ { 'id': QUEUE } ]);
 
-        data.should.have.property('high');
-        data.high.length.should.be.equal(1);
-        data.high.pop().id.should.be.equal(transID);
+    utils.putTransactionOrg(ORG_B, transID, trans, function(err, response, data) {
 
-        done();
+      should.not.exist(err);
+      response.statusCode.should.be.equal(400);
 
-      });
-    };
+      data.should.have.property('errors');
+      data.errors.length.should.be.equal(1);
+      data.errors.should.include(transID + ' does not exist');
 
-    var orgBTest = function(done) {
-      utils.getTransStateOrg(ORG_B, QUEUE, function(err, response, data) {
+      done();
 
-        should.not.exist(err);
-        response.statusCode.should.be.equal(200);
-
-        Object.keys(data).length.should.be.equal(0);
-
-        done();
-
-      });
-    }
-
-    async.parallel([orgATest, orgBTest], done);
+    });
   });
 
-  it('POST /queue/' + QUEUE + '/pop only works for ' + ORG_A, function(done) {
+  it('GET /queue/' + QUEUE + ' works for ' + ORG_A, function(done) {
+
+    utils.getQueueStateOrg(ORG_A, QUEUE, function(err, response, data) {
+
+      should.not.exist(err);
+      response.statusCode.should.be.equal(200);
+
+      data.should.have.property('high');
+      data.high.length.should.be.equal(1);
+      data.high.pop().id.should.be.equal(transID);
+
+      done();
+
+    });
+  });
+
+  it('GET /queue/' + QUEUE + ' does not work for ' + ORG_B, function(done) {
+
+    utils.getTransStateOrg(ORG_B, QUEUE, function(err, response, data) {
+
+      should.not.exist(err);
+      response.statusCode.should.be.equal(200);
+
+      Object.keys(data).length.should.be.equal(0);
+
+      done();
+
+    });
+  });
+
+  it('POST /queue/' + QUEUE + '/pop works for ' + ORG_A, function(done) {
+
+    utils.popOrg(ORG_A, QUEUE, function(err, response, data) {
+
+      should.not.exist(err);
+      response.statusCode.should.be.equal(200);
+
+      data.should.not.have.property('error');
+      data.should.have.property('ok');
+      data.should.have.property('data');
+      data.data.length.should.be.equal(1);
+      (data.data.pop()).should.be.equal(PAYLOAD);
+
+      done();
+
+    });
+  });
+
+  it('POST /queue/' + QUEUE + '/pop does not work for ' + ORG_B, function(done) {
 
     this.timeout(5000);
 
-    var orgATest = function(done) {
-      utils.popOrg(ORG_A, QUEUE, function(err, response, data) {
+    utils.popTimeoutOrg(ORG_B, QUEUE, 1, function(err, response, data) {
 
-        should.not.exist(err);
-        response.statusCode.should.be.equal(200);
+      should.not.exist(err);
+      response.statusCode.should.be.equal(200);
 
-        data.should.not.have.property('error');
-        data.should.have.property('ok');
-        data.should.have.property('data');
-        data.data.length.should.be.equal(1);
-        (data.data.pop()).should.be.equal(PAYLOAD);
+      data.should.not.have.property('error');
+      data.should.have.property('ok');
+      data.should.have.property('data');
+      data.data.length.should.be.equal(0);
 
-        done();
+      done();
 
-      });
-    };
-
-    var orgBTest = function(done) {
-      utils.popTimeoutOrg(ORG_B, QUEUE, 1, function(err, response, data) {
-
-        should.not.exist(err);
-        response.statusCode.should.be.equal(200);
-
-        data.should.not.have.property('error');
-        data.should.have.property('ok');
-        data.should.have.property('data');
-        data.data.length.should.be.equal(0);
-
-        done();
-
-      });
-    }
-
-    async.series([orgBTest, orgATest], done);
+    });
   });
 
-  it('GET /queue/' + QUEUE + '/peek only works for ' + ORG_A, function(done) {
+  it('GET /queue/' + QUEUE + '/peek works for ' + ORG_A, function(done) {
 
-    var orgATest = function(done) {
-      utils.peekOrg(ORG_A, QUEUE, function(err, response, data) {
+    utils.peekOrg(ORG_A, QUEUE, function(err, response, data) {
 
-        should.not.exist(err);
-        response.statusCode.should.be.equal(200);
+      should.not.exist(err);
+      response.statusCode.should.be.equal(200);
 
-        data.should.not.have.property('error');
-        data.should.have.property('ok');
-        data.should.have.property('data');
-        data.data.length.should.be.equal(1);
-        (data.data.pop()).should.be.equal(PAYLOAD);
+      data.should.not.have.property('error');
+      data.should.have.property('ok');
+      data.should.have.property('data');
+      data.data.length.should.be.equal(1);
+      (data.data.pop()).should.be.equal(PAYLOAD);
 
-        done();
-
-      });
-    };
-
-    var orgBTest = function(done) {
-      utils.peekOrg(ORG_B, QUEUE, 1, function(err, response, data) {
-
-        should.not.exist(err);
-        response.statusCode.should.be.equal(200);
-
-        data.should.not.have.property('error');
-        data.should.have.property('ok');
-        data.should.have.property('data');
-        data.data.length.should.be.equal(0);
-
-        done();
-
-      });
-    }
-
-    async.parallel([orgATest, orgBTest], done);
+      done()
+    });
   });
 
-  //TODO: Add subscription test
+  it('GET /queue/' + QUEUE + '/peek does not work for ' + ORG_B, function(done) {
+
+    utils.peekOrg(ORG_B, QUEUE, 1, function(err, response, data) {
+
+      should.not.exist(err);
+      response.statusCode.should.be.equal(200);
+
+      data.should.not.have.property('error');
+      data.should.have.property('ok');
+      data.should.have.property('data');
+      data.data.length.should.be.equal(0);
+
+      done();
+
+    });
+  });
+
+  it('POST /queue/' + QUEUE + '/subscribe works for ' + ORG_A, function(done) {
+
+    utils.subscribeOrg(ORG_A, 1, QUEUE, function(err, messages) {
+
+      var message = messages.pop();
+
+      message.should.have.property('ok', true);
+      message.should.have.property('data');
+      message.data.length.should.be.equal(1);
+      (message.data.pop()).should.be.equal(PAYLOAD);
+
+      done();
+    });
+  });
+
+  it('POST /queue/' + QUEUE + '/subscribe does not work for ' + ORG_B, function(done) {
+
+    var callbackInvoked = false;
+
+    utils.subscribeOrg(ORG_A, 1, QUEUE, function(err, messages) {
+      callbackInvoked = true;
+    });
+
+    setTimeout(function() {
+      callbackInvoked.should.be.equal(false);
+      done();
+    })
+  });
 
 });

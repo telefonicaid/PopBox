@@ -228,7 +228,6 @@ var subscribe = function(org, nPets, queueID, cb) {
   });
 
   req.end();
-  return req;
 };
 
 exports.createTransaction = createTransaction;
