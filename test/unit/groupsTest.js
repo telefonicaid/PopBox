@@ -57,8 +57,6 @@ describe('Groups', function () {
           should.not.exist(error);
           response.statusCode.should.equal(200);
 
-          console.log(groupBody);
-
           var parsedBody = JSON.parse(groupBody);
           parsedBody.name.should.equal('newGroup');
           parsedBody.queues.length.should.equal(2);
@@ -229,6 +227,144 @@ describe('Groups', function () {
           group.queues.length.should.equal(5);
           done();
         });
+      });
+    });
+  });
+
+  describe('When a group is updated', function () {
+    var groupName = 'group1'
+
+    beforeEach(function (done) {
+      var createGroup = {
+        url: 'http://' + HOST + ':' + PORT + '/group',
+        method: 'POST',
+        json: {
+          name: groupName,
+          queues: ['A1', 'B1']
+        }
+      };
+
+      request(createGroup, function (error, response, body) {
+        done();
+      });
+    });
+
+    it('should add queues', function (done) {
+      var addQueues = {
+        url: 'http://' + HOST + ':' + PORT + '/group/' + groupName,
+        method: 'PUT',
+        json: {
+          queuesToAdd: ['C1', 'D1', 'E1']
+        }
+      };
+
+      request(addQueues, function (error, response, body) {
+        var getGroup = {
+          url: 'http://' + HOST + ':' + PORT + '/group/' + groupName,
+          method: 'GET',
+          json: {}
+        };
+
+        request(getGroup, function (error, response, group) {
+          group.queues.length.should.equal(5);
+          done();
+        });
+      });
+    });
+
+    it('should remove queues', function (done) {
+      var removeQueues = {
+        url: 'http://' + HOST + ':' + PORT + '/group/' + groupName,
+        method: 'PUT',
+        json: {
+          queuesToRemove: ['A1']
+        }
+      };
+
+      request(removeQueues, function (error, response, body) {
+        var getGroup = {
+          url: 'http://' + HOST + ':' + PORT + '/group/' + groupName,
+          method: 'GET',
+          json: {}
+        };
+
+        request(getGroup, function (error, response, group) {
+          group.queues.length.should.equal(1);
+          group.queues.should.include('B1');
+          done();
+        });
+      });
+    });
+
+    it('should add and remove queues', function (done) {
+      var removeQueues = {
+        url: 'http://' + HOST + ':' + PORT + '/group/' + groupName,
+        method: 'PUT',
+        json: {
+          queuesToAdd: ['C1', 'D1', 'E1'],
+          queuesToRemove: ['A1']
+        }
+      };
+
+      request(removeQueues, function (error, response, body) {
+        var getGroup = {
+          url: 'http://' + HOST + ':' + PORT + '/group/' + groupName,
+          method: 'GET',
+          json: {}
+        };
+
+        request(getGroup, function (error, response, group) {
+
+          group.queues.length.should.equal(4);
+          group.queues.should.include('B1');
+          group.queues.should.include('C1');
+          group.queues.should.include('D1');
+          group.queues.should.include('E1');
+
+          done();
+        });
+      });
+    });
+
+    it('should return error when a group does not exist', function (done) {
+
+      var fakeGroup = 'fakeGroup';
+
+      var removeQueues = {
+        url: 'http://' + HOST + ':' + PORT + '/group/' + fakeGroup,
+        method: 'PUT',
+        json: {
+          queuesToAdd: ['C1', 'D1', 'E1'],
+          queuesToRemove: ['A1']
+        }
+      };
+
+      request(removeQueues, function (error, response, body) {
+
+        response.statusCode.should.be.equal(400);
+        body.errors.length.should.be.equal(1);
+        body.errors.should.include(fakeGroup + ' does not exist');
+
+        done();
+
+      });
+    });
+
+    it('should return error when the object is not valid', function (done) {
+      var removeQueues = {
+        url: 'http://' + HOST + ':' + PORT + '/group/' + groupName,
+        method: 'PUT',
+        json: {
+        }
+      };
+
+      request(removeQueues, function (error, response, body) {
+
+        response.statusCode.should.be.equal(400);
+        body.errors.length.should.be.equal(1);
+        body.errors.should.include('missing queues to add/remove');
+
+        done();
       });
     });
   });
