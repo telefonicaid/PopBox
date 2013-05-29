@@ -164,7 +164,21 @@ describe('Secure Queues - GET', function() {
     });
   });
 
-  it ('GET non-existent secure queue', function(done) {
+  it('Error is returned when an existing queue is recreated', function(done) {
+    var queue = { queue: QUEUE_ID, user: 'usename2', password: 'password2' };
+    postQueue(queue, function(err, res, data) {
+
+      res.statusCode.should.be.equal(403);
+
+      var parsed = JSON.parse(data);
+      parsed.errors.length.should.be.equal(1);
+      parsed.errors.pop().should.be.equal('Error: SEC:q1 exists');
+
+      done();
+    })
+  });
+
+  it('GET non-existent secure queue', function(done) {
 
     get('newQueue', USERNAME, PASSWORD, function(err, res, data) {
 
