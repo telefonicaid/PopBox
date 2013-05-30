@@ -14,16 +14,14 @@ program
     .option('-H, --host [hostname]', 'host, \'localhost\' by default', 'localhost')
     .option('-P, --port [number]', 'port, 5001 by default', 5002, parseInt)
     .option('-Q, --queue [id]', 'queue', "Q1")
-    .option('-U, --user [id]', 'username','popbox')
-    .option('-X, --password [passwd]', 'password', 'itscool')
+    .option('-U, --user [id:passwd]', 'username','popbox:itscool')
     .parse(process.argv);
 url = util.format('https://%s:%d/queue', program.host, program.port);
 data = {
     queue:  program.queue,
-    user: program.user,
-    password: program.password
+    user: program.user.split(":")[0],
+    password: program.user.split(":")[1]
 };
-
 console.log('url\n', url);
 console.log('data\n', data);
 request.post({url : url, json: data}, function(err, res, body) {
