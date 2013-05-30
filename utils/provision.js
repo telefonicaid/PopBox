@@ -26,6 +26,9 @@ trans = {
 if(program.expiration) {
     trans.expirationDelay = program.expiration;
 }
+if(program.callback) {
+    trans.callback = program.callback;
+}
 for(i = 0; i < program.queues.length; i++) {
     trans.queue.push({id: program.queues[i]});
 }
