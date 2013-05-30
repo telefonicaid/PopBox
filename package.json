@@ -28,7 +28,9 @@
         "hooker":"*",
         "logger":"https://github.com/telefonicaid/pditclogger/tarball/master",
         "performanceFramework":"https://github.com/PDI-DGS-Protolab/performanceFramework/tarball/master",
-		    "should": "1.2.2",
+        "should": "1.2.2",
+        "forever": "0.10.8",
+        "daemon":  "1.1.0"
         "socket.io": "0.8.7",
         "socket.io-client": "0.9.11"
     },

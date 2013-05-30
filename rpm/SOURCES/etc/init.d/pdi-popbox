@@ -1,0 +1,99 @@
+#!/bin/bash
+# description: Script to wake up Agent.js from Popbox module
+# chkconfig: 2345 85 11
+###########################################
+##Author:  Carlos Enrique Gómez Gómez
+##Depar:   Release Engineering & Management
+###########################################
+## Values
+# processname: popbox
+# config: /opt/pdi-popbox/lib/baseConfig.js
+# pidfile: /var/run/pdi-popbox/popbox.pid
+
+source /etc/rc.d/init.d/functions
+
+NAME=popbox
+SOURCE_DIR=/opt/pdi-popbox/bin
+SOURCE_FILE=popbox
+ 
+user=popbox
+pidfile=/var/run/pdi-popbox/$NAME.pid
+logfile=/var/log/pdi-popbox/$NAME.log
+forever_dir=/var/run/forever
+ 
+node=node
+sed=sed
+home_dir="/opt/pdi-popbox"
+forever=$home_dir/node_modules/forever/bin/forever 
+ 
+start() {
+  echo "Starting $NAME node instance: "
+ 
+  if [ "$foreverid" == "" ]; then
+    # Create the log and pid files, making sure that
+    # the target use has access to them
+    mkdir -p $(dirname $logfile)
+    touch $logfile
+    chown -R $user $(dirname $logfile)
+    mkdir -p $(dirname $pidfile)
+    #touch $pidfile
+    chown $user $(dirname $pidfile)
+ 
+    # Launch the application
+    cd $home_dir
+    daemon --user=$user \
+      $forever start -p $forever_dir --pidFile $pidfile -l $logfile -a \
+      $SOURCE_DIR/$SOURCE_FILE
+    RETVAL=$?
+    echo
+  else
+    echo "Instance already running"
+    RETVAL=0
+    echo
+  fi
+}
+
+stop() {
+  [ "$pid" == "" ] && return ;
+  echo "Shutting down $NAME(pid:$pid) node instance : "
+  processes=$(ps -ef|grep ^$user|grep $pid|grep -v "$home_dir/node_modules/forever"|awk '{print $2" "$3}' 2>/dev/null)
+  [ "$processes" == "" ] && echo "Any $user proccess is up" && RETVAL=1
+  if [ "$RETVAL" != "1" ]; then
+     kill -9 $processes
+     RETVAL=$?
+  fi
+  rm -Rf $pidfile
+  [ "$RETVAL" == "0" ] && echo_success
+  echo
+}
+ 
+if [ -f $pidfile ]; then
+  read pid < $pidfile
+else
+  pid=""
+fi
+if [ "$pid" != "" ]; then
+  # Gnarly sed usage to obtain the foreverid.
+  sed1="/$pid\]/p"
+  sed2="s/.*\[\([0-9]\+\)\].*\s$pid\].*/\1/g"
+  foreverid=`$forever list -p $forever_dir | $sed -n $sed1 | $sed $sed2`
+else
+  foreverid=""
+fi
+ 
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status -p ${pidfile}
+    ;;
+  *)
+    echo "Usage:  {start|stop|status}"
+    exit 1
+    ;;
+esac
+exit $RETVAL
