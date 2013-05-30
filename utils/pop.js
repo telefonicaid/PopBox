@@ -4,10 +4,13 @@
 
 var program = require('commander'),
     http = require('http'),
+    https = require('https'),
     qs = require('querystring'),
     util = require('util'),
     action,
     i,
+    options,
+    protocol,
     path,
     query;
 
@@ -20,8 +23,11 @@ program
     .option('-S, --subscribe', 'subscribe', false)
     .option('-T, --timeout [secs]', 'timeout')
     .option('-A, --timeoutACK [secs', 'ACK timeout')
+    .option('-U, --user [id:passwd]', 'username','popbox:itscool')
+    .option('-X, --secure', 'use HTTPS', false)
     .parse(process.argv);
 action = program.subscribe ? 'subscribe' : 'pop';
+protocol = http;
 if (program.reliable) {
     action += 'rel';
 }
@@ -37,7 +43,12 @@ if(query){
     path += '?'+qs.stringify(query);
 }
 console.log('path\n', path);
-http.request({method: 'POST', host: program.host, port: program.port, path: path}, function (res) {
+options = {method: 'POST', host: program.host, port: program.port, path: path};
+if(program.secure) {
+    protocol = https;
+    options.auth = program.user;
+}
+protocol.request(options, function (res) {
     console.log('statusCode\n', res.statusCode);
     console.log('headers\n', res.headers);
     console.log('body');
