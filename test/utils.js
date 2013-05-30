@@ -120,7 +120,7 @@ var pushTransaction = function(org, trans, cb) {
 
   //Can be replaced by introducing items into the database directly
   var path = orgPath(org, '/trans');
-  popBoxRequest('POST', path, trans, cb);
+      popBoxRequest('POST', path, trans, cb);
 };
 
 var getTransState = function(org, transID, state, cb) {
