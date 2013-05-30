@@ -17,9 +17,8 @@ program
     .option('-Q, --queues [list]', 'list of queues separated by comma', list, ["Q1"])
     .option('-C, --callback [url]', 'callback URL')
     .option('-E, --expiration [url]', 'expiration delay')
-    .option('-X, --secure', 'use HTTPS', false)
     .parse(process.argv);
-url = util.format('%s://%s:%d/trans', program.secure?'https':'http', program.host, program.port);
+url = util.format('http://%s:%d/trans', program.host, program.port);
 trans = {
     'payload': program.message,
     'priority': 'H',
