@@ -15,7 +15,7 @@ program
     .option('-P, --port [number]', 'port, 5001 by default', 5001, parseInt)
     .option('-M, --message [text]', 'message','¡hola!\n')
     .option('-Q, --queues [list]', 'list of queues separated by comma', list, ["Q1"])
-    .option('-G, --groups [list]', 'list of groups separated by comma', list, [])
+    .option('-G, --groups [list]', 'list of groups separated by comma',list)
     .option('-C, --callback [url]', 'callback URL')
     .option('-E, --expiration [url]', 'expiration delay')
     .option('-X, --secure', 'use HTTPS', false)
