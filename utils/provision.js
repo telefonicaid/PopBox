@@ -28,8 +28,8 @@ trans = {
 if(program.expiration) {
     trans.expirationDelay = program.expiration;
 }
-if(program.groups) {
-    trans.groups = program.groups;
+if(program.groups && program.groups.length!==0) {
+     trans.groups = program.groups;
 }
 if(program.callback) {
     trans.callback = program.callback;
