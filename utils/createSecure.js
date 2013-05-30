@@ -7,34 +7,26 @@ var program = require('commander'),
     util = require('util'),
     i,
     url,
-    trans;
+    data;
 
 program
     .version('0.0.1')
     .option('-H, --host [hostname]', 'host, \'localhost\' by default', 'localhost')
-    .option('-P, --port [number]', 'port, 5001 by default', 5001, parseInt)
-    .option('-M, --message [text]', 'message','¡hola!\n')
-    .option('-Q, --queues [list]', 'list of queues separated by comma', list, ["Q1"])
-    .option('-C, --callback [url]', 'callback URL')
-    .option('-E, --expiration [url]', 'expiration delay')
+    .option('-P, --port [number]', 'port, 5001 by default', 5002, parseInt)
+    .option('-Q, --queue [id]', 'queue', "Q1")
+    .option('-U, --user [id]', 'username','popbox')
+    .option('-X, --password [passwd]', 'password', 'itscool')
     .parse(process.argv);
-url = util.format('http://%s:%d/trans', program.host, program.port);
-trans = {
-    'payload': program.message,
-    'priority': 'H',
-    'queue': []};
-if(program.expiration) {
-    trans.expirationDelay = program.expiration;
-}
-if(program.callback) {
-    trans.callback = program.callback;
-}
-for(i = 0; i < program.queues.length; i++) {
-    trans.queue.push({id: program.queues[i]});
-}
+url = util.format('https://%s:%d/queue', program.host, program.port);
+data = {
+    queue:  program.queue,
+    user: program.user,
+    password: program.password
+};
+
 console.log('url\n', url);
-console.log('trans\n', trans);
-request.post({url : url, json: trans}, function(err, res, body) {
+console.log('data\n', data);
+request.post({url : url, json: data}, function(err, res, body) {
   if(err) {
      console.log('error\n', err);
   }
