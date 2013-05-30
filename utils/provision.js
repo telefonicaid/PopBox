@@ -12,7 +12,7 @@ var program = require('commander'),
 program
     .version('0.0.1')
     .option('-H, --host [hostname]', 'host, \'localhost\' by default', 'localhost')
-    .option('-P, --port [number]', 'port, 5001 by default', 5001)
+    .option('-P, --port [number]', 'port, 5001 by default', 5001, parseInt)
     .option('-M, --message [text]', 'message','¡hola!\n')
     .option('-Q, --queues [list]', 'list of queues separated by comma', list, ["Q1"])
     .option('-C, --callback [url]', 'callback URL')
@@ -32,7 +32,6 @@ if(program.callback) {
 for(i = 0; i < program.queues.length; i++) {
     trans.queue.push({id: program.queues[i]});
 }
-trans.queue.concat(program.queues);
 console.log('url\n', url);
 console.log('trans\n', trans);
 request.post({url : url, json: trans}, function(err, res, body) {
