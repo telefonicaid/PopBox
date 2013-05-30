@@ -1,6 +1,7 @@
 language: node_js
 node_js:
  - "0.8"
+ - "0.10"
 
 branches:
  only:
@@ -22,5 +23,3 @@ before_script:
  - openssl rsa -in server.key.org -passin pass:test1234 -out server.key
  - openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
  - cd ..
- - grunt test
- 

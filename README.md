@@ -111,7 +111,10 @@ server.crt
 ```
 
 To obtain them you may execute the following script (You must have openssl properly installed):
-PopBox/utils/create_http_certificates.sh
+```
+cd [PopBox]/utils/
+./create_http_certificates.sh
+```
 
 or execute these commands:
 ```

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <script src="/socket.io/socket.io.js">
+    </script>
+    <script>
+        var iosocket;
+
+        function connect_first() {
+            document.getElementById('estado').innerHTML = 'connecting first time';
+            iosocket = io.connect();
+
+            iosocket.on('connect', function(data) {
+                document.getElementById('estado').innerHTML = 'connected';
+                iosocket.emit('subscribe', 'Ax');
+            });
+
+            iosocket.on('data', function(data) {
+                document.getElementById('salida').innerHTML += JSON.stringify(data)+ "<br>";
+            });
+        }
+
+        function connect() {
+            document.getElementById('estado').innerHTML = 'reconnecting';
+            iosocket.socket.connect();
+        }
+        function disconnect() {
+            iosocket.disconnect();
+            document.getElementById('estado').innerHTML = 'disconnected';
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            connect_first();
+        })
+
+    </script>
+</head>
+<body>
+  <button onclick="connect()">connect</button><br>
+  <button onclick="disconnect()">disconnect</button><br>
+  <div id="estado">?</div>
+  <div id="salida">
+    (Inicio)<br>
+  </div>
+</body>
+</html>

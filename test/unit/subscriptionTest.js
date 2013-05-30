@@ -3,67 +3,66 @@ var http = require('http');
 var utils = require('./../utils.js');
 var agent = require('../../.');
 
+var pushTransaction = function(queue, message, cb) {
+  'use strict';
+
+  var transaction = utils.createTransaction(message, 'H', [{'id': queue}]);
+  utils.pushTransaction(transaction, function(error, response, data) {
+
+    should.not.exist(error);
+    response.statusCode.should.be.equal(200);
+
+    cb(error, data.data);
+  });
+
+};
+
+function checkState(id, payload, queueID, expectedState, cb) {
+  'use strict';
+
+  utils.getTransState(id, expectedState, function(error, response, data) {
+
+    should.not.exist(error);
+    response.statusCode.should.be.equal(200);
+
+    data.should.have.property('payload', payload);
+
+    data.should.have.property('queues');
+    var queues = data.queues;
+    queues.should.have.property(queueID);
+
+    var queue = queues[queueID];
+    queue.should.have.property('state', expectedState);
+
+    cb();
+
+  });
+};
+
 describe('Subscription Test', function() {
-
-  var pushTransaction = function(queue, message, cb) {
-    'use strict';
-
-    var transaction = utils.createTransaction(message, 'H', [{'id': queue}]);
-    utils.pushTransaction(transaction, function(error, response, data) {
-
-      should.not.exist(error);
-      response.statusCode.should.be.equal(200);
-
-      cb(error, data.data);
-    });
-
-  };
-
-  function checkState(id, payload, queueID, expectedState, cb) {
-    'use strict';
-
-    utils.getTransState(id, expectedState, function(error, response, data) {
-
-      should.not.exist(error);
-      response.statusCode.should.be.equal(200);
-
-      data.should.have.property('payload', payload);
-
-      data.should.have.property('queues');
-      var queues = data.queues;
-      queues.should.have.property(queueID);
-
-      var queue = queues[queueID];
-      queue.should.have.property('state', expectedState);
-
-      cb();
-
-    });
-  };
 
   beforeEach(function(done) {
     utils.cleanBBDD(done);
   });
 
-    before(function(done){
-        agent.start(done);
+  before(function(done){
+    agent.start(done);
+  });
+
+  after(function(done) {
+    utils.cleanBBDD(function() {
+      agent.stop(done);
     });
+  });
 
-    after(function(done) {
-        utils.cleanBBDD(function() {
-            agent.stop(done);
-        } );
-    });
-
-  it('Should receive all transaction in less than two seconds', function(done) {
-
+  var normalSubscription = function(subscriber, done) {
     var QUEUE_ID = 'subsQ',
         MESSAGE_PREFIX = 'message',
         N_PETS = 3,
         transactionIDList = [];
 
     //Subscribe to the queue
-    utils.subscribe(N_PETS, QUEUE_ID, function(err, messages) {
+    subscriber(N_PETS, QUEUE_ID, function(err, messages) {
 
       var interval;
 
@@ -106,17 +105,16 @@ describe('Subscription Test', function() {
         transactionIDList.push(data);
       })
     }
-  });
+  };
 
-  it('When connection is closed, no transactions can be missed', function(done) {
-
+  var repush = function(subscriber, done) {
     var QUEUE_ID = 'subsQ',
         MESSAGE = 'message',
         MESSAGE_PENDING = 'busy',
         transactionID, transactionIDPending;
 
     //Subscribe to the queue
-    utils.subscribe(1, QUEUE_ID, function(err, messages) {
+    subscriber(1, QUEUE_ID, function(err, messages) {
 
       should.not.exist(err);
 
@@ -137,7 +135,7 @@ describe('Subscription Test', function() {
         //Timeout is needed because transaction needs to be repushed into the queue
         setTimeout(function() {
           checkState(transactionIDPending, MESSAGE_PENDING, QUEUE_ID, 'Pending', function() {
-            utils.subscribe(1, QUEUE_ID, function(err, messages) {
+            subscriber(1, QUEUE_ID, function(err, messages) {
               should.not.exist(err);
 
               var message = messages[0];
@@ -161,5 +159,46 @@ describe('Subscription Test', function() {
     pushTransaction(QUEUE_ID, MESSAGE, function(err, data) {
       transactionID = data;
     });
+  }
+
+  describe('HTTP', function() {
+
+    it('Should receive all transaction in less than two seconds', function(done) {
+      normalSubscription(utils.subscribe, done);
+    });
+
+    it('When connection is closed, no transactions can be missed', function(done) {
+      repush(utils.subscribe, done);
+    });
   });
+
+  describe('Socket IO', function() {
+
+    var subscriber = function(N_PETS, QUEUE_ID, cb) {
+      var messages = [];
+      var iosocket = require('socket.io-client').connect('http://localhost:3001', {'force new connection': true});
+
+      iosocket.on('connect', function(data) {
+        iosocket.emit('subscribe', QUEUE_ID);
+      });
+
+      iosocket.on('data', function(data) {
+        messages.push(data);
+        if (messages.length === N_PETS) {
+          iosocket.disconnect();
+          cb(null, messages);
+        }
+      });
+    }
+
+    it('Should receive all transaction in less than two seconds', function(done) {
+      normalSubscription(subscriber, done);
+    });
+
+    it('When connection is closed, no transactions can be missed', function(done) {
+      repush(subscriber, done);
+    });
+
+  });
+
 });
