@@ -133,12 +133,37 @@ describe('Groups', function () {
 
   describe('When a message is posted to a group', function () {
     var publish;
+    var groupName = 'group2';
+    var queues = ['A2', 'B2'];
+
+    function checkQueue(transId, queue, done) {
+      var checkQueue = {
+        url: 'http://' + HOST + ':' + PORT + '/queue/' + queue + '/pop',
+        method: 'POST'
+      }
+
+      request(checkQueue, function (error, response, body) {
+        response.statusCode.should.equal(200);
+
+        var parsedBody = JSON.parse(body);
+        should.exist(parsedBody.data);
+        parsedBody.data.length.should.equal(1);
+        parsedBody.data.should.include(publish.json.payload);
+        parsedBody.transactions.length.should.equal(1);
+        parsedBody.transactions.should.include(transId);
+
+        done();
+      });
+    }
 
     beforeEach(function (done) {
       var createGroup = {
         url: 'http://' + HOST + ':' + PORT + '/group',
         method: 'POST',
-        json: {}
+        json: {
+          name: groupName,
+          queues: queues
+        }
       };
 
       publish = {
@@ -148,42 +173,53 @@ describe('Groups', function () {
           'payload': 'Published message',
           'priority': 'H',
           'callback': 'http://foo.bar',
-          'queue': [
-          ],
           'groups': [
             'group2'
           ]
         }
       };
 
-      createGroup.json.name = 'group1';
-      createGroup.json.queues = ['A1', 'B1']
       request(createGroup, function (error, response, body) {
-        createGroup.json.name = 'group2';
-        createGroup.json.queues = ['A2', 'B2']
-        request(createGroup, function (error, response, body) {
-          done();
-        });
+        done();
       });
     });
 
     it('should publish to all the inboxes associated to the group', function (done) {
       request(publish, function (error, response, body) {
+
         response.statusCode.should.equal(200);
 
-        var checkQueue = {
-          url: 'http://' + HOST + ':' + PORT + '/queue/B2/pop',
-          method: 'POST'
+        var transId = body.data;
+        var tests = [];
+
+        for (var i = 0; i < queues.length; i++) {
+          tests.push(checkQueue.bind({}, transId, queues[i]));
         }
 
-        request(checkQueue, function (error, response, body) {
-          response.statusCode.should.equal(200);
+        async.parallel(tests, done);
 
-          var parsedBody = JSON.parse(body);
-          should.exist(parsedBody.data);
-          parsedBody.data.length.should.equal(1);
-          done();
-        });
+      });
+    });
+
+
+    it('should publish to all the inboxes associated to the group and in the selected queues', function (done) {
+      var newQueue = 'C2';
+
+      publish.json.queue = [ { id: newQueue } ];
+      request(publish, function (error, response, body) {
+
+        response.statusCode.should.equal(200);
+
+        var transId = body.data;
+        var tests = [];
+
+        tests.push(checkQueue.bind({}, transId, newQueue));
+        for (var i = 0; i < queues.length; i++) {
+          tests.push(checkQueue.bind({}, transId, queues[i]));
+        }
+
+        async.parallel(tests, done);
+
       });
     });
   });
