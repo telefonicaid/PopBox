@@ -16,7 +16,7 @@ install:
  - npm install
 
 before_script:
- - redis-server --port 7777
+ - redis-server --port 7777 &
  - cd ./utils
  - openssl genrsa -des3 -passout pass:test1234 -out server.key 1024
  - openssl req -new -key server.key -batch -passin pass:test1234 -out server.csr
