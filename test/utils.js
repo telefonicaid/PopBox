@@ -124,21 +124,41 @@ var pushTransaction = function(org, trans, cb) {
 };
 
 var getTransState = function(org, transID, state, cb) {
-  'use strict';
+    'use strict';
 
-  if (typeof state === 'function') {
-    cb = state;
-    state = null;
-  }
+    if (typeof state === 'function') {
+        cb = state;
+        state = null;
+    }
 
-  var path = '/trans/' + transID;
-  if (state) {
-    path += '?queues=' + state;
-  }
+    var path = '/trans/' + transID;
+    if (state) {
+        path += '?queues=' + state;
+    }
 
-  path = orgPath(org, path);
-  popBoxRequest('GET', path , null, cb);
+    path = orgPath(org, path);
+    popBoxRequest('GET', path , null, cb);
 };
+
+
+var getTransStatus = function(org, transID, status, cb) {
+    'use strict';
+
+    if (typeof status === 'function') {
+        cb = status;
+        status = null;
+    }
+
+    var path = '/trans/' + transID;
+    if (status) {
+        path += '/state'; // + state;
+
+    }
+    console.log("path status\n _____\n ", path);
+    path = orgPath(org, path);
+    popBoxRequest('GET', path , null, cb);
+};
+
 
 var putTransaction = function(org, transID, trans, cb) {
   'use strict';
@@ -146,21 +166,53 @@ var putTransaction = function(org, transID, trans, cb) {
   popBoxRequest('PUT', path, trans, cb);
 };
 
+var postTransactionAck = function(org, transID, cb) {
+    'use strict';
+
+    //Can be replaced by introducing items into the database directly
+    var path = orgPath(org, '/trans');
+    popBoxRequest('POST', path, trans, cb);
+};
+
+var postAck = function(org, transID, trans, cb) {
+    'use strict';
+    var path = orgPath(org, '/trans/' + transID);
+    popBoxRequest('POST', path, trans, cb);
+};
+
+
 var pop = function(org, queueID, nPets, cb) {
-  'use strict';
+    'use strict';
 
-  if (typeof nPets === 'function') {
-    cb = nPets;
-    nPets = null;
-  }
+    if (typeof nPets === 'function') {
+        cb = nPets;
+        nPets = null;
+    }
 
-  var path = '/queue/' + queueID + '/pop';
-  if (nPets) {
-    path += '?max=' + nPets;
-  }
+    var path = '/queue/' + queueID + '/pop';
+    if (nPets) {
+        path += '?max=' + nPets;
+    }
 
-  path = orgPath(org, path);
-  popBoxRequest('POST', path, null, cb);
+    path = orgPath(org, path);
+    popBoxRequest('POST', path, null, cb);
+};
+
+var popAck = function(org, queueID, nPets, cb) {
+    'use strict';
+    var ackTime = 10;
+    if (typeof nPets === 'function') {
+        cb = nPets;
+        nPets = null;
+    }
+     var path = '/queue/' + queueID + '/poprel?timeoutACK=10' ;
+    if (nPets) {
+        path += '?max=' + nPets;
+      // console.log("________\nPATH _____________\n", path);
+    }
+
+    path = orgPath(org, path);
+    popBoxRequest('POST', path, null, cb);
 };
 
 var popTimeout = function(org, queueID, timeout, cb) {
@@ -226,7 +278,6 @@ var subscribe = function(org, nPets, queueID, cb) {
       }
     });
   });
-
   req.end();
   return req;
 };
@@ -238,9 +289,11 @@ exports.makeRequest = makeRequest;
 //Without ORG
 exports.pushTransaction = pushTransaction.bind({}, null);
 exports.getTransState = getTransState.bind({}, null);
+exports.getTransStatus = getTransStatus.bind({}, null);
 exports.putTransaction = putTransaction.bind({}, null);
 exports.getQueueState = getQueueState.bind({}, null);
 exports.pop = pop.bind({}, null);
+exports.popAck = popAck.bind({}, null);
 exports.popTimeout = popTimeout.bind({}, null);
 exports.peek = peek.bind({}, null);
 exports.subscribe = subscribe.bind({}, null);
@@ -248,9 +301,11 @@ exports.subscribe = subscribe.bind({}, null);
 //With ORG
 exports.pushTransactionOrg = pushTransaction;
 exports.getTransStateOrg = getTransState;
+exports.getTransStatusOrg = getTransStatus;
 exports.putTransactionOrg = putTransaction;
 exports.getQueueStateOrg = getQueueState;
 exports.popOrg = pop;
+exports.popAckOrg = popAck;
 exports.popTimeoutOrg = popTimeout;
 exports.peekOrg = peek;
 exports.subscribeOrg = subscribe;
