@@ -3,11 +3,13 @@ var http = require('http');
 var utils = require('./../utils.js');
 var agent = require('../../.');
 
-var pushTransaction = function(queue, message, cb) {
+var pushTransaction = function (queue, message, cb) {
   'use strict';
 
-  var transaction = utils.createTransaction(message, 'H', [{'id': queue}]);
-  utils.pushTransaction(transaction, function(error, response, data) {
+  var transaction = utils.createTransaction(message, 'H', [
+    {'id': queue}
+  ]);
+  utils.pushTransaction(transaction, function (error, response, data) {
 
     should.not.exist(error);
     response.statusCode.should.be.equal(200);
@@ -20,7 +22,7 @@ var pushTransaction = function(queue, message, cb) {
 function checkState(id, payload, queueID, expectedState, cb) {
   'use strict';
 
-  utils.getTransState(id, expectedState, function(error, response, data) {
+  utils.getTransState(id, expectedState, function (error, response, data) {
 
     should.not.exist(error);
     response.statusCode.should.be.equal(200);
@@ -39,40 +41,40 @@ function checkState(id, payload, queueID, expectedState, cb) {
   });
 };
 
-describe('Subscription Test', function() {
+describe('Subscription Test', function () {
 
-  beforeEach(function(done) {
+  beforeEach(function (done) {
     utils.cleanBBDD(done);
   });
 
-  before(function(done){
+  before(function (done) {
     agent.start(done);
   });
 
-  after(function(done) {
-    utils.cleanBBDD(function() {
+  after(function (done) {
+    utils.cleanBBDD(function () {
       agent.stop(done);
     });
   });
 
-  var normalSubscription = function(subscriber, done) {
+  var normalSubscription = function (subscriber, done) {
     var QUEUE_ID = 'subsQ',
         MESSAGE_PREFIX = 'message',
         N_PETS = 3,
         transactionIDList = [];
 
     //Subscribe to the queue
-    subscriber(N_PETS, QUEUE_ID, function(err, messages) {
+    subscriber(N_PETS, QUEUE_ID, function (err, messages) {
 
       var interval;
 
       should.not.exist(err);
 
-      var payloads = messages.map(function(msg) {
+      var payloads = messages.map(function (msg) {
         return msg && msg.data[0];
       });
 
-      var transactions = messages.map(function(msg) {
+      var transactions = messages.map(function (msg) {
         return msg && msg.transactions[0];
       });
 
@@ -81,7 +83,7 @@ describe('Subscription Test', function() {
       }
 
       //It's necessary wait request to finish to check returned transactions
-      var testTransactionList = function() {
+      var testTransactionList = function () {
         if (transactionIDList.length === N_PETS) {
 
           clearInterval(interval);
@@ -101,20 +103,20 @@ describe('Subscription Test', function() {
 
     //Insert transactions
     for (var i = 0; i < N_PETS; i++) {
-      pushTransaction(QUEUE_ID, MESSAGE_PREFIX + i, function(err, data) {
+      pushTransaction(QUEUE_ID, MESSAGE_PREFIX + i, function (err, data) {
         transactionIDList.push(data);
       })
     }
   };
 
-  var repush = function(subscriber, done) {
+  var repush = function (subscriber, done) {
     var QUEUE_ID = 'subsQ',
         MESSAGE = 'message',
         MESSAGE_PENDING = 'busy',
         transactionID, transactionIDPending;
 
     //Subscribe to the queue
-    subscriber(1, QUEUE_ID, function(err, messages) {
+    subscriber(1, QUEUE_ID, function (err, messages) {
 
       should.not.exist(err);
 
@@ -127,15 +129,15 @@ describe('Subscription Test', function() {
       message['transactions'].should.include(transactionID);
 
       //Insert a new transaction
-      pushTransaction(QUEUE_ID, MESSAGE_PENDING, function(err, data) {
+      pushTransaction(QUEUE_ID, MESSAGE_PENDING, function (err, data) {
 
         transactionIDPending = data;
 
         //Check if the transaction is still queued
         //Timeout is needed because transaction needs to be repushed into the queue
-        setTimeout(function() {
-          checkState(transactionIDPending, MESSAGE_PENDING, QUEUE_ID, 'Pending', function() {
-            subscriber(1, QUEUE_ID, function(err, messages) {
+        setTimeout(function () {
+          checkState(transactionIDPending, MESSAGE_PENDING, QUEUE_ID, 'Pending', function () {
+            subscriber(1, QUEUE_ID, function (err, messages) {
               should.not.exist(err);
 
               var message = messages[0];
@@ -146,7 +148,7 @@ describe('Subscription Test', function() {
               message['transactions'].length.should.be.equal(1);
               message['transactions'].should.include(transactionIDPending);
 
-              checkState(transactionIDPending, MESSAGE_PENDING, QUEUE_ID, 'Delivered', function() {
+              checkState(transactionIDPending, MESSAGE_PENDING, QUEUE_ID, 'Delivered', function () {
                 done();
               });
             });
@@ -156,33 +158,33 @@ describe('Subscription Test', function() {
     });
 
     //Insert transaction
-    pushTransaction(QUEUE_ID, MESSAGE, function(err, data) {
+    pushTransaction(QUEUE_ID, MESSAGE, function (err, data) {
       transactionID = data;
     });
   }
 
-  describe('HTTP', function() {
+  describe('HTTP', function () {
 
-    it('Should receive all transaction in less than two seconds', function(done) {
+    it('Should receive all transaction in less than two seconds', function (done) {
       normalSubscription(utils.subscribe, done);
     });
 
-    it('When connection is closed, no transactions can be missed', function(done) {
+    it('When connection is closed, no transactions can be missed', function (done) {
       repush(utils.subscribe, done);
     });
   });
 
-  describe('Socket IO', function() {
+  describe('Socket IO', function () {
 
-    var subscriber = function(N_PETS, QUEUE_ID, cb) {
+    var subscriber = function (N_PETS, QUEUE_ID, cb) {
       var messages = [];
       var iosocket = require('socket.io-client').connect('http://localhost:3001', {'force new connection': true});
 
-      iosocket.on('connect', function(data) {
+      iosocket.on('connect', function (data) {
         iosocket.emit('subscribe', QUEUE_ID);
       });
 
-      iosocket.on('data', function(data) {
+      iosocket.on('data', function (data) {
         messages.push(data);
         if (messages.length === N_PETS) {
           iosocket.disconnect();
@@ -191,11 +193,11 @@ describe('Subscription Test', function() {
       });
     }
 
-    it('Should receive all transaction in less than two seconds', function(done) {
+    it('Should receive all transaction in less than two seconds', function (done) {
       normalSubscription(subscriber, done);
     });
 
-    it('When connection is closed, no transactions can be missed', function(done) {
+    it('When connection is closed, no transactions can be missed', function (done) {
       repush(subscriber, done);
     });
 

@@ -205,7 +205,9 @@ describe('Groups', function () {
     it('should publish to all the inboxes associated to the group and in the selected queues', function (done) {
       var newQueue = 'C2';
 
-      publish.json.queue = [ { id: newQueue } ];
+      publish.json.queue = [
+        { id: newQueue }
+      ];
       request(publish, function (error, response, body) {
 
         response.statusCode.should.equal(200);

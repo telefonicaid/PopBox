@@ -3,17 +3,16 @@ var async = require('async');
 var utils = require('./../utils');
 var agent = require('../../.');
 
-describe('PUT', function() {
+describe('PUT', function () {
 
   var id, trans;
 
-  var modifyTransAndCheckStatus = function(modifiedData, errors, expectedPayload, expectedCallback,
-                                           expectedTimeOut, done) {
+  var modifyTransAndCheckStatus = function (modifiedData, errors, expectedPayload, expectedCallback, expectedTimeOut, done) {
 
     async.series([
 
-      function(callback) {
-        utils.putTransaction(id, modifiedData, function(error, response, data) {
+      function (callback) {
+        utils.putTransaction(id, modifiedData, function (error, response, data) {
 
           should.not.exist(error);
 
@@ -29,9 +28,9 @@ describe('PUT', function() {
         });
       },
 
-      function(callback) {
+      function (callback) {
 
-        utils.getTransState(id, function(error, response, data) {
+        utils.getTransState(id, function (error, response, data) {
 
           response.statusCode.should.be.equal(200);
           data.should.have.property('payload');
@@ -49,14 +48,17 @@ describe('PUT', function() {
     ], done);
   }
 
-  beforeEach(function(done) {
+  beforeEach(function (done) {
 
     var payload = "{\"spanish\": \"prueba1\", \"english\":'\"test1\", \"to\": \"Mr Lopez\"}";
 
-    trans = utils.createTransaction(payload, 'H',  [ { 'id': 'q1' }, { 'id': 'q2' } ],
+    trans = utils.createTransaction(payload, 'H', [
+      { 'id': 'q1' },
+      { 'id': 'q2' }
+    ],
         Math.round(new Date().getTime() / 1000 + 2), 'http://foo.bar');
 
-    utils.pushTransaction(trans, function(error, response, data) {
+    utils.pushTransaction(trans, function (error, response, data) {
       should.not.exist(error);
       data.should.have.property('data');
       id = data.data;
@@ -64,20 +66,20 @@ describe('PUT', function() {
     });
   });
 
-  before(function(done){
+  before(function (done) {
     agent.start(done);
   });
 
-  after(function(done) {
-    utils.cleanBBDD(function() {
+  after(function (done) {
+    utils.cleanBBDD(function () {
       agent.stop(done);
     });
   });
 
-  it('should change payload, callback and expirationDate', function(done) {
+  it('should change payload, callback and expirationDate', function (done) {
 
     var modifiedData = {
-      'payload':  'MESSAGE1',
+      'payload': 'MESSAGE1',
       'callback': 'www.fi.upm.es',
       'expirationDate': 1447483646
     };
@@ -87,11 +89,11 @@ describe('PUT', function() {
 
   });
 
-  it('should not change priority', function(done) {
+  it('should not change priority', function (done) {
 
 
     var modifiedData = {
-      'payload':  'MESSAGE2',
+      'payload': 'MESSAGE2',
       'priority': 'L',
       'expirationDate': 1447483646
     };
