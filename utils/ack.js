@@ -12,7 +12,7 @@ var program = require('commander'),
 program
     .version('0.0.1')
     .option('-H, --host [hostname]', 'host, \'localhost\' by default', 'localhost')
-    .option('-P, --port [number]', 'port, 5001 by default', 5001, parseInt)
+    .option('-P, --port [number]', 'port, 5001 by default', 3001, parseInt)
     .option('-Q, --queue [id]', 'queue', "Q1")
     .option('-T, --trans [list]', 'list of transactions separated by comma', list)
     .option('-X, --secure', 'use HTTPS', false)

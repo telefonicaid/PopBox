@@ -12,7 +12,7 @@ var program = require('commander'),
 program
     .version('0.0.1')
     .option('-H, --host [hostname]', 'host, \'localhost\' by default', 'localhost')
-    .option('-P, --port [number]', 'port, 5001 by default', 5001, parseInt)
+    .option('-P, --port [number]', 'port, 5001 by default', 3001, parseInt)
     .option('-M, --message [text]', 'message','¡hola!\n')
     .option('-Q, --queues [list]', 'list of queues separated by comma', list, ["Q1"])
     .option('-G, --groups [list]', 'list of groups separated by comma',list)

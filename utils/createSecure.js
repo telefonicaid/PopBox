@@ -12,7 +12,7 @@ var program = require('commander'),
 program
     .version('0.0.1')
     .option('-H, --host [hostname]', 'host, \'localhost\' by default', 'localhost')
-    .option('-P, --port [number]', 'port, 5001 by default', 5002, parseInt)
+    .option('-P, --port [number]', 'port, 5001 by default', 3002, parseInt)
     .option('-Q, --queue [id]', 'queue', "Q1")
     .option('-U, --user [id:passwd]', 'username','popbox:itscool')
     .parse(process.argv);
