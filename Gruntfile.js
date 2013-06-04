@@ -38,7 +38,8 @@ module.exports = function(grunt) {
     simplemocha: {
       options: {
         ui: 'bdd',
-        reporter: 'spec'
+        reporter: 'spec',
+        ignoreLeaks: true
       },
       unit: {
         src: [
@@ -55,16 +56,16 @@ module.exports = function(grunt) {
       doxfoundation: {
         cmd: 'node ./node_modules/.bin/dox-foundation --source lib --target doc'
       }
-    }, 
+    },
 
     plato: {
       options: {
-        jshint : grunt.file.readJSON('.jshintrc')          
+        jshint : grunt.file.readJSON('.jshintrc')
       },
       lib: {
         files: {
           'report': '<%= jshint.lib.src %>'
-        } 
+        }
       }
     }
 
